@@ -1,31 +1,30 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Server.Models
+namespace Server.Models;
+
+public class User
 {
-    public class User
-    {
-        [Key]
-        public int UserID { get; set; }
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public string Bio { get; set; }
-        public string ProfileImageURL { get; set; }
+    [Key] public int UserID { get; set; }
 
-        [ForeignKey("Role")]
-        public int RoleID { get; set; }
-        public Role Role { get; set; }
+    public string Username { get; set; }
+    public string Email { get; set; }
+    public string PasswordHash { get; set; }
+    public string Bio { get; set; }
+    public string ProfileImageURL { get; set; }
 
-        public string TalentArea { get; set; }
-        public DateTime CreatedAt { get; set; }
+    [ForeignKey("Role")] public int RoleID { get; set; }
 
-        // Navigation properties
-        public ICollection<Video> Videos { get; set; }
-        public ICollection<Comment> Comments { get; set; }
-        public ICollection<Like> Likes { get; set; }
-        public ICollection<ContestEntry> ContestEntries { get; set; }
-        public ICollection<Message> SentMessages { get; set; }
-        public ICollection<Message> ReceivedMessages { get; set; }
-    }
+    public Role Role { get; set; }
+
+    public string TalentArea { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    // Navigation properties
+    public ICollection<Video> Videos { get; set; }
+    public ICollection<Comment> Comments { get; set; }
+    public ICollection<Like> Likes { get; set; }
+    public ICollection<ContestEntry> ContestEntries { get; set; }
+    public ICollection<Message> SentMessages { get; set; }
+    public ICollection<Message> ReceivedMessages { get; set; }
 }
