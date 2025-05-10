@@ -1,9 +1,8 @@
-namespace Server.DTOs
+namespace Server.DTOs;
+
+public class CategoryDTO
 {
-    public class CategoryDTO
-    {
-        public int CategoryID { get; set; }
-        public string CategoryName { get; set; }
-        public string Description { get; set; }
-    }
+    public int CategoryID { get; set; }
+    public string CategoryName { get; set; }
+    public string Description { get; set; }
 }

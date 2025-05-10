@@ -1,14 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models
-{
-    public class Privacy
-    {
-        [Key]
-        public int PrivacyID { get; set; }
-        public string Name { get; set; }
+namespace Server.Models;
 
-        // Navigation property
-        public ICollection<Video> Videos { get; set; }
-    }
+public class Privacy
+{
+    [Key] public int PrivacyID { get; set; }
+
+    public string Name { get; set; }
+
+    // Navigation property
+    public ICollection<Video> Videos { get; set; }
 }
