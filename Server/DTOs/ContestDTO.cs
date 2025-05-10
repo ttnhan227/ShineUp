@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace ShineUp.Server.DTOs
+namespace Server.DTOs
 {
     public class ContestDTO
     {

@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace ShineUp.Server.Models
+namespace Server.Models
 {
     public class Category
     {
