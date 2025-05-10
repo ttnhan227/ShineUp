@@ -1,6 +1,4 @@
-using System;
-
-namespace ShineUp.Server.DTOs
+namespace Server.DTOs
 {
     public class ContestEntryDTO
     {

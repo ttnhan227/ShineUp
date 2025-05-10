@@ -1,7 +1,4 @@
-using System;
-using ShineUp.Server.Models;
-
-namespace ShineUp.Server.DTOs
+namespace Server.DTOs
 {
     public class VideoDTO
     {

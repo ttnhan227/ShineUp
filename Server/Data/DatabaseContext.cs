@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ShineUp.Server.Models;
+using Server.Models;
 
-namespace ShineUp.Server.Data
+namespace Server.Data
 {
     public class DatabaseContext : DbContext
     {

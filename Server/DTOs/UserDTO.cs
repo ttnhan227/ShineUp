@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using ShineUp.Server.Models;
-
-namespace ShineUp.Server.DTOs
+namespace Server.DTOs
 {
     public class UserDTO
     {
