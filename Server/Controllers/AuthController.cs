@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.DTOs;
 using Server.Models;
 using Server.Data;
+using Server.Interfaces;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using BCrypt.Net; // Need to add this package
@@ -17,26 +18,25 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly DatabaseContext _context;
+    private readonly DatabaseContext _context; // Keep context for other potential actions
+    private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
 
-    public AuthController(DatabaseContext context, IConfiguration configuration)
+    public AuthController(DatabaseContext context, IAuthRepository authRepository, IConfiguration configuration)
     {
         _context = context;
+        _authRepository = authRepository;
         _configuration = configuration;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDTO registerDTO)
     {
-        // Check if user with the same email or username already exists
-        if (await _context.Users.AnyAsync(u => u.Email == registerDTO.Email || u.Username == registerDTO.Username))
+        // Check if user with the same email or username already exists using the repository
+        if (await _authRepository.UserExists(registerDTO.Email, registerDTO.Username))
         {
             return BadRequest("User with this email or username already exists.");
         }
-
-        // Hash the password
-        string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDTO.Password);
 
         // Find the default role (e.g., "User")
         // You might need to ensure a default role exists in your database
@@ -47,13 +47,11 @@ public class AuthController : ControllerBase
              return StatusCode(500, "Default role not found. Please configure roles.");
         }
 
-
-        // Create new user
+        // Create new user object (password hashing is done in the repository)
         var newUser = new User
         {
             Username = registerDTO.Username,
             Email = registerDTO.Email,
-            PasswordHash = passwordHash,
             Bio = "", // Or a default empty string
             ProfileImageURL = "", // Or a default image URL
             RoleID = defaultRole.RoleID,
@@ -61,8 +59,8 @@ public class AuthController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Users.Add(newUser);
-        await _context.SaveChangesAsync();
+        // Register the user using the repository
+        var registeredUser = await _authRepository.Register(newUser, registerDTO.Password);
 
         // Return a success response (you might want to return a simplified UserDTO)
         return Ok(new { Message = "User registered successfully!" });
@@ -71,7 +69,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
     {
-        var user = await Authenticate(loginDTO);
+        // Authenticate the user using the repository
+        var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
 
         if (user == null)
         {
@@ -83,21 +82,8 @@ public class AuthController : ControllerBase
         return Ok(new { Token = token });
     }
 
-    private async Task<User> Authenticate(LoginDTO userLogin)
-    {
-        // Find the user in the database based on email
-        var user = await _context.Users
-            .Include(u => u.Role) // Include the Role for claims
-            .SingleOrDefaultAsync(x => x.Email.Equals(userLogin.Email));
+    // The Authenticate method is no longer needed as its logic is in the repository
 
-        // Verify the password using BCrypt
-        if (user != null && BCrypt.Net.BCrypt.Verify(userLogin.Password, user.PasswordHash))
-        {
-            return user;
-        }
-
-        return null; // Authentication failed
-    }
 
     private string GenerateToken(User user)
     {
