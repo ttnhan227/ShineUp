@@ -2,7 +2,7 @@
 using Server.Data;
 using Server.Models;
 
-namespace Server.Repository
+namespace Server.Repositories
 {
     public class ContestRepository : IContestRepository
     {
