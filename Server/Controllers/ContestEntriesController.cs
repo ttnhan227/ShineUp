@@ -2,7 +2,7 @@
 using Client.DTOs;
 using Server.Models;
 using Server.Repositories;
-using Server.Repository;
+using Server.Interfaces;
 
 namespace Server.Controllers
 {

@@ -1,10 +1,11 @@
 ﻿using Client.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
-using Server.Repository;
+using Server.Repositories;
 using System.Text;
+using Server.Interfaces;
 
-namespace Client.Controllers
+namespace Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
