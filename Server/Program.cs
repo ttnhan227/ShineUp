@@ -15,6 +15,9 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 builder.Services.AddControllers(); // Add this line
 builder.Services.AddSwaggerGen();
 
+// Add Repositories
+builder.Services.AddScoped<Server.Interfaces.IAuthRepository, Server.Repositories.AuthRepository>();
+
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
