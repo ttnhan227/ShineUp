@@ -22,7 +22,7 @@ namespace Server.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ShineUp.Server.Models.Category", b =>
+            modelBuilder.Entity("Server.Models.Category", b =>
                 {
                     b.Property<int>("CategoryID")
                         .ValueGeneratedOnAdd()
@@ -43,7 +43,7 @@ namespace Server.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Comment", b =>
+            modelBuilder.Entity("Server.Models.Comment", b =>
                 {
                     b.Property<int>("CommentID")
                         .ValueGeneratedOnAdd()
@@ -73,7 +73,7 @@ namespace Server.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Contest", b =>
+            modelBuilder.Entity("Server.Models.Contest", b =>
                 {
                     b.Property<int>("ContestID")
                         .ValueGeneratedOnAdd()
@@ -100,7 +100,7 @@ namespace Server.Migrations
                     b.ToTable("Contests");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.ContestEntry", b =>
+            modelBuilder.Entity("Server.Models.ContestEntry", b =>
                 {
                     b.Property<int>("EntryID")
                         .ValueGeneratedOnAdd()
@@ -131,7 +131,7 @@ namespace Server.Migrations
                     b.ToTable("ContestEntries");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Like", b =>
+            modelBuilder.Entity("Server.Models.Like", b =>
                 {
                     b.Property<int>("LikeID")
                         .ValueGeneratedOnAdd()
@@ -157,7 +157,7 @@ namespace Server.Migrations
                     b.ToTable("Likes");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Message", b =>
+            modelBuilder.Entity("Server.Models.Message", b =>
                 {
                     b.Property<int>("MessageID")
                         .ValueGeneratedOnAdd()
@@ -187,7 +187,7 @@ namespace Server.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Privacy", b =>
+            modelBuilder.Entity("Server.Models.Privacy", b =>
                 {
                     b.Property<int>("PrivacyID")
                         .ValueGeneratedOnAdd()
@@ -204,7 +204,7 @@ namespace Server.Migrations
                     b.ToTable("Privacies");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Role", b =>
+            modelBuilder.Entity("Server.Models.Role", b =>
                 {
                     b.Property<int>("RoleID")
                         .ValueGeneratedOnAdd()
@@ -221,7 +221,7 @@ namespace Server.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.User", b =>
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
                     b.Property<int>("UserID")
                         .ValueGeneratedOnAdd()
@@ -266,7 +266,7 @@ namespace Server.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Video", b =>
+            modelBuilder.Entity("Server.Models.Video", b =>
                 {
                     b.Property<int>("VideoID")
                         .ValueGeneratedOnAdd()
@@ -313,15 +313,41 @@ namespace Server.Migrations
                     b.ToTable("Videos");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Comment", b =>
+            modelBuilder.Entity("Server.Models.Vote", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.User", "User")
+                    b.Property<int>("VoteID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VoteID"));
+
+                    b.Property<int>("EntryID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("VotedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("VoteID");
+
+                    b.HasIndex("EntryID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("Votes");
+                });
+
+            modelBuilder.Entity("Server.Models.Comment", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.Video", "Video")
+                    b.HasOne("Server.Models.Video", "Video")
                         .WithMany("Comments")
                         .HasForeignKey("VideoID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -332,21 +358,21 @@ namespace Server.Migrations
                     b.Navigation("Video");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.ContestEntry", b =>
+            modelBuilder.Entity("Server.Models.ContestEntry", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.Contest", "Contest")
+                    b.HasOne("Server.Models.Contest", "Contest")
                         .WithMany("ContestEntries")
                         .HasForeignKey("ContestID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.User", "User")
+                    b.HasOne("Server.Models.User", "User")
                         .WithMany("ContestEntries")
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.Video", "Video")
+                    b.HasOne("Server.Models.Video", "Video")
                         .WithMany("ContestEntries")
                         .HasForeignKey("VideoID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -359,15 +385,15 @@ namespace Server.Migrations
                     b.Navigation("Video");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Like", b =>
+            modelBuilder.Entity("Server.Models.Like", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.User", "User")
+                    b.HasOne("Server.Models.User", "User")
                         .WithMany("Likes")
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.Video", "Video")
+                    b.HasOne("Server.Models.Video", "Video")
                         .WithMany("Likes")
                         .HasForeignKey("VideoID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -378,15 +404,15 @@ namespace Server.Migrations
                     b.Navigation("Video");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Message", b =>
+            modelBuilder.Entity("Server.Models.Message", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.User", "Receiver")
+                    b.HasOne("Server.Models.User", "Receiver")
                         .WithMany("ReceivedMessages")
                         .HasForeignKey("ReceiverID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.User", "Sender")
+                    b.HasOne("Server.Models.User", "Sender")
                         .WithMany("SentMessages")
                         .HasForeignKey("SenderID")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -397,9 +423,9 @@ namespace Server.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.User", b =>
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.Role", "Role")
+                    b.HasOne("Server.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -408,21 +434,21 @@ namespace Server.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Video", b =>
+            modelBuilder.Entity("Server.Models.Video", b =>
                 {
-                    b.HasOne("ShineUp.Server.Models.Category", "Category")
+                    b.HasOne("Server.Models.Category", "Category")
                         .WithMany("Videos")
                         .HasForeignKey("CategoryID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.Privacy", "Privacy")
+                    b.HasOne("Server.Models.Privacy", "Privacy")
                         .WithMany("Videos")
                         .HasForeignKey("PrivacyID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShineUp.Server.Models.User", "User")
+                    b.HasOne("Server.Models.User", "User")
                         .WithMany("Videos")
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -435,27 +461,46 @@ namespace Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Category", b =>
+            modelBuilder.Entity("Server.Models.Vote", b =>
+                {
+                    b.HasOne("Server.Models.ContestEntry", "ContestEntry")
+                        .WithMany()
+                        .HasForeignKey("EntryID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ContestEntry");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.Category", b =>
                 {
                     b.Navigation("Videos");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Contest", b =>
+            modelBuilder.Entity("Server.Models.Contest", b =>
                 {
                     b.Navigation("ContestEntries");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Privacy", b =>
+            modelBuilder.Entity("Server.Models.Privacy", b =>
                 {
                     b.Navigation("Videos");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Role", b =>
+            modelBuilder.Entity("Server.Models.Role", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.User", b =>
+            modelBuilder.Entity("Server.Models.User", b =>
                 {
                     b.Navigation("Comments");
 
@@ -470,7 +515,7 @@ namespace Server.Migrations
                     b.Navigation("Videos");
                 });
 
-            modelBuilder.Entity("ShineUp.Server.Models.Video", b =>
+            modelBuilder.Entity("Server.Models.Video", b =>
                 {
                     b.Navigation("Comments");
 

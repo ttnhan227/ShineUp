@@ -1,0 +1,51 @@
+﻿@model Client.DTOs.ContestEntryDTO
+@{
+    ViewData["Title"] = "Submit Entry";
+    var contests = ViewBag.Contests as List<Client.DTOs.ContestDTO>;
+    var videos = ViewBag.Videos as List<Client.DTOs.VideoDTO>;
+    bool hasSubmitted = ViewBag.HasSubmitted != null && (bool)ViewBag.HasSubmitted;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">Submit Your Entry</h2>
+
+    @if (hasSubmitted)
+    {
+        <div class="alert alert-warning">
+            You have already submitted an entry for this contest.
+        </div>
+    }
+    else
+    {
+        <form asp-action="Create" method="post" class="p-4 border rounded bg-light shadow-sm">
+            <div class="mb-3">
+                <label class="form-label">Select Contest</label>
+                <select asp-for="ContestID" class="form-select">
+                    @foreach (var contest in contests)
+                    {
+                        <option value="@contest.ContestID">@contest.Title</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Select Your Video</label>
+                <select asp-for="VideoID" class="form-select">
+                    @foreach (var video in videos)
+                    {
+                        <option value="@video.VideoID">@video.Title</option>
+                    }
+                </select>
+            </div>
+
+            <input type="hidden" asp-for="UserID" value="1" />
+
+            <button type="submit" class="btn btn-primary">Submit Entry</button>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger mt-3">@ViewBag.Error</div>
+            }
+        </form>
+    }
+</div>

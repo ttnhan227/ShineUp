@@ -1,15 +1,24 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+using Server.Repositories;
+using Server.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers(); // ✅ Quan trọng
+
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddSwaggerGen();
+
+// AddScoped for Repositories
+builder.Services.AddScoped<IContestRepository, ContestRepository>();
+builder.Services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
+builder.Services.AddScoped<IVoteRepository, VoteRepository>();
 
 var app = builder.Build();
 
@@ -41,5 +50,7 @@ app.MapGet("/weatherforecast", () =>
     })
     .WithName("GetWeatherForecast")
     .WithOpenApi();
+
+app.MapControllers(); // 👈 Để map tất cả controller API
 
 app.Run();
