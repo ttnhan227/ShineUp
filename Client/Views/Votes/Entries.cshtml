@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Vote for Entries";
+    var entries = Model as List<dynamic>;
+    int contestId = (int)ViewBag.ContestId;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary">🗳️ Contest Entries</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info">@TempData["Message"]</div>
+    }
+
+    @if (entries != null && entries.Any())
+    {
+        <table class="table table-bordered table-striped shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>No.</th>
+                    <th>Video Title</th>
+                    <th>Author</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < entries.Count; i++)
+                {
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@entries[i].videoTitle</td>
+                        <td>@entries[i].userName</td>
+                        <td>
+                            <form asp-action="Cast" asp-controller="Votes" method="post">
+                                <input type="hidden" name="entryId" value="@entries[i].entryID" />
+                                <button type="submit" class="btn btn-success btn-sm">Vote</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning">No entries found for this contest.</div>
+    }
+</div>
