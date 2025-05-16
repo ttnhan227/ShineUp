@@ -1,6 +1,6 @@
 ﻿using Server.Models;
 
-namespace Server.Repository
+namespace Server.Interfaces
 {
     public interface IContestRepository
     {

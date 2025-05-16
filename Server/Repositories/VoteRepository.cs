@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
-using Server.Repository;
+using Server.Repositories;
 
 namespace Server.Repositories
 {
