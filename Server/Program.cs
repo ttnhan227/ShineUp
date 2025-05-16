@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +15,23 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 builder.Services.AddControllers(); // Add this line
 builder.Services.AddSwaggerGen();
 
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"])),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"]
+        };
+    });
+
+builder.Services.AddAuthorization(); // Add Authorization service
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -22,6 +42,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication(); // Add Authentication middleware
+app.UseAuthorization(); // Add Authorization middleware
+
 
 var summaries = new[]
 {
