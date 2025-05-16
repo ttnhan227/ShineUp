@@ -7,7 +7,7 @@ public class Comment
 {
     [Key] public int CommentID { get; set; }
 
-    [ForeignKey("Video")] public int VideoID { get; set; }
+    [ForeignKey("Video")] public string VideoID { get; set; }
 
     public Video Video { get; set; }
 

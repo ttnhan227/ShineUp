@@ -1,15 +1,24 @@
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+using Server.Helpers;
+using Server.Interfaces;
+using Server.Repositories;
+using Server.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IVideoRepository, VideoRepository>();
+
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.Configure<CloundinarySetting>(builder.Configuration.GetSection("CloudinarySettings"));
 
 var app = builder.Build();
 
@@ -19,7 +28,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.MapControllers();
 app.UseHttpsRedirection();
 
 var summaries = new[]
