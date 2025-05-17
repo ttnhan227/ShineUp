@@ -81,6 +81,21 @@ public class DatabaseContext : DbContext
             .WithOne(c => c.Video)
             .HasForeignKey(c => c.VideoID);
 
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Video)
+            .WithMany(v => v.Comments)
+            .HasForeignKey(c => c.VideoID);
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Video)
+            .WithMany(v => v.Likes)
+            .HasForeignKey(l => l.VideoID);
+
+        modelBuilder.Entity<ContestEntry>()
+            .HasOne(ce => ce.Video)
+            .WithMany(v => v.ContestEntries)
+            .HasForeignKey(ce => ce.VideoID);
+
         // Many-to-many relationship between User and Video via Likes is handled by the Likes entity
 
         // Configure the many-to-many relationship between User and Video through the Like entity
@@ -91,11 +106,6 @@ public class DatabaseContext : DbContext
             .HasOne(l => l.User)
             .WithMany(u => u.Likes)
             .HasForeignKey(l => l.UserID);
-
-        modelBuilder.Entity<Like>()
-            .HasOne(l => l.Video)
-            .WithMany(v => v.Likes)
-            .HasForeignKey(l => l.VideoID);
 
         // Configure the one-to-many relationship between Role and User
         modelBuilder.Entity<Role>()
