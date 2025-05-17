@@ -4,7 +4,8 @@ namespace Server.Models;
 
 public class Contest
 {
-    [Key] public int ContestID { get; set; }
+    [Key] 
+    public int ContestID { get; set; }
 
     public string Title { get; set; }
     public string Description { get; set; }

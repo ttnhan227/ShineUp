@@ -19,6 +19,7 @@ public class DatabaseContext : DbContext
     public DbSet<Contest> Contests { get; set; }
     public DbSet<ContestEntry> ContestEntries { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Vote> Votes { get; set; } //anh
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,5 +108,16 @@ public class DatabaseContext : DbContext
             .HasMany(p => p.Videos)
             .WithOne(v => v.Privacy)
             .HasForeignKey(v => v.PrivacyID);
+
+        modelBuilder.Entity<Vote>()  //anh
+            .HasOne(v => v.ContestEntry)
+            .WithMany()
+            .HasForeignKey(v => v.EntryID);
+
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.User)
+            .WithMany()
+            .HasForeignKey(v => v.UserID);
+
     }
 }

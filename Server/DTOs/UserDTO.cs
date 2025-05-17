@@ -1,4 +1,4 @@
-namespace Server.DTOs;
+namespace Client.DTOs;
 
 public class UserDTO
 {
