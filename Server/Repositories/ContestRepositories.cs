@@ -1,14 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Interfaces;
 using Server.Models;
 
 namespace Server.Repositories
 {
-    public class ContestRepository : IContestRepository
+    public class ContestRepositories : IContestRepositories
     {
         private readonly DatabaseContext _context;
 
-        public ContestRepository(DatabaseContext context)
+        public ContestRepositories(DatabaseContext context)
         {
             _context = context;
         }
@@ -24,8 +25,16 @@ namespace Server.Repositories
 
         public async Task UpdateAsync(Contest contest)
         {
-            _context.Contests.Update(contest);
-            await _context.SaveChangesAsync();
+            var existing = await _context.Contests.FindAsync(contest.ContestID);
+            if (existing != null)
+            {
+                existing.Title = contest.Title;
+                existing.Description = contest.Description;
+                existing.StartDate = contest.StartDate;
+                existing.EndDate = contest.EndDate;
+
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteAsync(int id)
@@ -38,5 +47,4 @@ namespace Server.Repositories
             }
         }
     }
-
 }
