@@ -7,15 +7,12 @@ namespace Server.Models
     {
         [Key] 
         public int VoteID { get; set; }
-
         [ForeignKey("ContestEntry")] 
         public int EntryID { get; set; }
         public ContestEntry ContestEntry { get; set; }
-
         [ForeignKey("User")] 
         public int UserID { get; set; }
         public User User { get; set; }
-
         public DateTime VotedAt { get; set; }
     }
 }

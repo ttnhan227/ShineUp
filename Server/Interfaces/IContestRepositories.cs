@@ -2,7 +2,7 @@
 
 namespace Server.Interfaces
 {
-    public interface IContestRepository
+    public interface IContestRepositories
     {
         Task<List<Contest>> GetAllAsync();
         Task<Contest?> GetByIdAsync(int id);

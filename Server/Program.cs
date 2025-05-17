@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+using Server.Interfaces;
 using Server.Repositories;
-using Server.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +16,9 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 builder.Services.AddSwaggerGen();
 
 // AddScoped for Repositories
-builder.Services.AddScoped<IContestRepository, ContestRepository>();
-builder.Services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
-builder.Services.AddScoped<IVoteRepository, VoteRepository>();
+builder.Services.AddScoped<IContestRepositories, ContestRepositories>();
+builder.Services.AddScoped<IContestEntryRepositories, ContestEntryRepositories>();
+builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
 
 var app = builder.Build();
 

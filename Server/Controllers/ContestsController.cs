@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Client.DTOs;
-using Server.Repository;
+using Server.Repositories;
 using Server.Models;
 using Server.Interfaces;
 
@@ -10,9 +10,9 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class ContestsController : ControllerBase
     {
-        private readonly IContestRepository _repository;
+        private readonly IContestRepositories _repository;
 
-        public ContestsController(IContestRepository repository)
+        public ContestsController(IContestRepositories repository)
         {
             _repository = repository;
         }
@@ -34,6 +34,12 @@ namespace Server.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ContestDTO dto)
         {
+            if (dto.StartDate >= dto.EndDate)
+                return BadRequest("Start date must be before end date.");
+
+            if (dto.EndDate < DateTime.UtcNow)
+                return BadRequest("End date must be in the future.");
+
             var entity = new Contest
             {
                 Title = dto.Title,
@@ -41,6 +47,7 @@ namespace Server.Controllers
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate
             };
+
             await _repository.AddAsync(entity);
             dto.ContestID = entity.ContestID;
             return CreatedAtAction(nameof(GetById), new { id = entity.ContestID }, dto);
@@ -50,21 +57,29 @@ namespace Server.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] ContestDTO dto)
         {
             if (id != dto.ContestID) return BadRequest();
+
+            if (dto.StartDate >= dto.EndDate)
+                return BadRequest("Start date must be before end date.");
+
             var contest = await _repository.GetByIdAsync(id);
             if (contest == null) return NotFound();
+
             contest.Title = dto.Title;
             contest.Description = dto.Description;
             contest.StartDate = dto.StartDate;
             contest.EndDate = dto.EndDate;
+
             await _repository.UpdateAsync(contest);
-            return NoContent();
+            //return NoContent(); // 204, api nội bộ
+            return Ok(dto); // hoặc return Ok(contest);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             await _repository.DeleteAsync(id);
-            return NoContent();
+            //return NoContent();
+            return Ok(new { message = "Deleted successfully", contestId = id });
         }
     }
 }

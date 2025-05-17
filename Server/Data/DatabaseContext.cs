@@ -19,7 +19,7 @@ public class DatabaseContext : DbContext
     public DbSet<Contest> Contests { get; set; }
     public DbSet<ContestEntry> ContestEntries { get; set; }
     public DbSet<Message> Messages { get; set; }
-    public DbSet<Vote> Votes { get; set; } //aaa
+    public DbSet<Vote> Votes { get; set; } //anh
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,7 +109,7 @@ public class DatabaseContext : DbContext
             .WithOne(v => v.Privacy)
             .HasForeignKey(v => v.PrivacyID);
 
-        modelBuilder.Entity<Vote>()  //aaa
+        modelBuilder.Entity<Vote>()  //anh
             .HasOne(v => v.ContestEntry)
             .WithMany()
             .HasForeignKey(v => v.EntryID);

@@ -1,16 +1,17 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Interfaces;
 using Server.Models;
 using Server.Repositories;
 
 namespace Server.Repositories
 {
-    public class VoteRepository : IVoteRepository
+    public class VoteRepositories : IVoteRepositories
     {
         private readonly DatabaseContext _context;
 
-        public VoteRepository(DatabaseContext context)
+        public VoteRepositories(DatabaseContext context)
         {
             _context = context;
         }
@@ -30,12 +31,17 @@ namespace Server.Repositories
         {
             return await _context.Votes
                 .Include(v => v.ContestEntry)
+                .ThenInclude(e => e.Video)
+                .Include(v => v.ContestEntry.User)
                 .Where(v => v.ContestEntry.ContestID == contestId)
                 .GroupBy(v => v.EntryID)
                 .Select(g => new
                 {
                     EntryID = g.Key,
-                    VoteCount = g.Count()
+                    VoteCount = g.Count(),
+                    VideoTitle = g.First().ContestEntry.Video.Title,
+                    VideoURL = g.First().ContestEntry.Video.VideoURL,
+                    UserName = g.First().ContestEntry.User.Username
                 })
                 .Cast<object>()
                 .ToListAsync();

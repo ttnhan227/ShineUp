@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Client.DTOs;
+﻿using Client.DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
+using Server.Interfaces;
 using Server.Models;
 using Server.Repositories;
-using Server.Interfaces;
 
 namespace Server.Controllers
 {
@@ -10,16 +12,22 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class ContestEntriesController : ControllerBase
     {
-        private readonly IContestEntryRepository _repository;
+        private readonly IContestEntryRepositories _repository;
+        private readonly DatabaseContext _context;
 
-        public ContestEntriesController(IContestEntryRepository repository)
+        public ContestEntriesController(IContestEntryRepositories repository, DatabaseContext context)
         {
             _repository = repository;
+            _context = context;
         }
 
         [HttpPost]
         public async Task<IActionResult> Submit([FromBody] ContestEntryDTO dto)
         {
+            var contest = await _context.Contests.FindAsync(dto.ContestID);
+            if (contest == null || DateTime.UtcNow < contest.StartDate || DateTime.UtcNow > contest.EndDate)
+                return BadRequest("This contest is not active.");
+
             if (await _repository.HasSubmittedAsync(dto.ContestID, dto.UserID))
                 return BadRequest("You have already submitted.");
 
