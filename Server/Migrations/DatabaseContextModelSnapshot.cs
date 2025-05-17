@@ -61,8 +61,9 @@ namespace Server.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
 
-                    b.Property<int>("VideoID")
-                        .HasColumnType("integer");
+                    b.Property<string>("VideoID")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("CommentID");
 
@@ -117,8 +118,9 @@ namespace Server.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
 
-                    b.Property<int>("VideoID")
-                        .HasColumnType("integer");
+                    b.Property<string>("VideoID")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("EntryID");
 
@@ -145,8 +147,9 @@ namespace Server.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("integer");
 
-                    b.Property<int>("VideoID")
-                        .HasColumnType("integer");
+                    b.Property<string>("VideoID")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("LikeID");
 
@@ -268,25 +271,21 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.Video", b =>
                 {
-                    b.Property<int>("VideoID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VideoID"));
+                    b.Property<string>("VideoID")
+                        .HasColumnType("text");
 
                     b.Property<int>("CategoryID")
                         .HasColumnType("integer");
+
+                    b.Property<string>("CloudPublicId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PrivacyID")
+                    b.Property<int?>("PrivacyID")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ThumbnailURL")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -444,9 +443,7 @@ namespace Server.Migrations
 
                     b.HasOne("Server.Models.Privacy", "Privacy")
                         .WithMany("Videos")
-                        .HasForeignKey("PrivacyID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PrivacyID");
 
                     b.HasOne("Server.Models.User", "User")
                         .WithMany("Videos")
