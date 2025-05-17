@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+
+        <PackageReference Include="CloudinaryDotNet" Version="1.27.5" />
         <PackageReference Include="BCrypt.Net-Core" Version="1.6.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.15"/>
@@ -14,6 +16,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1"/>
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.10.0" />

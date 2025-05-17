@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+using Server.Helpers;
+using Server.Interfaces;
+using Server.Repositories;
+using Server.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -10,10 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddControllers(); // Add this line
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IVideoRepository, VideoRepository>();
+
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.Configure<CloundinarySetting>(builder.Configuration.GetSection("CloudinarySettings"));
 
 // Add Repositories
 builder.Services.AddScoped<Server.Interfaces.IAuthRepository, Server.Repositories.AuthRepository>();
@@ -43,7 +52,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.MapControllers();
 app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Add Authentication middleware
