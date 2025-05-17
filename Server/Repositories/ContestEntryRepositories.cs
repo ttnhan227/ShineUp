@@ -1,15 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Interfaces;
 using Server.Models;
 using Server.Repositories;
 
 namespace Server.Repositories
 {
-    public class ContestEntryRepository : IContestEntryRepository
+    public class ContestEntryRepositories : IContestEntryRepositories
     {
         private readonly DatabaseContext _context;
 
-        public ContestEntryRepository(DatabaseContext context)
+        public ContestEntryRepositories(DatabaseContext context)
         {
             _context = context;
         }
