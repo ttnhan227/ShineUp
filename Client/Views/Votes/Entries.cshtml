@@ -31,7 +31,7 @@
                         <td>@entries[i].videoTitle</td>
                         <td>@entries[i].userName</td>
                         <td>
-                            <form asp-action="Cast" asp-controller="Votes" method="post">
+                            <form asp-action="Cast" asp-controller="Votes" method="post" onsubmit="return confirm('Are you sure you want to vote for this entry?');">
                                 <input type="hidden" name="entryId" value="@entries[i].entryID" />
                                 <button type="submit" class="btn btn-success btn-sm">Vote</button>
                             </form>

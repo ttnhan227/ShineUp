@@ -49,6 +49,9 @@ namespace Client.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(ContestEntryDTO entry)
         {
+            int userId = HttpContext.Session.GetInt32("UserID") ?? 0;
+            entry.UserID = userId;
+
             var json = JsonConvert.SerializeObject(entry);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -61,5 +64,6 @@ namespace Client.Controllers
             ViewBag.Error = "Failed to submit contest entry.";
             return View(entry);
         }
+
     }
 }
