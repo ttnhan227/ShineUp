@@ -1,10 +1,8 @@
 ﻿using Client.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
-using Server.Repositories;
 
 namespace Server.Controllers
 {
@@ -34,7 +32,6 @@ namespace Server.Controllers
             var entity = new ContestEntry
             {
                 ContestID = dto.ContestID,
-                VideoID = dto.VideoID,
                 UserID = dto.UserID,
                 SubmissionDate = DateTime.UtcNow
             };
