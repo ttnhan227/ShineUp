@@ -8,17 +8,20 @@ public class Video
     [Key] public string VideoID { get; set; }
     public string? CloudPublicId { get; set; }
 
-    [ForeignKey("User")] public int UserID { get; set; }
+    [ForeignKey("User")] 
+    public int UserID { get; set; }
 
     public User User { get; set; }
 
-    [ForeignKey("Category")] public int CategoryID { get; set; }
+    [ForeignKey("Category")] 
+    public int CategoryID { get; set; }
 
     public Category? Category { get; set; }
 
     public string Title { get; set; }
     public string Description { get; set; }
     public string VideoURL { get; set; }
+
 
     [ForeignKey("Privacy")] public int? PrivacyID { get; set; }
 
