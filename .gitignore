@@ -398,3 +398,4 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 /Requirements
+Server/appsettings.json
