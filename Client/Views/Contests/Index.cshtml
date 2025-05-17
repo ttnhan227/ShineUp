@@ -29,6 +29,7 @@
                         <td>@contest.item.StartDate.ToShortDateString()</td>
                         <td>@contest.item.EndDate.ToShortDateString()</td>
                         <td>
+                            <a class="btn btn-sm btn-outline-info me-1" href="/Votes/Results?contestId=@contest.item.ContestID">Results</a>
                             <a class="btn btn-sm btn-outline-primary me-1" href="/Votes/Entries?contestId=@contest.item.ContestID">Vote</a>
                             <a class="btn btn-sm btn-outline-success" href="/ContestEntries/Create">Submit</a>
                         </td>
