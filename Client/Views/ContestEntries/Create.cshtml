@@ -17,7 +17,11 @@
     }
     else
     {
-        <form asp-action="Create" method="post" class="p-4 border rounded bg-light shadow-sm">
+        <form asp-action="Create" 
+            method="post" 
+            class="p-4 border rounded bg-light shadow-sm" 
+            onsubmit="return confirm('Are you sure you want to submit this entry?');">
+
             <div class="mb-3">
                 <label class="form-label">Select Contest</label>
                 <select asp-for="ContestID" class="form-select">
@@ -37,8 +41,6 @@
                     }
                 </select>
             </div>
-
-            <input type="hidden" asp-for="UserID" value="1" />
 
             <button type="submit" class="btn btn-primary">Submit Entry</button>
 
