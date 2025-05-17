@@ -1,4 +1,4 @@
-    namespace Server.DTOs;
+namespace Server.DTOs;
 
     public class VideoDTO
     {

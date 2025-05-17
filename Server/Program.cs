@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Server;
 using Server.Data;
+
 using Server.Helpers;
 using Server.Interfaces;
 using Server.Repositories;
@@ -9,12 +10,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddControllers();
+
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddControllers(); // Add this line
@@ -43,6 +47,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization(); // Add Authorization service
+
+// AddScoped for Repositories
+builder.Services.AddScoped<IContestRepositories, ContestRepositories>();
+builder.Services.AddScoped<IContestEntryRepositories, ContestEntryRepositories>();
+builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
 
 var app = builder.Build();
 
@@ -79,6 +88,7 @@ app.MapGet("/weatherforecast", () =>
     .WithName("GetWeatherForecast")
     .WithOpenApi();
 
-app.MapControllers();
+
 
 app.Run();
+
