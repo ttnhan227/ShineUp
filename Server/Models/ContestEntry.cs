@@ -16,7 +16,7 @@ public class ContestEntry
     [ForeignKey("Video")] public string VideoID { get; set; }
 
 
-    public Video Video { get; set; }
+    public Video? Video { get; set; }
 
     [ForeignKey("User")] 
     public int UserID { get; set; }
