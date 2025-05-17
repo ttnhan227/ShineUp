@@ -2,7 +2,7 @@
 
 namespace Server.Interfaces
 {
-    public interface IVoteRepository
+    public interface IVoteRepositories
     {
         Task<bool> HasVotedAsync(int entryId, int userId);
         Task AddAsync(Vote vote);

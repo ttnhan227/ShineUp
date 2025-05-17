@@ -2,7 +2,7 @@
 
 namespace Server.Interfaces
 {
-    public interface IContestEntryRepository
+    public interface IContestEntryRepositories
     {
         Task<bool> HasSubmittedAsync(int contestId, int userId);
         Task<List<object>> GetEntriesByContestAsync(int contestId);
