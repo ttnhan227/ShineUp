@@ -37,12 +37,14 @@ namespace Client.Controllers
 
         // POST: Votes/Cast
         [HttpPost]
-        public async Task<IActionResult> Cast(int entryId)
+        public async Task<IActionResult> Cast(int entryId, int contestId)
         {
+            int userId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
             var vote = new VoteDTO
             {
                 EntryID = entryId,
-                UserID = 1, // use session later
+                UserID = userId,
                 VotedAt = DateTime.UtcNow
             };
 
@@ -55,7 +57,23 @@ namespace Client.Controllers
                 ? "Vote successfully submitted!"
                 : "Failed to vote. You might have already voted.";
 
-            return RedirectToAction("Entries", new { contestId = vote.EntryID });
+            return RedirectToAction("Entries", new { contestId });
+        }
+
+
+        public async Task<IActionResult> Results(int contestId)
+        {
+            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/votes/contest/{contestId}");
+            var results = new List<dynamic>();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                results = JsonConvert.DeserializeObject<List<dynamic>>(json);
+            }
+
+            ViewBag.Results = results;
+            return View();
         }
     }
 }
