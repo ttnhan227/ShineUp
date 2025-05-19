@@ -52,6 +52,12 @@ builder.Services.AddAuthorization(); // Add Authorization service
 builder.Services.AddScoped<IContestRepositories, ContestRepositories>();
 builder.Services.AddScoped<IContestEntryRepositories, ContestEntryRepositories>();
 builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 var app = builder.Build();
 
@@ -91,4 +97,3 @@ app.MapGet("/weatherforecast", () =>
 
 
 app.Run();
-
