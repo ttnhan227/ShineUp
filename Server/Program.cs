@@ -9,6 +9,9 @@ using Server.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,8 +34,32 @@ builder.Services.Configure<CloundinarySetting>(builder.Configuration.GetSection(
 // Add Repositories
 builder.Services.AddScoped<Server.Interfaces.IAuthRepository, Server.Repositories.AuthRepository>();
 
-// Add JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// Add Distributed Memory Cache for session state
+builder.Services.AddDistributedMemoryCache();
+
+// Add Session state for handling the OAuth state
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set a reasonable timeout
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Add Data Protection for handling state (still needed for other potential uses)
+builder.Services.AddDataProtection();
+
+// Add Authentication
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme; // Set default challenge scheme to Google
+        options.DefaultSignInScheme = "GoogleAuthTemp"; // Set the default sign-in scheme
+    })
+    .AddCookie("GoogleAuthTemp", options => // Add cookie authentication for temporary storage and sign-in
+    {
+        options.Cookie.Name = "GoogleAuthTemp"; // Name for the temporary cookie
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5); // Set an expiration time
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -44,6 +71,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"]
         };
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.SaveTokens = true; // Save tokens in authentication properties for state management
     });
 
 builder.Services.AddAuthorization(); // Add Authorization service
@@ -67,8 +100,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles(); // Add Static Files middleware
+
 app.MapControllers();
 app.UseHttpsRedirection();
+
+app.UseSession(); // Add Session middleware
 
 app.UseAuthentication(); // Add Authentication middleware
 app.UseAuthorization(); // Add Authorization middleware
