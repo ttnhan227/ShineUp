@@ -11,6 +11,11 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Server.DTOs; // Re-adding to ensure it's present and correct
 
 namespace Server.Controllers;
 
@@ -82,7 +87,127 @@ public class AuthController : ControllerBase
         return Ok(new { Token = token });
     }
 
-    // The Authenticate method is no longer needed as its logic is in the repository
+    [HttpGet("google-challenge")]
+    [AllowAnonymous] // Allow anonymous access to initiate the challenge
+    public IActionResult GoogleChallenge()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = Url.Action(nameof(GoogleLoginCallback)) };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+
+    [HttpGet("signin-google")] // Or the configured callback path
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLoginCallback()
+    {
+        var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+
+        if (!authenticateResult.Succeeded)
+        {
+            return BadRequest("Google authentication failed.");
+        }
+
+        var googleUser = authenticateResult.Principal;
+        var googleIdClaim = googleUser.FindFirst(ClaimTypes.NameIdentifier); // Or the appropriate claim type for Google User ID
+
+        if (googleIdClaim == null)
+        {
+            return BadRequest("Google User ID not found in claims.");
+        }
+
+        var googleId = googleIdClaim.Value;
+
+        // Check if user with Google ID exists
+        var user = await _authRepository.GetUserByGoogleId(googleId); // Assuming you add this method to IAuthRepository and AuthRepository
+
+        if (user == null)
+        {
+            // User doesn't exist, create a new one
+            var email = googleUser.FindFirst(ClaimTypes.Email)?.Value;
+            var username = googleUser.FindFirst(ClaimTypes.Name)?.Value; // Or generate a username
+
+            if (string.IsNullOrEmpty(email))
+            {
+                 return BadRequest("Google email not found in claims.");
+            }
+
+            // Find the default role (e.g., "User")
+            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            if (defaultRole == null)
+            {
+                 return StatusCode(500, "Default role not found. Please configure roles.");
+            }
+
+            var newUser = new User
+            {
+                GoogleId = googleId,
+                Username = username ?? email, // Use username if available, otherwise email
+                Email = email,
+                Bio = "",
+                ProfileImageURL = googleUser.FindFirst("picture")?.Value ?? "", // Get profile picture if available
+                RoleID = defaultRole.RoleID,
+                TalentArea = "", // Or a default value
+                CreatedAt = DateTime.UtcNow
+            };
+
+            user = await _authRepository.CreateUser(newUser); // Assuming you add this method to IAuthRepository and AuthRepository
+        }
+
+        // Generate JWT for the user
+        var token = GenerateToken(user);
+
+        // Create claims for the user
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // Use UserID as the NameIdentifier
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role.Name)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme); // Use Cookie scheme for identity
+        var userPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        // Sign in the user using the default sign-in scheme (GoogleAuthTemp cookie)
+        await HttpContext.SignInAsync(userPrincipal);
+
+
+        return Ok(new { Token = token });
+    }
+
+    [HttpGet("profile")]
+    [Authorize] // Requires authentication
+    public async Task<IActionResult> GetUserProfile()
+    {
+        // Get the authenticated user's ID from the claims
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return Unauthorized("User ID not found in claims.");
+        }
+
+        // Fetch the user from the database using the repository
+        var user = await _authRepository.GetUserById(userId); // Assuming you add this method to IAuthRepository and AuthRepository
+
+        if (user == null)
+        {
+            return NotFound("User not found.");
+        }
+
+        // Return a simplified user object or DTO
+        var userProfile = new UserDTO // Assuming you have a UserDTO
+        {
+            UserID = user.UserID,
+            Username = user.Username,
+            Email = user.Email,
+            Bio = user.Bio,
+            ProfileImageURL = user.ProfileImageURL,
+            TalentArea = user.TalentArea
+            // Do not include sensitive information like PasswordHash or GoogleId
+        };
+
+        return Ok(userProfile);
+    }
 
 
     private string GenerateToken(User user)
