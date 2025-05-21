@@ -50,5 +50,28 @@ namespace Server.Repositories
 
             return false;
         }
+
+        public async Task<User?> GetUserByGoogleId(string googleId)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .SingleOrDefaultAsync(x => x.GoogleId == googleId);
+        }
+
+        public async Task<User> CreateUser(User user)
+        {
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+            // Include the role after saving to ensure it's loaded for token generation
+            await _context.Entry(user).Reference(u => u.Role).LoadAsync();
+            return user;
+        }
+
+        public async Task<User?> GetUserById(int userId)
+        {
+            return await _context.Users
+                .Include(u => u.Role)
+                .SingleOrDefaultAsync(x => x.UserID == userId);
+        }
     }
 }
