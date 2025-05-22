@@ -78,8 +78,6 @@ public class AuthController : ControllerBase
 
         var token = GenerateToken(user);
 
-        // Add this line to log the token
-        Console.WriteLine($"JWT Token generated for {user.Email}: {token}");
 
         return Ok(new
         {
@@ -103,6 +101,7 @@ public class AuthController : ControllerBase
         // Tạo danh sách các claim (thông tin người dùng) để đưa vào token
         var claims = new[]
         {
+            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // Add UserID as NameIdentifier
             new Claim("Username", user.Username), // Thêm claim chứa tên người dùng
             new Claim("Email", user.Email), // Thêm claim chứa email người dùng
             new Claim(ClaimTypes.Role, user.Role.Name) // Thêm claim chứa vai trò người dùng

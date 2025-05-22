@@ -89,17 +89,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddDataProtection();
 
 // Add Authentication
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme; // Set default challenge scheme to Google
-        options.DefaultSignInScheme = "GoogleAuthTemp"; // Set the default sign-in scheme
-    })
-    .AddCookie("GoogleAuthTemp", options => // Add cookie authentication for temporary storage and sign-in
-    {
-        options.Cookie.Name = "GoogleAuthTemp"; // Name for the temporary cookie
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(5); // Set an expiration time
-    })
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -110,6 +100,7 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
             NameClaimType = ClaimTypes.Name,
             RoleClaimType = ClaimTypes.Role
         };
@@ -188,6 +179,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors();  // Must be after UseRouting and before UseAuthentication
+
 app.UseAuthentication();
 app.UseAuthorization();
 
