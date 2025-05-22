@@ -52,16 +52,13 @@ public class UserProfileController : ControllerBase
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
-                _logger.LogWarning("No NameIdentifier claim found in token");
                 return Unauthorized("Invalid token");
             }
 
             var currentUserId = int.Parse(userIdClaim.Value);
-            _logger.LogInformation($"Token UserId: {currentUserId}, Requested UserId: {userId}");
 
             if (userId != currentUserId)
             {
-                _logger.LogWarning($"User {currentUserId} attempted to modify profile of user {userId}");
                 return Unauthorized("You can only modify your own profile");
             }
 
@@ -105,14 +102,12 @@ public class UserProfileController : ControllerBase
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
         {
-            _logger.LogWarning("No NameIdentifier claim found in token");
             return Unauthorized("Invalid token");
         }
 
         var currentUserId = int.Parse(userIdClaim.Value);
         if (userId != currentUserId)
         {
-            _logger.LogWarning($"User {currentUserId} attempted to change password of user {userId}");
             return Unauthorized("You can only change your own password");
         }
 

@@ -41,57 +41,46 @@ public class UserProfileRepository : IUserProfileRepository
 
     public async Task<User> UpdateProfile(User userToUpdate)
     {
-        _logger.LogInformation($"Attempting to update profile for user {userToUpdate.UserID}");
-
         var existingUser = await _context.Users
             .AsTracking()
             .FirstOrDefaultAsync(u => u.UserID == userToUpdate.UserID);
 
         if (existingUser == null)
         {
-            _logger.LogWarning($"User {userToUpdate.UserID} not found");
             throw new Exception("User not found");
         }
-
-        _logger.LogInformation($"Current user state: {System.Text.Json.JsonSerializer.Serialize(existingUser)}");
 
         // Apply updates from userToUpdate to existingUser
         if (!string.IsNullOrEmpty(userToUpdate.Username))
         {
-            _logger.LogInformation($"Updating username from {existingUser.Username} to {userToUpdate.Username}");
             existingUser.Username = userToUpdate.Username;
         }
 
         if (!string.IsNullOrEmpty(userToUpdate.Email))
         {
-            _logger.LogInformation($"Updating email from {existingUser.Email} to {userToUpdate.Email}");
             existingUser.Email = userToUpdate.Email;
         }
 
         if (userToUpdate.Bio != null)
         {
-            _logger.LogInformation($"Updating bio from {existingUser.Bio} to {userToUpdate.Bio}");
             existingUser.Bio = userToUpdate.Bio;
         }
 
         if (userToUpdate.ProfileImageURL != null)
         {
-            _logger.LogInformation($"Updating profile image from {existingUser.ProfileImageURL} to {userToUpdate.ProfileImageURL}");
             existingUser.ProfileImageURL = userToUpdate.ProfileImageURL;
         }
 
         if (userToUpdate.TalentArea != null)
         {
-            _logger.LogInformation($"Updating talent area from {existingUser.TalentArea} to {userToUpdate.TalentArea}");
             existingUser.TalentArea = userToUpdate.TalentArea;
         }
 
         try
         {
             _context.Entry(existingUser).State = EntityState.Modified;
-            var result = await _context.SaveChangesAsync();
-            _logger.LogInformation($"SaveChanges result: {result} rows affected");
-
+            await _context.SaveChangesAsync();
+            
             // Reload the user to ensure we have the latest data
             await _context.Entry(existingUser).ReloadAsync();
             return existingUser;
