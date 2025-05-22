@@ -101,7 +101,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
-            NameClaimType = ClaimTypes.Name,
+            NameClaimType = ClaimTypes.NameIdentifier, // Changed to NameIdentifier
             RoleClaimType = ClaimTypes.Role
         };
         

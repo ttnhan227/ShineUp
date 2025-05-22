@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims; // Added
+using Microsoft.AspNetCore.Authentication; // Added
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,10 +10,23 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication("Cookies")
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.LoginPath = "/Auth/Login"; // Changed to Auth controller
+        options.LogoutPath = "/Auth/Logout"; // Changed to Auth controller
+        options.AccessDeniedPath = "/Auth/AccessDenied"; // Changed to Auth controller
         options.Cookie.Name = "ShineUpAuth";
+        options.ClaimsIssuer = "ShineUpClient"; // Explicitly set claims issuer
+
+        // Ensure NameIdentifier is correctly mapped
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                // If NameIdentifier is missing, try to re-authenticate or sign out
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
 
 builder.Services.AddSingleton(provider =>
