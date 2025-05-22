@@ -83,7 +83,8 @@ public class AuthController : ControllerBase
         {
             Token = token,
             user.Username,
-            user.Email
+            user.Email,
+            user.ProfileImageURL // Added ProfileImageURL to the response
         });
     }
 

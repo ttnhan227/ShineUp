@@ -47,6 +47,8 @@ builder.Services.AddSingleton(provider =>
     return client;
 });
 
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

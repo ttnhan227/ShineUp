@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Client.Models;
+using Microsoft.AspNetCore.Authentication;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text;
@@ -7,6 +8,7 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Client.Controllers
 {
@@ -149,6 +151,20 @@ namespace Client.Controllers
 
             if (response.IsSuccessStatusCode)
             {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var updatedUser = JsonConvert.DeserializeObject<UserViewModel>(responseContent);
+
+                // Update the claims with new profile image URL
+                var identity = new ClaimsIdentity(User.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var existingClaim = identity.FindFirst("ProfileImageURL");
+                if (existingClaim != null)
+                {
+                    identity.RemoveClaim(existingClaim);
+                }
+                identity.AddClaim(new Claim("ProfileImageURL", updatedUser.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"));
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
                 TempData["SuccessMessage"] = "Profile updated successfully!";
                 return RedirectToAction("Index");
             }

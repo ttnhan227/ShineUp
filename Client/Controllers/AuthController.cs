@@ -82,10 +82,11 @@ namespace Client.Controllers
                         {
                             new Claim(ClaimTypes.Name, result.Username),
                             new Claim(ClaimTypes.Email, result.Email),
-                            new Claim("JWT", result.Token)
+                            new Claim("JWT", result.Token),
+                            new Claim("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
                         };
 
-                        // Extract UserID from JWT and add as NameIdentifier claim
+                        // Extract UserID from JWT
                         var userIdClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
                         if (userIdClaim != null)
                         {
@@ -121,6 +122,6 @@ namespace Client.Controllers
         public string Token { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
-        // No need to add UserID here, as it's extracted from the token
+        public string? ProfileImageURL { get; set; } // Added ProfileImageURL
     }
 }
