@@ -74,17 +74,23 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
     {
-        // Authenticate the user using the repository
         var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
 
         if (user == null)
         {
-            return Unauthorized("Invalid credentials.");
+            return Unauthorized("Invalid email or password.");
         }
 
         var token = GenerateToken(user);
+        
+        // Add this line to log the token
+        Console.WriteLine($"JWT Token generated for {user.Email}: {token}");
 
-        return Ok(new { Token = token });
+        return Ok(new { 
+            Token = token,
+            Username = user.Username,
+            Email = user.Email
+        });
     }
 
     [HttpGet("google-challenge")]
@@ -155,7 +161,10 @@ public class AuthController : ControllerBase
 
         // Generate JWT for the user
         var token = GenerateToken(user);
-
+        
+        // Add this line to log the token
+        Console.WriteLine($"JWT Token generated for Google user {user.Email}: {token}");
+        
         // Create claims for the user
         var claims = new[]
         {

@@ -1,0 +1,35 @@
+@model Client.Models.LoginViewModel
+
+<h2>Login</h2>
+
+<form asp-controller="Auth" asp-action="Login" method="post">
+    <div class="form-group">
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" class="form-control" type="password" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+
+@if (!string.IsNullOrEmpty(ViewBag.Token))
+{
+    <script>
+        console.log("JWT Token: @ViewBag.Token");
+    </script>
+}
+
+@if (!ViewContext.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var key in ViewContext.ModelState.Keys)
+        {
+            foreach (var error in ViewContext.ModelState[key]!.Errors)
+            {
+                <p>@error.ErrorMessage</p>
+            }
+        }
+    </div>
+}

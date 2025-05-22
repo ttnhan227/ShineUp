@@ -32,7 +32,7 @@ namespace Server.Repositories
         {
             var user = await _context.Users
                 .Include(u => u.Role)
-                .SingleOrDefaultAsync(x => x.Email.Equals(email));
+                .FirstOrDefaultAsync(x => x.Email.Equals(email));
 
             if (user == null)
                 return null;
