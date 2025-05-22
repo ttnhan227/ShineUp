@@ -123,10 +123,29 @@ namespace Client.Controllers
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var json = JsonConvert.SerializeObject(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var formData = new MultipartFormDataContent();
 
-            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}", content);
+            // Add string content
+            formData.Add(new StringContent(model.Username ?? string.Empty), "Username");
+            formData.Add(new StringContent(model.Email ?? string.Empty), "Email");
+            formData.Add(new StringContent(model.Bio ?? string.Empty), "Bio");
+            formData.Add(new StringContent(model.TalentArea ?? string.Empty), "TalentArea");
+            
+            // Add existing ProfileImageURL if it's not being replaced
+            if (!string.IsNullOrEmpty(model.ProfileImageURL) && model.ProfileImageFile == null)
+            {
+                formData.Add(new StringContent(model.ProfileImageURL), "ProfileImageUrl");
+            }
+
+            // Add file content if a new file is uploaded
+            if (model.ProfileImageFile != null)
+            {
+                var fileStreamContent = new StreamContent(model.ProfileImageFile.OpenReadStream());
+                fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue(model.ProfileImageFile.ContentType);
+                formData.Add(fileStreamContent, "ProfileImageFile", model.ProfileImageFile.FileName);
+            }
+
+            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}", formData); // Send formData
 
             if (response.IsSuccessStatusCode)
             {

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http; // Added for IFormFile
+
 namespace Server.DTOs
 {
     public class UpdateProfileDto
@@ -7,6 +9,7 @@ namespace Server.DTOs
         public string? Bio { get; set; }
         public string? ProfileImageUrl { get; set; }
         public string? TalentArea { get; set; }
+        public IFormFile? ProfileImageFile { get; set; } // Added for image upload
     }
 
     public class ChangePasswordDto

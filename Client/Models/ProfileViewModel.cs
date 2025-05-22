@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http; // Added for IFormFile
 
 namespace Client.Models
 {
@@ -14,5 +15,7 @@ namespace Client.Models
         public string? ProfileImageURL { get; set; }
         [Display(Name = "Talent Area")]
         public string? TalentArea { get; set; }
+        [Display(Name = "Upload New Profile Image")]
+        public IFormFile? ProfileImageFile { get; set; } // Added for image upload
     }
 }
