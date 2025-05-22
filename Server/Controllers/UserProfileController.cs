@@ -65,14 +65,18 @@ public class UserProfileController : ControllerBase
                 return Unauthorized("You can only modify your own profile");
             }
 
-            var updatedUser = await _userProfileRepository.UpdateProfile(
-                userId,
-                updateProfile.Username,
-                updateProfile.Email,
-                updateProfile.Bio,
-                updateProfile.ProfileImageUrl,
-                updateProfile.TalentArea
-            );
+            var userModel = new Server.Models.User
+            {
+                UserID = userId, // Ensure the ID is set for the update
+                Username = updateProfile.Username,
+                Email = updateProfile.Email,
+                Bio = updateProfile.Bio,
+                ProfileImageURL = updateProfile.ProfileImageUrl,
+                TalentArea = updateProfile.TalentArea
+                // Do not set RoleID or CreatedAt here, as they are not part of the update DTO
+            };
+
+            var updatedUser = await _userProfileRepository.UpdateProfile(userModel);
 
             var userDto = new UserDTO
             {
