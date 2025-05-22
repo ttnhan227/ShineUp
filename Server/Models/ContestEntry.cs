@@ -5,10 +5,10 @@ namespace Server.Models;
 
 public class ContestEntry
 {
-    [Key] 
+    [Key]
     public int EntryID { get; set; }
 
-    [ForeignKey("Contest")] 
+    [ForeignKey("Contest")]
     public int ContestID { get; set; }
 
     public Contest Contest { get; set; }
@@ -18,7 +18,7 @@ public class ContestEntry
 
     public Video? Video { get; set; }
 
-    [ForeignKey("User")] 
+    [ForeignKey("User")]
     public int UserID { get; set; }
 
     public User User { get; set; }

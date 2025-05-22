@@ -1,11 +1,10 @@
 ﻿using Server.Models;
 
-namespace Server.Interfaces
+namespace Server.Interfaces;
+
+public interface IContestEntryRepositories
 {
-    public interface IContestEntryRepositories
-    {
-        Task<bool> HasSubmittedAsync(int contestId, int userId);
-        Task<List<object>> GetEntriesByContestAsync(int contestId);
-        Task AddAsync(ContestEntry entry);
-    }
+    Task<bool> HasSubmittedAsync(int contestId, int userId);
+    Task<List<object>> GetEntriesByContestAsync(int contestId);
+    Task AddAsync(ContestEntry entry);
 }

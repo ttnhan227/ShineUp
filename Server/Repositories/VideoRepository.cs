@@ -10,15 +10,23 @@ public class VideoRepository : IVideoRepository
 
     public VideoRepository(DatabaseContext context)
     {
-        this._context = context;
+        _context = context;
     }
-    
-    public async Task<Video> GetVideoById(string id) => await _context.Videos.FindAsync(id);
- 
 
-    public  void Add(Video video)=> _context.Videos.Add(video);
- 
+    public async Task<Video> GetVideoById(string id)
+    {
+        return await _context.Videos.FindAsync(id);
+    }
 
-    public Task SaveChangesAsync() => _context.SaveChangesAsync();
- 
+
+    public void Add(Video video)
+    {
+        _context.Videos.Add(video);
+    }
+
+
+    public Task SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
+    }
 }

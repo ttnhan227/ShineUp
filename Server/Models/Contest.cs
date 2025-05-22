@@ -4,7 +4,7 @@ namespace Server.Models;
 
 public class Contest
 {
-    [Key] 
+    [Key]
     public int ContestID { get; set; }
 
     public string Title { get; set; }

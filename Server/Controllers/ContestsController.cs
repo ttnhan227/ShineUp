@@ -1,85 +1,95 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Client.DTOs;
-using Server.Repositories;
-using Server.Models;
+using Server.DTOs;
 using Server.Interfaces;
+using Server.Models;
 
-namespace Server.Controllers
+namespace Server.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ContestsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ContestsController : ControllerBase
+    private readonly IContestRepositories _repository;
+
+    public ContestsController(IContestRepositories repository)
     {
-        private readonly IContestRepositories _repository;
+        _repository = repository;
+    }
 
-        public ContestsController(IContestRepositories repository)
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var contests = await _repository.GetAllAsync();
+        return Ok(contests);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var contest = await _repository.GetByIdAsync(id);
+        return contest == null ? NotFound() : Ok(contest);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] ContestDTO dto)
+    {
+        if (dto.StartDate >= dto.EndDate)
         {
-            _repository = repository;
+            return BadRequest("Start date must be before end date.");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        if (dto.EndDate < DateTime.UtcNow)
         {
-            var contests = await _repository.GetAllAsync();
-            return Ok(contests);
+            return BadRequest("End date must be in the future.");
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        var entity = new Contest
         {
-            var contest = await _repository.GetByIdAsync(id);
-            return contest == null ? NotFound() : Ok(contest);
+            Title = dto.Title,
+            Description = dto.Description,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate
+        };
+
+        await _repository.AddAsync(entity);
+        dto.ContestID = entity.ContestID;
+        return CreatedAtAction(nameof(GetById), new { id = entity.ContestID }, dto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] ContestDTO dto)
+    {
+        if (id != dto.ContestID)
+        {
+            return BadRequest();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ContestDTO dto)
+        if (dto.StartDate >= dto.EndDate)
         {
-            if (dto.StartDate >= dto.EndDate)
-                return BadRequest("Start date must be before end date.");
-
-            if (dto.EndDate < DateTime.UtcNow)
-                return BadRequest("End date must be in the future.");
-
-            var entity = new Contest
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate
-            };
-
-            await _repository.AddAsync(entity);
-            dto.ContestID = entity.ContestID;
-            return CreatedAtAction(nameof(GetById), new { id = entity.ContestID }, dto);
+            return BadRequest("Start date must be before end date.");
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ContestDTO dto)
+        var contest = await _repository.GetByIdAsync(id);
+        if (contest == null)
         {
-            if (id != dto.ContestID) return BadRequest();
-
-            if (dto.StartDate >= dto.EndDate)
-                return BadRequest("Start date must be before end date.");
-
-            var contest = await _repository.GetByIdAsync(id);
-            if (contest == null) return NotFound();
-
-            contest.Title = dto.Title;
-            contest.Description = dto.Description;
-            contest.StartDate = dto.StartDate;
-            contest.EndDate = dto.EndDate;
-
-            await _repository.UpdateAsync(contest);
-            //return NoContent(); // 204, api nội bộ
-            return Ok(dto); // hoặc return Ok(contest);
+            return NotFound();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _repository.DeleteAsync(id);
-            //return NoContent();
-            return Ok(new { message = "Deleted successfully", contestId = id });
-        }
+        contest.Title = dto.Title;
+        contest.Description = dto.Description;
+        contest.StartDate = dto.StartDate;
+        contest.EndDate = dto.EndDate;
+
+        await _repository.UpdateAsync(contest);
+        //return NoContent(); // 204, api nội bộ
+        return Ok(dto); // hoặc return Ok(contest);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _repository.DeleteAsync(id);
+        //return NoContent();
+        return Ok(new { message = "Deleted successfully", contestId = id });
     }
 }

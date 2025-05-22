@@ -1,14 +1,12 @@
 using Server.Models;
-using System.Threading.Tasks;
 
-namespace Server.Interfaces
+namespace Server.Interfaces;
+
+public interface IAuthRepository
 {
-    public interface IAuthRepository
-    {
-        Task<User> Register(User user, string password);
-        Task<User> Login(string email, string password);
-        Task<bool> UserExists(string email, string username);
-        Task<User> CreateUser(User user);
-        Task<User?> GetUserById(int userId);
-    }
+    Task<User> Register(User user, string password);
+    Task<User> Login(string email, string password);
+    Task<bool> UserExists(string email, string username);
+    Task<User> CreateUser(User user);
+    Task<User?> GetUserById(int userId);
 }

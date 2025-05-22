@@ -8,12 +8,12 @@ public class Video
     [Key] public string VideoID { get; set; }
     public string? CloudPublicId { get; set; }
 
-    [ForeignKey("User")] 
+    [ForeignKey("User")]
     public int UserID { get; set; }
 
     public User User { get; set; }
 
-    [ForeignKey("Category")] 
+    [ForeignKey("Category")]
     public int CategoryID { get; set; }
 
     public Category? Category { get; set; }
@@ -30,7 +30,7 @@ public class Video
     public DateTime UploadDate { get; set; }
 
     // Navigation properties
-    public ICollection<Comment> Comments { get; set; } = null ;
+    public ICollection<Comment> Comments { get; set; } = null;
     public ICollection<Like> Likes { get; set; } = null;
     public ICollection<ContestEntry>? ContestEntries { get; set; }
 }

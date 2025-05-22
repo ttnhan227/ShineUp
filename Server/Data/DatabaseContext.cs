@@ -119,7 +119,7 @@ public class DatabaseContext : DbContext
             .WithOne(v => v.Privacy)
             .HasForeignKey(v => v.PrivacyID);
 
-        modelBuilder.Entity<Vote>()  //anh
+        modelBuilder.Entity<Vote>() //anh
             .HasOne(v => v.ContestEntry)
             .WithMany()
             .HasForeignKey(v => v.EntryID);
@@ -128,6 +128,5 @@ public class DatabaseContext : DbContext
             .HasOne(v => v.User)
             .WithMany()
             .HasForeignKey(v => v.UserID);
-
     }
 }

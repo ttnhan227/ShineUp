@@ -1,4 +1,4 @@
-namespace Client.DTOs;
+namespace Server.DTOs;
 
 public class LikeDTO
 {

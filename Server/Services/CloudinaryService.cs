@@ -2,13 +2,13 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Server.Interfaces;
 
-namespace Server.Service;
+namespace Server.Services;
 
 public class CloudinaryService : ICloudinaryService
 {
-    private readonly IVideoRepository _videoRepository;
     private readonly Cloudinary _cloudinary;
-    
+    private readonly IVideoRepository _videoRepository;
+
     public CloudinaryService(IVideoRepository videoRepository, IConfiguration config)
     {
         _videoRepository = videoRepository;
@@ -20,8 +20,8 @@ public class CloudinaryService : ICloudinaryService
 
         _cloudinary = new Cloudinary(account);
     }
-    
-   
+
+
     public async Task<ImageUploadResult> UploadImgAsync(IFormFile file)
     {
         var result = new ImageUploadResult();
@@ -32,7 +32,7 @@ public class CloudinaryService : ICloudinaryService
             {
                 File = new FileDescription(file.FileName, stream),
                 PublicId = "image_" + file.FileName,
-                Folder = "demo",
+                Folder = "demo"
             };
             result = await _cloudinary.UploadAsync(uploadParams);
             if (result.Error != null)
@@ -40,6 +40,7 @@ public class CloudinaryService : ICloudinaryService
                 throw new Exception(result.Error.Message);
             }
         }
+
         return result;
     }
 
@@ -53,7 +54,7 @@ public class CloudinaryService : ICloudinaryService
             {
                 File = new FileDescription(file.FileName, stream),
                 PublicId = "video_" + file.FileName,
-                Folder = "demo",
+                Folder = "demo"
             };
             result = await _cloudinary.UploadAsync(uploadParams);
             if (result.Error != null)
@@ -61,6 +62,7 @@ public class CloudinaryService : ICloudinaryService
                 throw new Exception(result.Error.Message);
             }
         }
+
         return result;
     }
 
@@ -75,6 +77,7 @@ public class CloudinaryService : ICloudinaryService
         {
             throw new Exception(result.Error.Message);
         }
+
         return result;
     }
 }

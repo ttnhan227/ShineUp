@@ -1,72 +1,83 @@
+using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
 
-namespace Server.Repositories
+namespace Server.Repositories;
+
+public class AuthRepository : IAuthRepository
 {
-    public class AuthRepository : IAuthRepository
+    private readonly DatabaseContext _context;
+
+    public AuthRepository(DatabaseContext context)
     {
-        private readonly DatabaseContext _context;
+        _context = context;
+    }
 
-        public AuthRepository(DatabaseContext context)
+    public async Task<User> Register(User user, string password)
+    {
+        // Hash the password
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        user.PasswordHash = passwordHash;
+
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+    public async Task<User> Login(string email, string password)
+    {
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(x => x.Email.Equals(email));
+
+        if (user == null)
         {
-            _context = context;
+            return null;
         }
 
-        public async Task<User> Register(User user, string password)
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            // Hash the password
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-            user.PasswordHash = passwordHash;
-
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-
-            return user;
+            return null;
         }
 
-        public async Task<User> Login(string email, string password)
+        return user;
+    }
+
+    public async Task<bool> UserExists(string email, string username)
+    {
+        if (await _context.Users.AnyAsync(u => u.Email == email || u.Username == username))
         {
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(x => x.Email.Equals(email));
-
-            if (user == null)
-                return null;
-
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                return null;
-
-            return user;
+            return true;
         }
 
-        public async Task<bool> UserExists(string email, string username)
-        {
-            if (await _context.Users.AnyAsync(u => u.Email == email || u.Username == username))
-                return true;
+        return false;
+    }
 
-            return false;
-        }
+    public async Task<User> CreateUser(User user)
+    {
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+        // Include the role after saving to ensure it's loaded for token generation
+        await _context.Entry(user).Reference(u => u.Role).LoadAsync();
+        return user;
+    }
 
-     
+    public async Task<User?> GetUserById(int userId)
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .SingleOrDefaultAsync(x => x.UserID == userId);
+    }
 
-        public async Task<User> CreateUser(User user)
-        {
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-            // Include the role after saving to ensure it's loaded for token generation
-            await _context.Entry(user).Reference(u => u.Role).LoadAsync();
-            return user;
-        }
+    private string CreatePasswordHash(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
 
-        public async Task<User?> GetUserById(int userId)
-        {
-            return await _context.Users
-                .Include(u => u.Role)
-                .SingleOrDefaultAsync(x => x.UserID == userId);
-        }
+    private bool VerifyPasswordHash(string password, string passwordHash)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, passwordHash);
     }
 }
