@@ -67,8 +67,17 @@ app.UseRouting();
 app.UseAuthentication(); // Add this line before UseAuthorization
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+        
+    // Add explicit route for google-auth
+    endpoints.MapControllerRoute(
+        name: "googleAuth",
+        pattern: "Auth/google-auth",
+        defaults: new { controller = "Auth", action = "GoogleAuth" });
+});
 
 app.Run();

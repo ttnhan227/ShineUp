@@ -8,9 +8,8 @@ using Server.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-// Need to add this package
-
-// Re-adding to ensure it's present and correct
+using Google.Apis.Auth;
+using Microsoft.Extensions.Logging;
 
 namespace Server.Controllers;
 
@@ -21,12 +20,14 @@ public class AuthController : ControllerBase
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
     private readonly DatabaseContext _context; // Keep context for other potential actions
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(DatabaseContext context, IAuthRepository authRepository, IConfiguration configuration)
+    public AuthController(DatabaseContext context, IAuthRepository authRepository, IConfiguration configuration, ILogger<AuthController> logger)
     {
         _context = context;
         _authRepository = authRepository;
         _configuration = configuration;
+        _logger = logger;
     }
 
     [HttpPost("register")]
@@ -86,6 +87,41 @@ public class AuthController : ControllerBase
             user.Email,
             user.ProfileImageURL // Added ProfileImageURL to the response
         });
+    }
+
+    [HttpPost("google-login")]
+    public async Task<ActionResult<object>> GoogleLogin(GoogleAuthDTO googleAuth)
+    {
+        try
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings()
+            {
+                Audience = new[] { _configuration["Authentication:Google:ClientId"] }
+            };
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(googleAuth.IdToken, settings);
+            var user = await _authRepository.GoogleLogin(
+                payload.Subject,
+                payload.Email,
+                payload.Name,
+                payload.Picture
+            );
+
+            var token = GenerateToken(user);
+
+            return Ok(new
+            {
+                Token = token,
+                Username = user.Username,
+                Email = user.Email,
+                ProfileImageURL = user.ProfileImageURL
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Google login error: {ex}");
+            return BadRequest(ex.Message);
+        }
     }
 
 

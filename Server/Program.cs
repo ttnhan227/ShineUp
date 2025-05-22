@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Google;
+﻿using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -121,13 +121,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             }
         };
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        options.SaveTokens = true; // Save tokens in authentication properties for state management
     });
+
+// Configure Google token validation
+builder.Services.Configure<GoogleJsonWebSignature.ValidationSettings>(options =>
+{
+    options.Audience = new[] { builder.Configuration["Authentication:Google:ClientId"] };
+});
 
 builder.Services.AddAuthorization(); // Add Authorization service
 

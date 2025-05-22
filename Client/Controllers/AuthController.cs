@@ -10,27 +10,31 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt; // Added for JWT token parsing
+using Microsoft.Extensions.Logging; // Added for logging
 
 namespace Client.Controllers
 {
+    [Route("[controller]")]
     public class AuthController : Controller
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger; // Added logger
 
-        public AuthController(HttpClient httpClient, IConfiguration configuration)
+        public AuthController(HttpClient httpClient, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _logger = logger;
         }
 
-        [HttpGet]
+        [HttpGet("register")]
         public IActionResult Register()
         {
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
@@ -52,13 +56,13 @@ namespace Client.Controllers
             return View(model);
         }
 
-        [HttpGet]
+        [HttpGet("login")]
         public IActionResult Login()
         {
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
@@ -109,11 +113,73 @@ namespace Client.Controllers
             return View(model);
         }
 
-        [HttpPost]
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Auth");
+        }
+
+        [HttpPost("google-auth")]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthViewModel model)
+        {
+            try
+            {
+                _logger.LogInformation("Starting Google auth...");
+                var apiUrl = $"{_configuration["ApiBaseUrl"]}/api/Auth/google-login";
+                
+                var response = await _httpClient.PostAsJsonAsync(apiUrl, new { IdToken = model.IdToken });
+                var content = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation($"API Response: {content}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = false, message = content });
+                }
+
+                var result = JsonConvert.DeserializeObject<LoginResponseDTO>(content);
+                if (result?.Token == null)
+                {
+                    return Json(new { success = false, message = "No token received" });
+                }
+
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;
+
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.Name, result.Username),
+                    new(ClaimTypes.Email, result.Email),
+                    new("JWT", result.Token),
+                    new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
+                };
+
+                // Extract UserID from JWT
+                var userIdClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
+                {
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                }
+
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal,
+                    new AuthenticationProperties 
+                    { 
+                        IsPersistent = true,
+                        ExpiresUtc = DateTime.UtcNow.AddHours(24)
+                    });
+
+                return Json(new { success = true, redirectUrl = "/" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Google auth error: {ex}");
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 
@@ -123,5 +189,10 @@ namespace Client.Controllers
         public string Username { get; set; }
         public string Email { get; set; }
         public string? ProfileImageURL { get; set; } // Added ProfileImageURL
+    }
+
+    public class GoogleAuthDTO
+    {
+        public string IdToken { get; set; }
     }
 }

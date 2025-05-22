@@ -80,4 +80,40 @@ public class AuthRepository : IAuthRepository
     {
         return BCrypt.Net.BCrypt.Verify(password, passwordHash);
     }
+
+    public async Task<User> GoogleLogin(string googleId, string email, string username, string profileImageURL)
+    {
+        // Try to find user by GoogleId first, then by email
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(x => x.GoogleId == googleId || x.Email == email);
+
+        if (user == null)
+        {
+            // Create new user if not exists
+            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            user = new User
+            {
+                GoogleId = googleId,
+                Email = email,
+                Username = username,
+                ProfileImageURL = profileImageURL ?? "",
+                Bio = "",
+                RoleID = defaultRole?.RoleID ?? 1, // Changed from 2 to 1 for User role
+                TalentArea = "",
+                CreatedAt = DateTime.UtcNow
+            };
+            await _context.Users.AddAsync(user);
+        }
+        else if (user.GoogleId == null)
+        {
+            // Link Google account to existing email account
+            user.GoogleId = googleId;
+            user.ProfileImageURL = profileImageURL ?? user.ProfileImageURL;
+            _context.Users.Update(user);
+        }
+
+        await _context.SaveChangesAsync();
+        return user;
+    }
 }
