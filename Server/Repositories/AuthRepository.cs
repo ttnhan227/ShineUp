@@ -51,12 +51,7 @@ namespace Server.Repositories
             return false;
         }
 
-        public async Task<User?> GetUserByGoogleId(string googleId)
-        {
-            return await _context.Users
-                .Include(u => u.Role)
-                .SingleOrDefaultAsync(x => x.GoogleId == googleId);
-        }
+     
 
         public async Task<User> CreateUser(User user)
         {
