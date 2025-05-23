@@ -14,6 +14,13 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ensure wwwroot directory exists
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+
+// Add secrets configuration
+builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.secrets.json", optional: false, reloadOnChange: true);
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -176,7 +183,13 @@ if (app.Environment.IsDevelopment())
 
 // Correct middleware order
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=600");
+    }
+});
 app.UseRouting();
 app.UseCors();  // Must be after UseRouting and before UseAuthentication
 

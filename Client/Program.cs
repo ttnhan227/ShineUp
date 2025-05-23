@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Authentication; // Added
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add secrets configuration
+builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.secrets.json", optional: false, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -60,7 +64,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=600");
+    }
+});
 
 app.UseRouting();
 
