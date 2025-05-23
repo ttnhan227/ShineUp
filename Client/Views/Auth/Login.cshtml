@@ -46,6 +46,10 @@
             </div>
         </div>
 
+        <div class="text-center mt-3">
+            Don't have an account? <a asp-controller="Auth" asp-action="Register">Register</a>
+        </div>
+
         @if (!ViewContext.ModelState.IsValid)
         {
             <div class="alert alert-danger mt-3">
@@ -176,6 +180,20 @@
             display: flex;
             justify-content: center;
             margin-top: 20px;
+        }
+
+        .text-center {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .text-center a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .text-center a:hover {
+            text-decoration: underline;
         }
 
         .alert {

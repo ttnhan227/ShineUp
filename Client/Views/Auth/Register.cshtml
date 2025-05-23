@@ -1,23 +1,192 @@
 @model Client.Models.RegisterViewModel
 
-<h2>Register</h2>
+<div class="login-container">
+    <div class="login-box">
+        <div class="login-header">
+            <h2>Create Account</h2>
+            <p>Please fill in your details to register</p>
+        </div>
 
-<form asp-controller="Auth" asp-action="Register" method="post">
-    <div class="form-group">
-        <label asp-for="Username">Username</label>
-        <input asp-for="Username" class="form-control" />
+        <form asp-controller="Auth" asp-action="Register" method="post" class="login-form">
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input asp-for="Username" class="form-control" placeholder="Choose a username" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Choose a password" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="TalentArea"></label>
+                <div class="input-group">
+                    <i class="fas fa-star"></i>
+                    <input asp-for="TalentArea" class="form-control" placeholder="What's your talent?" />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <div class="text-center mt-3">
+            Already have an account? <a asp-controller="Auth" asp-action="Login">Sign In</a>
+        </div>
+
+        @if (!ViewContext.ModelState.IsValid)
+        {
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-exclamation-circle"></i>
+                @foreach (var key in ViewContext.ModelState.Keys)
+                {
+                    foreach (var error in ViewContext.ModelState[key]!.Errors)
+                    {
+                        <p class="mb-0">@error.ErrorMessage</p>
+                    }
+                }
+            </div>
+        }
     </div>
-    <div class="form-group">
-        <label asp-for="Email">Email</label>
-        <input asp-for="Email" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label asp-for="Password">Password</label>
-        <input asp-for="Password" class="form-control" type="password" />
-    </div>
-    <div class="form-group">
-        <label asp-for="TalentArea">Talent Area</label>
-        <input asp-for="TalentArea" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</form>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form .input-group {
+            position: relative;
+        }
+
+        .login-form .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .login-form .form-control {
+            padding-left: 40px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            height: 45px;
+        }
+
+        .login-form .btn-block {
+            height: 45px;
+            font-size: 16px;
+            background: #007bff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .login-form .btn-block:hover {
+            background: #0056b3;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background-color: #ddd;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .alert i {
+            margin-right: 10px;
+        }
+
+        .text-center {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .text-center a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .text-center a:hover {
+            text-decoration: underline;
+        }
+    </style>
+}
