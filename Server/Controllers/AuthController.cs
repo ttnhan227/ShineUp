@@ -22,19 +22,22 @@ public class AuthController : ControllerBase
     private readonly DatabaseContext _context;
     private readonly ILogger<AuthController> _logger;
     private readonly IGoogleAuthService _googleAuthService;
+    private readonly IEmailService _emailService; // Add IEmailService
 
     public AuthController(
         DatabaseContext context, 
         IAuthRepository authRepository, 
         IConfiguration configuration, 
         ILogger<AuthController> logger,
-        IGoogleAuthService googleAuthService)
+        IGoogleAuthService googleAuthService,
+        IEmailService emailService) // Inject IEmailService
     {
         _context = context;
         _authRepository = authRepository;
         _configuration = configuration;
         _logger = logger;
         _googleAuthService = googleAuthService;
+        _emailService = emailService; // Initialize
     }
 
     [HttpPost("register")]
@@ -144,6 +147,47 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO model)
+    {
+        try
+        {
+            // Check if email exists
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "This email doesn't exist" });
+            }
+
+            var otp = await _authRepository.GenerateOTP(model.Email);
+            await _emailService.SendEmailAsync(
+                model.Email,
+                "Password Reset OTP",
+                $"Your OTP for password reset is: {otp}. This code will expire in 15 minutes.");
+            
+            return Ok(new { message = "OTP has been sent to your email" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
+    {
+        if (!await _authRepository.ValidateOTP(model.Email, model.OTP))
+        {
+            return BadRequest(new { message = "Invalid or expired OTP" });
+        }
+
+        if (await _authRepository.ResetPassword(model.Email, model.NewPassword))
+        {
+            return Ok(new { message = "Password has been reset successfully" });
+        }
+
+        return BadRequest(new { message = "Password reset failed" });
+    }
 
     private string GenerateToken(User user)
     {

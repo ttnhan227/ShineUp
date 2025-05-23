@@ -212,6 +212,59 @@ namespace Client.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+
+        [HttpGet("forgot-password")]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/forgot-password", model);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Email"] = model.Email;
+                    return RedirectToAction("ResetPassword");
+                }
+
+                ModelState.AddModelError("Email", result?["message"] ?? "Failed to send reset code. Please try again.");
+            }
+            return View(model);
+        }
+
+        [HttpGet("reset-password")]
+        public IActionResult ResetPassword()
+        {
+            var email = TempData["Email"]?.ToString();
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("ForgotPassword");
+            }
+            return View(new ResetPasswordViewModel { Email = email });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/reset-password", model);
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Password reset successful. Please login with your new password.";
+                    return RedirectToAction("Login");
+                }
+                ModelState.AddModelError("", "Failed to reset password. Please try again.");
+            }
+            return View(model);
+        }
     }
 
     public class LoginResponseDTO

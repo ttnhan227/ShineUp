@@ -12,6 +12,7 @@ public class DatabaseContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<Privacy> Privacies { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<ForgetPasswordOTP> ForgetPasswordOTPs { get; set; }
     public DbSet<Video> Videos { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Comment> Comments { get; set; }
@@ -128,5 +129,15 @@ public class DatabaseContext : DbContext
             .HasOne(v => v.User)
             .WithMany()
             .HasForeignKey(v => v.UserID);
+
+        // Configure ForgetPasswordOTP
+        modelBuilder.Entity<ForgetPasswordOTP>()
+            .HasOne(f => f.User)
+            .WithMany()
+            .HasForeignKey(f => f.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ForgetPasswordOTP>()
+            .HasIndex(f => f.Email);  // Index for faster email lookups
     }
 }

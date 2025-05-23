@@ -93,4 +93,51 @@ public class AuthRepository : IAuthRepository
 
         return username;
     }
+
+    public async Task<string> GenerateOTP(string email)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null) throw new Exception("User not found");
+
+        var otp = new Random().Next(100000, 999999).ToString();
+        var otpModel = new ForgetPasswordOTP
+        {
+            Email = email,
+            OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            IsUsed = false
+        };
+
+        _context.ForgetPasswordOTPs.Add(otpModel);
+        await _context.SaveChangesAsync();
+
+        return otp;
+    }
+
+    public async Task<bool> ValidateOTP(string email, string otp)
+    {
+        var otpModel = await _context.ForgetPasswordOTPs
+            .Where(o => o.Email == email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(o => o.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (otpModel == null) return false;
+
+        if (!BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode)) return false;
+
+        otpModel.IsUsed = true;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ResetPassword(string email, string newPassword)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null) return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

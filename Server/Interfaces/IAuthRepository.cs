@@ -9,4 +9,7 @@ public interface IAuthRepository
     Task<bool> UserExists(string email, string username);
     Task<User> CreateUser(User user);
     Task<User?> GetUserById(int userId);
+    Task<string> GenerateOTP(string email);
+    Task<bool> ValidateOTP(string email, string otp);
+    Task<bool> ResetPassword(string email, string newPassword);
 }

@@ -80,7 +80,8 @@ builder.Services.Configure<CloundinarySettingsDTO>(builder.Configuration.GetSect
 
 // Add Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();  // Add this line
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();  // Updated name
 
 // Add Distributed Memory Cache for session state
 builder.Services.AddDistributedMemoryCache();
