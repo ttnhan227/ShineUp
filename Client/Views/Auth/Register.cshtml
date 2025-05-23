@@ -14,6 +14,7 @@
                     <i class="fas fa-user"></i>
                     <input asp-for="Username" class="form-control" placeholder="Choose a username" />
                 </div>
+                <span asp-validation-for="Username" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Email"></label>
@@ -21,6 +22,7 @@
                     <i class="fas fa-envelope"></i>
                     <input asp-for="Email" class="form-control" placeholder="Enter your email" />
                 </div>
+                <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Password"></label>
@@ -28,6 +30,7 @@
                     <i class="fas fa-lock"></i>
                     <input asp-for="Password" class="form-control" type="password" placeholder="Choose a password" />
                 </div>
+                <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="TalentArea"></label>
@@ -35,6 +38,7 @@
                     <i class="fas fa-star"></i>
                     <input asp-for="TalentArea" class="form-control" placeholder="What's your talent?" />
                 </div>
+                <span asp-validation-for="TalentArea" class="text-danger"></span>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Create Account</button>
         </form>
@@ -65,6 +69,8 @@
 
 @section Scripts {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <style>
         .login-container {
             min-height: 100vh;
@@ -187,6 +193,28 @@
 
         .text-center a:hover {
             text-decoration: underline;
+        }
+
+        .text-danger {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        .input-validation-error {
+            border-color: #dc3545;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .form-text ul {
+            padding-left: 20px;
+            margin-top: 0.25rem;
+            margin-bottom: 0;
         }
     </style>
 }
