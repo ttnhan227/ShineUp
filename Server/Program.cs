@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Server;
 using Server.Data;
-using Server.Helpers;
+using Server.DTOs;
 using Server.Interfaces;
 using Server.Repositories;
 using Server.Services;
@@ -76,10 +76,11 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<IVideoRepository, VideoRepository>();
 
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-builder.Services.Configure<CloundinarySetting>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.Configure<CloundinarySettingsDTO>(builder.Configuration.GetSection("CloudinarySettings"));
 
 // Add Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();  // Add this line
 
 // Add Distributed Memory Cache for session state
 builder.Services.AddDistributedMemoryCache();

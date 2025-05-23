@@ -19,15 +19,22 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
-    private readonly DatabaseContext _context; // Keep context for other potential actions
+    private readonly DatabaseContext _context;
     private readonly ILogger<AuthController> _logger;
+    private readonly IGoogleAuthService _googleAuthService;
 
-    public AuthController(DatabaseContext context, IAuthRepository authRepository, IConfiguration configuration, ILogger<AuthController> logger)
+    public AuthController(
+        DatabaseContext context, 
+        IAuthRepository authRepository, 
+        IConfiguration configuration, 
+        ILogger<AuthController> logger,
+        IGoogleAuthService googleAuthService)
     {
         _context = context;
         _authRepository = authRepository;
         _configuration = configuration;
         _logger = logger;
+        _googleAuthService = googleAuthService;
     }
 
     [HttpPost("register")]
@@ -118,19 +125,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var settings = new GoogleJsonWebSignature.ValidationSettings()
-            {
-                Audience = new[] { _configuration["Authentication:Google:ClientId"] }
-            };
-
-            var payload = await GoogleJsonWebSignature.ValidateAsync(googleAuth.IdToken, settings);
-            var user = await _authRepository.GoogleLogin(
-                payload.Subject,
-                payload.Email,
-                payload.Name,
-                payload.Picture
-            );
-
+            var payload = await _googleAuthService.VerifyGoogleToken(googleAuth.IdToken);
+            var user = await _googleAuthService.HandleGoogleUser(payload);
             var token = GenerateToken(user);
 
             return Ok(new

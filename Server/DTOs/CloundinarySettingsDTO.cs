@@ -1,6 +1,6 @@
-namespace Server.Helpers;
+namespace Server.DTOs;
 
-public class CloundinarySetting
+public class CloundinarySettingsDTO
 {
     public string CloudName { get; set; }
     public string ApiKey { get; set; }
