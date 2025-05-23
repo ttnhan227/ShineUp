@@ -182,6 +182,7 @@ namespace Client.Controllers
                     new(ClaimTypes.Name, result.Username),
                     new(ClaimTypes.Email, result.Email),
                     new("JWT", result.Token),
+                    // Ensure profile image URL is properly set
                     new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
                 };
 
@@ -191,6 +192,9 @@ namespace Client.Controllers
                 {
                     claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
                 }
+
+                // Log the profile image URL for debugging
+                _logger.LogInformation($"Setting profile image URL: {result.ProfileImageURL}");
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
@@ -304,7 +308,7 @@ namespace Client.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["PasswordResetSuccess"] = true;
-                    return View(model);
+                    return View(model); // This will trigger the modal
                 }
 
                 ModelState.AddModelError("NewPassword", result?["message"] ?? "Failed to reset password. Please try again.");

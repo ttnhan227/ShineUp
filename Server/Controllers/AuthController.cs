@@ -132,12 +132,13 @@ public class AuthController : ControllerBase
             var user = await _googleAuthService.HandleGoogleUser(payload);
             var token = GenerateToken(user);
 
+            // Make sure we're returning the correct profile image URL
             return Ok(new
             {
                 Token = token,
                 Username = user.Username,
                 Email = user.Email,
-                ProfileImageURL = user.ProfileImageURL
+                ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"
             });
         }
         catch (Exception ex)
