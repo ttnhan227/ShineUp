@@ -151,6 +151,12 @@ public class AuthRepository : IAuthRepository
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) return false;
 
+        // Check if new password is same as old password
+        if (user.PasswordHash != null && BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
+        {
+            throw new Exception("New password cannot be the same as your old password");
+        }
+
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         await _context.SaveChangesAsync();
         return true;

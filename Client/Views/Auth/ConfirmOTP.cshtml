@@ -17,11 +17,62 @@
                 </div>
                 <span asp-validation-for="OTP" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Verify Code</button>
+            <button type="submit" class="btn btn-primary btn-block mb-2">Verify Code</button>
+            <button type="button" id="resendBtn" class="btn btn-outline-primary btn-block" onclick="resendCode()">
+                Resend Code <span id="timer" class="d-none">(60s)</span>
+            </button>
         </form>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        let countdown = 0;
+        let timerId = null;
+
+        function startTimer() {
+            const btn = document.getElementById('resendBtn');
+            const timerSpan = document.getElementById('timer');
+            btn.disabled = true;
+            countdown = 60;
+            timerSpan.classList.remove('d-none');
+
+            timerId = setInterval(() => {
+                countdown--;
+                timerSpan.textContent = `(${countdown}s)`;
+                
+                if (countdown <= 0) {
+                    clearInterval(timerId);
+                    btn.disabled = false;
+                    timerSpan.classList.add('d-none');
+                }
+            }, 1000);
+        }
+
+        function resendCode() {
+            fetch('/Auth/ResendOTP', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: '@Model.Email' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success('New code has been sent to your email');
+                    startTimer();
+                } else {
+                    toastr.error(data.message || 'Failed to resend code');
+                }
+            })
+            .catch(() => toastr.error('Failed to resend code'));
+        }
+
+        // Start timer if coming back from a resend
+        if (@Json.Serialize(TempData["ResendOTP"] ?? false)) {
+            startTimer();
+        }
+    </script>
 }

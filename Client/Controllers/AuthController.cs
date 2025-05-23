@@ -298,14 +298,42 @@ namespace Client.Controllers
             if (ModelState.IsValid)
             {
                 var response = await _httpClient.PostAsJsonAsync("api/Auth/reset-password", model);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Password reset successful. Please login with your new password.";
-                    return RedirectToAction("Login");
+                    TempData["PasswordResetSuccess"] = true;
+                    return View(model);
                 }
-                ModelState.AddModelError("", "Failed to reset password. Please try again.");
+
+                ModelState.AddModelError("NewPassword", result?["message"] ?? "Failed to reset password. Please try again.");
             }
             return View(model);
+        }
+
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOTP([FromBody] ForgotPasswordViewModel model)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/forgot-password", model);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["ResendOTP"] = true;
+                    return Json(new { success = true, message = "Code has been resent" });
+                }
+
+                return Json(new { success = false, message = result?["message"] ?? "Failed to resend code" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error resending OTP: {ex}");
+                return Json(new { success = false, message = "An error occurred" });
+            }
         }
     }
 

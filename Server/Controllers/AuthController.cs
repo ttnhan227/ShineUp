@@ -196,11 +196,18 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
     {
-        if (await _authRepository.ResetPassword(model.Email, model.NewPassword))
+        try
         {
-            return Ok(new { message = "Password has been reset successfully" });
+            if (await _authRepository.ResetPassword(model.Email, model.NewPassword))
+            {
+                return Ok(new { message = "Password has been reset successfully" });
+            }
+            return BadRequest(new { message = "Password reset failed" });
         }
-        return BadRequest(new { message = "Password reset failed" });
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     private string GenerateToken(User user)
