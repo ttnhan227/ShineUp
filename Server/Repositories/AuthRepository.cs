@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
@@ -8,10 +9,12 @@ namespace Server.Repositories;
 public class AuthRepository : IAuthRepository
 {
     private readonly DatabaseContext _context;
+    private readonly ILogger<AuthRepository> _logger;
 
-    public AuthRepository(DatabaseContext context)
+    public AuthRepository(DatabaseContext context, ILogger<AuthRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<User> Register(User user, string password)
@@ -122,13 +125,25 @@ public class AuthRepository : IAuthRepository
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 
-        if (otpModel == null) return false;
+        if (otpModel == null)
+        {
+            // Log for debugging
+            _logger.LogWarning($"No valid OTP found for email: {email}");
+            return false;
+        }
 
-        if (!BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode)) return false;
+        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+        
+        if (isValid)
+        {
+            otpModel.IsUsed = true;
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-        otpModel.IsUsed = true;
-        await _context.SaveChangesAsync();
-        return true;
+        // Log for debugging
+        _logger.LogWarning($"OTP validation failed for email: {email}");
+        return false;
     }
 
     public async Task<bool> ResetPassword(string email, string newPassword)

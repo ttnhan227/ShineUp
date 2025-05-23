@@ -1,0 +1,27 @@
+@model Client.Models.ConfirmOTPViewModel
+
+<div class="login-container">
+    <div class="login-box">
+        <div class="login-header">
+            <h2>Enter Reset Code</h2>
+            <p>Please enter the code sent to your email: @Model.Email</p>
+        </div>
+
+        <form asp-controller="Auth" asp-action="ConfirmOTP" method="post" class="login-form">
+            <input type="hidden" asp-for="Email" />
+            <div class="form-group">
+                <label asp-for="OTP">Reset Code</label>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input asp-for="OTP" class="form-control" placeholder="Enter reset code" required />
+                </div>
+                <span asp-validation-for="OTP" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Verify Code</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -23,3 +23,14 @@ public class ResetPasswordDTO
     [StringLength(100, MinimumLength = 6)]
     public string NewPassword { get; set; }
 }
+
+public class ValidateOTPDTO
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+
+    [Required]
+    [StringLength(6, MinimumLength = 6)]
+    public string OTP { get; set; }
+}

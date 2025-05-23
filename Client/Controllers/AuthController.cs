@@ -231,10 +231,51 @@ namespace Client.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Email"] = model.Email;
-                    return RedirectToAction("ResetPassword");
+                    return RedirectToAction("ConfirmOTP");
                 }
 
                 ModelState.AddModelError("Email", result?["message"] ?? "Failed to send reset code. Please try again.");
+            }
+            return View(model);
+        }
+
+        [HttpGet("confirm-otp")]
+        public IActionResult ConfirmOTP()
+        {
+            var email = TempData["Email"]?.ToString();
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("ForgotPassword");
+            }
+            TempData.Keep("Email"); // Keep the email for the next request
+            return View(new ConfirmOTPViewModel { Email = email });
+        }
+
+        [HttpPost("confirm-otp")]
+        public async Task<IActionResult> ConfirmOTP(ConfirmOTPViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync("api/Auth/validate-otp", model);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        TempData["Email"] = model.Email;
+                        TempData["OTP"] = model.OTP;
+                        return RedirectToAction("ResetPassword");
+                    }
+
+                    ModelState.AddModelError("OTP", result?["message"] ?? "Invalid or expired code. Please try again.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"OTP validation error: {ex}");
+                    ModelState.AddModelError("", "An error occurred. Please try again.");
+                }
             }
             return View(model);
         }
@@ -243,11 +284,12 @@ namespace Client.Controllers
         public IActionResult ResetPassword()
         {
             var email = TempData["Email"]?.ToString();
-            if (string.IsNullOrEmpty(email))
+            var otp = TempData["OTP"]?.ToString();
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
             {
                 return RedirectToAction("ForgotPassword");
             }
-            return View(new ResetPasswordViewModel { Email = email });
+            return View(new ResetPasswordViewModel { Email = email, OTP = otp });
         }
 
         [HttpPost("reset-password")]

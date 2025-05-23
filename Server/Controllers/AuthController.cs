@@ -173,19 +173,33 @@ public class AuthController : ControllerBase
         }
     }
 
+    // Add this new endpoint
+    [HttpPost("validate-otp")]
+    public async Task<IActionResult> ValidateOTP([FromBody] ValidateOTPDTO model)
+    {
+        try
+        {
+            var isValid = await _authRepository.ValidateOTP(model.Email, model.OTP);
+            if (isValid)
+            {
+                return Ok(new { message = "OTP validated successfully" });
+            }
+            return BadRequest(new { message = "Invalid or expired code" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // Modify existing ResetPassword action to not validate OTP again
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
     {
-        if (!await _authRepository.ValidateOTP(model.Email, model.OTP))
-        {
-            return BadRequest(new { message = "Invalid or expired OTP" });
-        }
-
         if (await _authRepository.ResetPassword(model.Email, model.NewPassword))
         {
             return Ok(new { message = "Password has been reset successfully" });
         }
-
         return BadRequest(new { message = "Password reset failed" });
     }
 
