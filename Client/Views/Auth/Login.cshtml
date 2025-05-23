@@ -25,7 +25,9 @@
                 </div>
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary btn-block mb-2">Sign In</button>
+            </div>
             <div class="text-center mt-2">
                 <a asp-controller="Auth" asp-action="ForgotPassword">Forgot your password?</a>
             </div>
@@ -232,6 +234,19 @@
         
         .input-validation-error {
             border-color: #dc3545;
+        }
+
+        /* Add button group styles */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .button-group button {
+            width: 100%;
+            margin: 0;
         }
     </style>
     <script src="https://accounts.google.com/gsi/client" async></script>

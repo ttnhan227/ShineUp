@@ -40,7 +40,9 @@
                 </div>
                 <span asp-validation-for="TalentArea" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary btn-block mb-2">Create Account</button>
+            </div>
         </form>
 
         <div class="divider">
@@ -201,6 +203,19 @@
             padding-left: 20px;
             margin-top: 0.25rem;
             margin-bottom: 0;
+        }
+
+        /* Add button group styles */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .button-group button {
+            width: 100%;
+            margin: 0;
         }
     </style>
 }
