@@ -26,11 +26,11 @@ public class AuthRepository : IAuthRepository
         return user;
     }
 
-    public async Task<User> Login(string email, string password)
+    public async Task<User> Login(string emailOrUsername, string password)
     {
         var user = await _context.Users
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(x => x.Email.Equals(email));
+            .FirstOrDefaultAsync(x => x.Email.Equals(emailOrUsername) || x.Username.Equals(emailOrUsername));
 
         if (user == null)
         {
@@ -92,11 +92,15 @@ public class AuthRepository : IAuthRepository
         {
             // Create new user if not exists
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            
+            // Ensure unique username by appending numbers if necessary
+            string uniqueUsername = await GenerateUniqueUsername(username);
+            
             user = new User
             {
                 GoogleId = googleId,
                 Email = email,
-                Username = username,
+                Username = uniqueUsername,
                 ProfileImageURL = profileImageURL ?? "",
                 Bio = "",
                 RoleID = defaultRole?.RoleID ?? 1, // Changed from 2 to 1 for User role
@@ -115,5 +119,18 @@ public class AuthRepository : IAuthRepository
 
         await _context.SaveChangesAsync();
         return user;
+    }
+
+    private async Task<string> GenerateUniqueUsername(string baseUsername)
+    {
+        string username = baseUsername;
+        int counter = 1;
+
+        while (await _context.Users.AnyAsync(u => u.Username == username))
+        {
+            username = $"{baseUsername}{counter++}";
+        }
+
+        return username;
     }
 }

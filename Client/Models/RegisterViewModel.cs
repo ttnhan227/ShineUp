@@ -23,7 +23,7 @@ namespace Client.Models
         [Display(Name = "Password")]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please specify your talent area")]
+        [Required(ErrorMessage = "Talent area is required")]
         [StringLength(50, MinimumLength = 2, ErrorMessage = "Talent area must be between 2 and 50 characters")]
         [Display(Name = "Talent Area")]
         public string TalentArea { get; set; } = string.Empty;

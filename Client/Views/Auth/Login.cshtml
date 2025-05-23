@@ -51,20 +51,6 @@
         <div class="text-center mt-3">
             Don't have an account? <a asp-controller="Auth" asp-action="Register">Register</a>
         </div>
-
-        @if (!ViewContext.ModelState.IsValid)
-        {
-            <div class="alert alert-danger mt-3">
-                <i class="fas fa-exclamation-circle"></i>
-                @foreach (var key in ViewContext.ModelState.Keys)
-                {
-                    foreach (var error in ViewContext.ModelState[key]!.Errors)
-                    {
-                        <p class="mb-0">@error.ErrorMessage</p>
-                    }
-                }
-            </div>
-        }
     </div>
 </div>
 

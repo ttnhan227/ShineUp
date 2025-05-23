@@ -33,59 +33,83 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDTO registerDTO)
     {
-        // Check if user with the same email or username already exists using the repository
-        if (await _authRepository.UserExists(registerDTO.Email, registerDTO.Username))
+        if (!ModelState.IsValid)
         {
-            return BadRequest("User with this email or username already exists.");
+            return BadRequest(ModelState);
         }
 
-        // Find the default role (e.g., "User")
-        // You might need to ensure a default role exists in your database
+        // Check both email and username at once
+        var emailExists = await _context.Users.AnyAsync(u => u.Email == registerDTO.Email);
+        var usernameExists = await _context.Users.AnyAsync(u => u.Username == registerDTO.Username);
+
+        if (emailExists || usernameExists)
+        {
+            var errors = new Dictionary<string, string[]>();
+
+            if (emailExists)
+            {
+                errors.Add("Email", new[] { "This email is already registered" });
+            }
+            if (usernameExists)
+            {
+                errors.Add("Username", new[] { "This username is already taken" });
+            }
+
+            return BadRequest(errors);
+        }
+
+        // Find the default role
         var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
         if (defaultRole == null)
         {
-            // Handle the case where the default role doesn't exist
-            return StatusCode(500, "Default role not found. Please configure roles.");
+            ModelState.AddModelError("", "Server configuration error");
+            return BadRequest(ModelState);
         }
 
-        // Create new user object (password hashing is done in the repository)
+        // Create new user object
         var newUser = new User
         {
             Username = registerDTO.Username,
             Email = registerDTO.Email,
-            Bio = "", // Or a default empty string
-            ProfileImageURL = "", // Or a default image URL
+            Bio = "",
+            ProfileImageURL = "",
             RoleID = defaultRole.RoleID,
             TalentArea = registerDTO.TalentArea,
             CreatedAt = DateTime.UtcNow
         };
 
-        // Register the user using the repository
+        // Register the user
         var registeredUser = await _authRepository.Register(newUser, registerDTO.Password);
-
-        // Return a success response (you might want to return a simplified UserDTO)
         return Ok(new { Message = "User registered successfully!" });
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
     {
+        // Try to find user by either email or username
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == loginDTO.Email || u.Username == loginDTO.Email);
+
+        if (existingUser == null)
+        {
+            return Unauthorized("Invalid email/username: Account not found.");
+        }
+
         var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
 
         if (user == null)
         {
-            return Unauthorized("Invalid email or password.");
+            return Unauthorized("Invalid password: The password you entered is incorrect.");
         }
 
         var token = GenerateToken(user);
-
 
         return Ok(new
         {
             Token = token,
             user.Username,
             user.Email,
-            user.ProfileImageURL // Added ProfileImageURL to the response
+            user.ProfileImageURL
         });
     }
 

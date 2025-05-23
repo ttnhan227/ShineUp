@@ -43,14 +43,30 @@ namespace Client.Controllers
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync("api/Auth/register", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Login"); // Redirect to login after successful registration
+                    return RedirectToAction("Login");
                 }
-                else
+
+                try
                 {
-                    ModelState.AddModelError("", "Registration failed. Please try again.");
+                    var errors = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(responseContent);
+                    if (errors != null)
+                    {
+                        foreach (var error in errors)
+                        {
+                            foreach (var message in error.Value)
+                            {
+                                ModelState.AddModelError(error.Key, message);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    ModelState.AddModelError("", responseContent);
                 }
             }
             return View(model);
@@ -71,10 +87,10 @@ namespace Client.Controllers
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync("api/Auth/login", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
                     var result = JsonConvert.DeserializeObject<LoginResponseDTO>(responseContent);
 
                     if (!string.IsNullOrEmpty(result?.Token))
@@ -108,7 +124,22 @@ namespace Client.Controllers
                         return RedirectToAction("Index", "Home");
                     }
                 }
-                ModelState.AddModelError("", "Login failed. Please try again.");
+                else
+                {
+                    // Map server errors to specific form fields
+                    if (responseContent.Contains("Invalid email"))
+                    {
+                        ModelState.AddModelError("Email", "This email is not registered");
+                    }
+                    else if (responseContent.Contains("Invalid password"))
+                    {
+                        ModelState.AddModelError("Password", "Incorrect password");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("Email", "Login failed. Please check your credentials");
+                    }
+                }
             }
             return View(model);
         }
