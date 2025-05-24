@@ -308,11 +308,11 @@ namespace Client.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Password changed successfully.";
+                    TempData["PasswordChangeSuccess"] = true;
                     // Clear the verification flags from Session
                     HttpContext.Session.Remove("PasswordVerified");
                     HttpContext.Session.Remove("VerifiedCurrentPassword");
-                    return RedirectToAction("Index");
+                    return View(model); // Show modal on success
                 }
                 else
                 {

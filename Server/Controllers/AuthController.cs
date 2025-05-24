@@ -163,8 +163,8 @@ public class AuthController : ControllerBase
             var otp = await _authRepository.GenerateOTP(model.Email);
             await _emailService.SendEmailAsync(
                 model.Email,
-                "Password Reset OTP",
-                $"Your OTP for password reset is: {otp}. This code will expire in 15 minutes.");
+                "Password Reset Request",
+                $"<p><strong>Dear {user.Username},</strong></p>\n<p>We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed:</p>\n<h2 style='color:#007bff; background: #f0f8ff; display: inline-block; padding: 8px 24px; border-radius: 8px; letter-spacing: 2px;'>{otp}</h2>\n<p style='margin-top:16px;'>This code is valid for 15 minutes. If you did not request a password reset, please ignore this email.</p>\n<p>Thank you,<br/>ShineUp Support Team</p>");
             
             return Ok(new { message = "OTP has been sent to your email" });
         }
