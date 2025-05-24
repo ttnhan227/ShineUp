@@ -9,6 +9,9 @@ using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Logging;
+using System.Net.Mime;
+using Microsoft.AspNetCore.Http;
 
 namespace Client.Controllers
 {
@@ -16,10 +19,16 @@ namespace Client.Controllers
     public class UserProfileController : Controller
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<UserProfileController> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public UserProfileController(HttpClient httpClient)
+        public UserProfileController(HttpClient httpClient, IConfiguration configuration, ILogger<UserProfileController> logger, IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClient;
+            _configuration = configuration;
+            _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet]
@@ -176,5 +185,148 @@ namespace Client.Controllers
             }
         }
 
+        [HttpGet]
+        public IActionResult VerifyCurrentPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyCurrentPassword(VerifyCurrentPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    TempData["Error"] = "User not authenticated.";
+                    return RedirectToAction("Index");
+                }
+
+                var token = User.FindFirst("JWT")?.Value;
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["Error"] = "Authentication token not found.";
+                    return RedirectToAction("Index");
+                }
+
+                var client = _httpClientFactory.CreateClient("API");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // First verify the current password using the login endpoint
+                var verifyResponse = await client.PostAsJsonAsync("api/Auth/login", new
+                {
+                    Email = User.FindFirst(ClaimTypes.Email)?.Value,
+                    Password = model.CurrentPassword
+                });
+
+                if (verifyResponse.IsSuccessStatusCode)
+                {
+                    // Store both the verification flag and the verified password in Session
+                    HttpContext.Session.SetString("PasswordVerified", "true");
+                    HttpContext.Session.SetString("VerifiedCurrentPassword", model.CurrentPassword);
+                    return RedirectToAction("ChangePassword");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Current password is incorrect.");
+                    return View(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verifying current password");
+                ModelState.AddModelError("", "An error occurred while verifying your password.");
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            // Check if password verification was completed
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("PasswordVerified")))
+            {
+                return RedirectToAction("VerifyCurrentPassword");
+            }
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            // Check if password verification was completed
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("PasswordVerified")))
+            {
+                return RedirectToAction("VerifyCurrentPassword");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    TempData["Error"] = "User not authenticated.";
+                    return RedirectToAction("Index");
+                }
+
+                var token = User.FindFirst("JWT")?.Value;
+                if (string.IsNullOrEmpty(token))
+                {
+                    TempData["Error"] = "Authentication token not found.";
+                    return RedirectToAction("Index");
+                }
+
+                var client = _httpClientFactory.CreateClient("API");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // Get the verified current password from Session
+                var currentPassword = HttpContext.Session.GetString("VerifiedCurrentPassword");
+                if (string.IsNullOrEmpty(currentPassword))
+                {
+                    return RedirectToAction("VerifyCurrentPassword");
+                }
+
+                var response = await client.PostAsJsonAsync("api/UserProfile/ChangePassword", new
+                {
+                    CurrentPassword = currentPassword,
+                    NewPassword = model.NewPassword
+                });
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Success"] = "Password changed successfully.";
+                    // Clear the verification flags from Session
+                    HttpContext.Session.Remove("PasswordVerified");
+                    HttpContext.Session.Remove("VerifiedCurrentPassword");
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", "Failed to change password. Please try again.");
+                    return View(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing password");
+                ModelState.AddModelError("", "An error occurred while changing your password.");
+                return View(model);
+            }
+        }
     }
 }

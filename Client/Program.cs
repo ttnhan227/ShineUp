@@ -12,6 +12,26 @@ builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add Session
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Add HttpClient factory
+builder.Services.AddHttpClient("API", client =>
+{
+    var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+    if (string.IsNullOrEmpty(apiBaseUrl))
+    {
+        throw new InvalidOperationException("ApiBaseUrl is not configured in appsettings.json");
+    }
+    client.BaseAddress = new Uri(apiBaseUrl);
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -78,8 +98,11 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRouting();
 
-app.UseAuthentication(); // Add this line before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
+
+// Add Session middleware
+app.UseSession();
 
 app.UseEndpoints(endpoints =>
 {

@@ -4,6 +4,7 @@ using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
+using BCrypt.Net; // Assuming BCrypt.Net is installed
 
 namespace Server.Repositories;
 
@@ -92,4 +93,37 @@ public class UserProfileRepository : IUserProfileRepository
         }
     }
 
+    public async Task<bool> ChangePassword(int userId, string currentPassword, string newPassword)
+    {
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.UserID == userId);
+
+        if (user == null)
+        {
+            _logger.LogWarning($"ChangePassword failed: User with ID {userId} not found.");
+            return false;
+        }
+
+        // Verify current password
+        if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+        {
+            _logger.LogWarning($"ChangePassword failed for user {userId}: Incorrect current password.");
+            return false;
+        }
+
+        // Hash the new password
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+        try
+        {
+            _context.Entry(user).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Password successfully changed for user {userId}.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error changing password for user {userId}: {ex.Message}");
+            return false;
+        }
+    }
 }
