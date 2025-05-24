@@ -114,33 +114,4 @@ public class UserProfileController : ControllerBase
         }
     }
 
-    [HttpPut("{userId}/password")]
-    [Produces("application/json")] // Added back for this specific action
-    public async Task<IActionResult> ChangePassword(int userId, ChangePasswordDto passwordDto)
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-        {
-            return Unauthorized("Invalid token");
-        }
-
-        var currentUserId = int.Parse(userIdClaim.Value);
-        if (userId != currentUserId)
-        {
-            return Unauthorized("You can only change your own password");
-        }
-
-        var result = await _userProfileRepository.ChangePassword(
-            userId,
-            passwordDto.CurrentPassword,
-            passwordDto.NewPassword
-        );
-
-        if (result)
-        {
-            return Ok(new { message = "Password updated successfully" });
-        }
-
-        return BadRequest("Invalid current password");
-    }
 }

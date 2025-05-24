@@ -92,21 +92,4 @@ public class UserProfileRepository : IUserProfileRepository
         }
     }
 
-    public async Task<bool> ChangePassword(int userId, string currentPassword, string newPassword)
-    {
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null)
-        {
-            return false;
-        }
-
-        if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
-        {
-            return false;
-        }
-
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-        await _context.SaveChangesAsync();
-        return true;
-    }
 }

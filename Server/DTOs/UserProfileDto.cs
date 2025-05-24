@@ -12,9 +12,4 @@ namespace Server.DTOs
         public IFormFile? ProfileImageFile { get; set; } // Added for image upload
     }
 
-    public class ChangePasswordDto
-    {
-        public string CurrentPassword { get; set; } = string.Empty;
-        public string NewPassword { get; set; } = string.Empty;
-    }
 }

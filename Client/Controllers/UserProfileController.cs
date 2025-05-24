@@ -176,50 +176,5 @@ namespace Client.Controllers
             }
         }
 
-        [HttpGet]
-        public IActionResult ChangePassword()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in token.");
-            }
-
-            var token = User.FindFirst("JWT")?.Value;
-            if (string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("JWT token not found.");
-            }
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var json = JsonConvert.SerializeObject(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}/password", content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Password updated successfully!";
-                return RedirectToAction("Index");
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ModelState.AddModelError("", $"Error changing password: {errorContent}");
-                return View(model);
-            }
-        }
     }
 }

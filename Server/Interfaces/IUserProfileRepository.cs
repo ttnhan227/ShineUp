@@ -9,5 +9,4 @@ public interface IUserProfileRepository
 
     Task<User> UpdateProfile(User user);
 
-    Task<bool> ChangePassword(int userId, string currentPassword, string newPassword);
 }
