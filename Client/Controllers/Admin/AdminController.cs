@@ -37,11 +37,11 @@ namespace Client.Controllers.Admin
             var response = await client.GetAsync("api/admin/UserManagement");
             if (!response.IsSuccessStatusCode)
             {
-                return View(new List<UserViewModel>());
+                return View("~/Views/Admin/UserManagement/Users.cshtml", new List<UserViewModel>());
             }
             var json = await response.Content.ReadAsStringAsync();
             var users = JsonConvert.DeserializeObject<List<UserViewModel>>(json);
-            return View(users);
+            return View("~/Views/Admin/UserManagement/Users.cshtml", users);
         }
 
         public async Task<IActionResult> EditUser(int id)
@@ -56,7 +56,7 @@ namespace Client.Controllers.Admin
                 return NotFound();
             var json = await response.Content.ReadAsStringAsync();
             var user = JsonConvert.DeserializeObject<UserViewModel>(json);
-            return View(user);
+            return View("~/Views/Admin/UserManagement/EditUser.cshtml", user);
         }
 
         [HttpPost]
@@ -80,7 +80,7 @@ namespace Client.Controllers.Admin
                     user = JsonConvert.DeserializeObject<UserViewModel>(json);
                 }
                 ModelState.AddModelError("", "Failed to update user role.");
-                return View(user);
+                return View("~/Views/Admin/UserManagement/EditUser.cshtml", user);
             }
             return RedirectToAction("Users");
         }

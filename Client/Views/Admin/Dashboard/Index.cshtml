@@ -1,44 +1,265 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
-<div class="container mt-5">
-    <h2 class="mb-4">Admin Dashboard</h2>
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <div>
-                        <h5 class="card-title mb-3"><i class="bx bx-user"></i> User Management</h5>
-                        <p class="card-text">View, edit, and manage all users on the platform.</p>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Management</h5>
+                    <div class="nav flex-column nav-pills">
+                        <a asp-controller="Admin" asp-action="Users" class="nav-link active">
+                            <i class='bx bx-user'></i> User Management
+                        </a>
+                        <a href="#" class="nav-link disabled">
+                            <i class='bx bx-trophy'></i> Contest Management
+                        </a>
+                        <a href="#" class="nav-link disabled">
+                            <i class='bx bx-cog'></i> Site Settings
+                        </a>
                     </div>
-                    <a asp-controller="Admin" asp-action="Users" class="btn btn-primary mt-3">Go to User Management</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm bg-light">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <div>
-                        <h5 class="card-title mb-3 text-muted"><i class="bx bx-trophy"></i> Contest Management</h5>
-                        <p class="card-text text-muted">Coming soon: Manage contests, entries, and results.</p>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Statistics Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Total Users</h6>
+                                    <h2 class="card-title mb-0">1,234</h2>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class='bx bx-user'></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <span class="text-success">
+                                    <i class='bx bx-up-arrow-alt'></i> 12%
+                                </span>
+                                <span class="text-muted">from last month</span>
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-secondary mt-3" disabled>Coming Soon</button>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Active Contests</h6>
+                                    <h2 class="card-title mb-0">0</h2>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class='bx bx-trophy'></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <span class="text-muted">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Total Submissions</h6>
+                                    <h2 class="card-title mb-0">0</h2>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class='bx bx-file'></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <span class="text-muted">Coming soon</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm bg-light">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <div>
-                        <h5 class="card-title mb-3 text-muted"><i class="bx bx-cog"></i> Site Settings</h5>
-                        <p class="card-text text-muted">Coming soon: Configure website settings and preferences.</p>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Quick Actions</h5>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="quick-action-card">
+                                <div class="quick-action-icon">
+                                    <i class='bx bx-user-plus'></i>
+                                </div>
+                                <div class="quick-action-content">
+                                    <h6>User Management</h6>
+                                    <p>Manage user accounts, roles, and permissions</p>
+                                    <a asp-controller="Admin" asp-action="Users" class="btn btn-primary btn-sm">
+                                        Go to Users
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="quick-action-card disabled">
+                                <div class="quick-action-icon">
+                                    <i class='bx bx-trophy'></i>
+                                </div>
+                                <div class="quick-action-content">
+                                    <h6>Contest Management</h6>
+                                    <p>Create and manage contests and submissions</p>
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button class="btn btn-secondary mt-3" disabled>Coming Soon</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .nav-pills .nav-link {
+            color: #525f7f;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-pills .nav-link i {
+            font-size: 1.25rem;
+        }
+
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #5e72e4;
+            color: white;
+        }
+
+        .nav-pills .nav-link.disabled {
+            color: #8898aa;
+            cursor: not-allowed;
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(94, 114, 228, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon i {
+            font-size: 24px;
+            color: #5e72e4;
+        }
+
+        .quick-action-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action-card:hover {
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-card.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .quick-action-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(94, 114, 228, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .quick-action-icon i {
+            font-size: 24px;
+            color: #5e72e4;
+        }
+
+        .quick-action-content {
+            flex-grow: 1;
+        }
+
+        .quick-action-content h6 {
+            margin-bottom: 0.5rem;
+            color: #32325d;
+        }
+
+        .quick-action-content p {
+            color: #8898aa;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background: #5e72e4;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: #8898aa;
+            border: none;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        @@media (max-width: 768px) {
+            .col-md-3 {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
 }

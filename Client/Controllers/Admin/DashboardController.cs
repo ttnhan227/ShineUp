@@ -4,14 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace Client.Controllers.Admin
 {
     [Authorize(Roles = "Admin")]
-    [Route("Admin/[controller]")]
+    [Route("[controller]")]
     public class DashboardController : Controller
     {
         [HttpGet]
         public IActionResult Index()
         {
-            // return View("~/Views/Admin/Dashboard/Index.cshtml");
-            return View();
+            return View("~/Views/Admin/Dashboard/Index.cshtml");
         }
     }
 }
