@@ -1,0 +1,27 @@
+@model Client.Models.UserViewModel
+@{
+    ViewData["Title"] = "Edit User Role";
+}
+<div class="container mt-4">
+    <h2>Edit User Role</h2>
+    <form asp-action="EditUser" method="post">
+        <input type="hidden" asp-for="UserID" />
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" asp-for="Username" readonly />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" asp-for="Email" readonly />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" name="RoleID" required>
+                <option value="1" selected="@(Model.RoleID == 1)">User</option>
+                <option value="2" selected="@(Model.RoleID == 2)">Admin</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Users" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

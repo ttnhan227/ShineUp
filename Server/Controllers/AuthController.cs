@@ -227,7 +227,8 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // Add UserID as NameIdentifier
             new Claim("Username", user.Username), // Thêm claim chứa tên người dùng
             new Claim("Email", user.Email), // Thêm claim chứa email người dùng
-            new Claim(ClaimTypes.Role, user.Role.Name) // Thêm claim chứa vai trò người dùng
+            new Claim(ClaimTypes.Role, user.Role.Name), // Thêm claim chứa vai trò người dùng
+            new Claim("RoleID", user.RoleID.ToString()) // Add RoleID claim
         };
 
         // Tạo token JWT với các thông tin như issuer, audience, claims, thời gian hết hạn và thông tin ký

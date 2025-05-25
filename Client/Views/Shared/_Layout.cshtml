@@ -26,7 +26,11 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    </li>
+                    </li>                    @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
+                    {                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
+                        </li>
+                    }
                 </ul>
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)

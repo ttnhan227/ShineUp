@@ -96,9 +96,7 @@ namespace Client.Controllers
                     if (!string.IsNullOrEmpty(result?.Token))
                     {
                         var handler = new JwtSecurityTokenHandler();
-                        var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;
-
-                        var claims = new List<Claim>
+                        var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;                        var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.Name, result.Username),
                             new Claim(ClaimTypes.Email, result.Email),
@@ -106,11 +104,19 @@ namespace Client.Controllers
                             new Claim("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
                         };
 
-                        // Extract UserID from JWT
-                        var userIdClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                        if (userIdClaim != null)
+                        // Extract UserID, Role and RoleID from JWT
+                        if (jwtToken != null)
                         {
-                            claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                            var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+                            var roleIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "RoleID");
+
+                            if (userIdClaim != null)
+                                claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                            if (roleClaim != null)
+                                claims.Add(new Claim(ClaimTypes.Role, roleClaim.Value));
+                            if (roleIdClaim != null)
+                                claims.Add(new Claim("RoleID", roleIdClaim.Value));
                         }
 
                         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -175,9 +181,7 @@ namespace Client.Controllers
                 }
 
                 var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;
-
-                var claims = new List<Claim>
+                var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;                var claims = new List<Claim>
                 {
                     new(ClaimTypes.Name, result.Username),
                     new(ClaimTypes.Email, result.Email),
@@ -186,11 +190,19 @@ namespace Client.Controllers
                     new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
                 };
 
-                // Extract UserID from JWT
-                var userIdClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                if (userIdClaim != null)
+                // Extract UserID, Role and RoleID from JWT
+                if (jwtToken != null)
                 {
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                    var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                    var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+                    var roleIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "RoleID");
+
+                    if (userIdClaim != null)
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                    if (roleClaim != null)
+                        claims.Add(new Claim(ClaimTypes.Role, roleClaim.Value));
+                    if (roleIdClaim != null)
+                        claims.Add(new Claim("RoleID", roleIdClaim.Value));
                 }
 
                 // Log the profile image URL for debugging

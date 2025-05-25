@@ -8,5 +8,7 @@ namespace Client.Models
         public string? Bio { get; set; }
         public string? ProfileImageURL { get; set; }
         public string? TalentArea { get; set; }
+        public int? RoleID { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

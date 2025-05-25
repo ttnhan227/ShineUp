@@ -1,0 +1,41 @@
+@model IEnumerable<Client.Models.UserViewModel>
+@{
+    ViewData["Title"] = "User Management";
+}
+<div class="container mt-4">
+    <h2 class="mb-4">User Management</h2>
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>UserID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Talent Area</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model != null)
+        {
+            foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserID</td>
+                    <td>@user.Username</td>
+                    <td>@user.Email</td>
+                    <td>@user.RoleID</td>
+                    <td>@user.TalentArea</td>
+                    <td>@user.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <!-- Actions: Edit role, Delete, etc. -->
+                        <a asp-action="EditUser" asp-route-id="@user.UserID" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="DeleteUser" asp-route-id="@user.UserID" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">Delete</a>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
