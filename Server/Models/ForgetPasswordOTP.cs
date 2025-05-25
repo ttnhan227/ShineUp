@@ -20,6 +20,7 @@ public class ForgetPasswordOTP
 
     // Optional: Add relation to User if you want to track which user requested the OTP
     [ForeignKey("User")]
-    public int? UserID { get; set; }
-    public User? User { get; set; }
+    [Required]
+    public int UserID { get; set; }
+    public User User { get; set; }
 }

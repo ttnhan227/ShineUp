@@ -78,76 +78,67 @@ namespace Client.Controllers
             return View();
         }
 
-        [HttpPost("login")]
+        [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                return View(model);
+            }
 
-                var response = await _httpClient.PostAsync("api/Auth/login", content);
-                var responseContent = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var client = _httpClient;
+                var response = await client.PostAsJsonAsync("api/auth/login", new
+                {
+                    Email = model.Email,
+                    Password = model.Password
+                });
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = JsonConvert.DeserializeObject<LoginResponseDTO>(responseContent);
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<dynamic>(content);
 
-                    if (!string.IsNullOrEmpty(result?.Token))
+                    var claims = new List<Claim>
                     {
-                        var handler = new JwtSecurityTokenHandler();
-                        var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;                        var claims = new List<Claim>
+                        new Claim(ClaimTypes.Name, result.user.username.ToString()),
+                        new Claim(ClaimTypes.Email, result.user.email.ToString()),
+                        new Claim(ClaimTypes.NameIdentifier, result.user.userID.ToString()),
+                        new Claim(ClaimTypes.Role, result.user.role.ToString()),
+                        new Claim("RoleID", result.user.roleID.ToString()),
+                        new Claim("JWT", result.token.ToString()),
+                        new Claim("ProfileImageURL", result.user.profileImageURL?.ToString() ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
+                        new Claim("Verified", result.user.verified.ToString())
+                    };
+
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        principal,
+                        new AuthenticationProperties
                         {
-                            new Claim(ClaimTypes.Name, result.Username),
-                            new Claim(ClaimTypes.Email, result.Email),
-                            new Claim("JWT", result.Token),
-                            new Claim("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
-                        };
+                            IsPersistent = true,
+                            ExpiresUtc = DateTime.UtcNow.AddHours(24)
+                        });
 
-                        // Extract UserID, Role and RoleID from JWT
-                        if (jwtToken != null)
-                        {
-                            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-                            var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
-                            var roleIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "RoleID");
-
-                            if (userIdClaim != null)
-                                claims.Add(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
-                            if (roleClaim != null)
-                                claims.Add(new Claim(ClaimTypes.Role, roleClaim.Value));
-                            if (roleIdClaim != null)
-                                claims.Add(new Claim("RoleID", roleIdClaim.Value));
-                        }
-
-                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                        var principal = new ClaimsPrincipal(identity);
-
-                        await HttpContext.SignInAsync(
-                            CookieAuthenticationDefaults.AuthenticationScheme,
-                            principal,
-                            new AuthenticationProperties { IsPersistent = true });
-
-                        return RedirectToAction("Index", "Home");
-                    }
+                    return RedirectToAction("Index", "Home");
                 }
                 else
                 {
-                    // Map server errors to specific form fields
-                    if (responseContent.Contains("Invalid email"))
-                    {
-                        ModelState.AddModelError("Email", "This email is not registered");
-                    }
-                    else if (responseContent.Contains("Invalid password"))
-                    {
-                        ModelState.AddModelError("Password", "Incorrect password");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("Email", "Login failed. Please check your credentials");
-                    }
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", "Invalid login attempt.");
+                    return View(model);
                 }
             }
-            return View(model);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during login");
+                ModelState.AddModelError("", "An error occurred during login.");
+                return View(model);
+            }
         }
 
         [HttpPost("logout")]

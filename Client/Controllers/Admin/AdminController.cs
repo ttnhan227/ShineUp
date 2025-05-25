@@ -85,6 +85,32 @@ namespace Client.Controllers.Admin
             return RedirectToAction("Users");
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateUserStatus(int id, [FromBody] UpdateUserStatusViewModel model)
+        {
+            var token = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            var client = _httpClientFactory.CreateClient("API");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            
+            var content = new StringContent(
+                JsonConvert.SerializeObject(new { field = model.Field, value = model.Value }),
+                System.Text.Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await client.PutAsync($"api/admin/UserManagement/{id}/status", content);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                return Json(new { success = false, message = "Failed to update user status" });
+            }
+
+            return Json(new { success = true });
+        }
+
         public async Task<IActionResult> DeleteUser(int id)
         {
             var token = User.FindFirst("JWT")?.Value;

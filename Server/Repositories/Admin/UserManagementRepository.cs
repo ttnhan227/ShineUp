@@ -28,7 +28,9 @@ public class UserManagementRepository : IUserManagementRepository
                 ProfileImageURL = u.ProfileImageURL,
                 RoleID = u.RoleID,
                 TalentArea = u.TalentArea,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                IsActive = u.IsActive,
+                Verified = u.Verified
             })
             .ToListAsync();
     }
@@ -50,7 +52,9 @@ public class UserManagementRepository : IUserManagementRepository
             ProfileImageURL = user.ProfileImageURL,
             RoleID = user.RoleID,
             TalentArea = user.TalentArea,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            IsActive = user.IsActive,
+            Verified = user.Verified
         };
     }
 
@@ -74,7 +78,46 @@ public class UserManagementRepository : IUserManagementRepository
             ProfileImageURL = user.ProfileImageURL,
             RoleID = user.RoleID,
             TalentArea = user.TalentArea,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            IsActive = user.IsActive,
+            Verified = user.Verified
+        };
+    }
+
+    public async Task<UserDTO?> UpdateUserStatus(int userId, string field, bool value)
+    {
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.UserID == userId);
+
+        if (user == null) return null;
+
+        switch (field.ToLower())
+        {
+            case "isactive":
+                user.IsActive = value;
+                break;
+            case "verified":
+                user.Verified = value;
+                break;
+            default:
+                throw new ArgumentException("Invalid field name", nameof(field));
+        }
+
+        await _context.SaveChangesAsync();
+
+        return new UserDTO
+        {
+            UserID = user.UserID,
+            Username = user.Username,
+            Email = user.Email,
+            Bio = user.Bio,
+            ProfileImageURL = user.ProfileImageURL,
+            RoleID = user.RoleID,
+            TalentArea = user.TalentArea,
+            CreatedAt = user.CreatedAt,
+            IsActive = user.IsActive,
+            Verified = user.Verified
         };
     }
 

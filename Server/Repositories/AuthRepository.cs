@@ -161,4 +161,57 @@ public class AuthRepository : IAuthRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> SaveOTP(int userId, string otp)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning($"User not found for ID: {userId}");
+            return false;
+        }
+
+        var otpModel = new ForgetPasswordOTP
+        {
+            Email = user.Email,
+            OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            IsUsed = false,
+            UserID = userId
+        };
+
+        _context.ForgetPasswordOTPs.Add(otpModel);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> VerifyOTP(int userId, string otp)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        var otpModel = await _context.ForgetPasswordOTPs
+            .Where(o => o.Email == user.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(o => o.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (otpModel == null)
+        {
+            _logger.LogWarning($"No valid OTP found for user ID: {userId}");
+            return false;
+        }
+
+        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+        
+        if (isValid)
+        {
+            otpModel.IsUsed = true;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        _logger.LogWarning($"OTP validation failed for user ID: {userId}");
+        return false;
+    }
 }

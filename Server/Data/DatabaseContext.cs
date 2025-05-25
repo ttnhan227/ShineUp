@@ -24,6 +24,15 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Configure User entity
+        modelBuilder.Entity<User>()
+            .Property(u => u.IsActive)
+            .HasDefaultValue(true);
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.Verified)
+            .HasDefaultValue(false);
+
         // Configure relationships
         modelBuilder.Entity<User>()
             .HasMany(u => u.Videos)

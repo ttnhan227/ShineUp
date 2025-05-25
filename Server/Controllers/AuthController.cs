@@ -9,7 +9,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace Server.Controllers;
 
@@ -119,7 +121,8 @@ public class AuthController : ControllerBase
             Token = token,
             user.Username,
             user.Email,
-            user.ProfileImageURL
+            user.ProfileImageURL,
+            user.Verified
         });
     }
 
@@ -132,13 +135,14 @@ public class AuthController : ControllerBase
             var user = await _googleAuthService.HandleGoogleUser(payload);
             var token = GenerateToken(user);
 
-            // Make sure we're returning the correct profile image URL
+            // Make sure we're returning the correct profile image URL and include Verified status
             return Ok(new
             {
                 Token = token,
                 Username = user.Username,
                 Email = user.Email,
-                ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"
+                ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
+                Verified = user.Verified
             });
         }
         catch (Exception ex)
@@ -211,6 +215,175 @@ public class AuthController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPost("send-verification-otp")]
+    public async Task<IActionResult> SendVerificationOTP()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                _logger.LogWarning($"Invalid user ID claim. Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
+                return BadRequest(new { success = false, message = "Invalid user ID" });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == userId);
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found for ID: {userId}");
+                return NotFound(new { success = false, message = "User not found" });
+            }
+
+            if (user.Verified)
+            {
+                _logger.LogInformation($"User {userId} is already verified");
+                return BadRequest(new { success = false, message = "Email is already verified" });
+            }
+
+            // Generate OTP
+            var otp = new Random().Next(100000, 999999).ToString();
+            
+            // Save OTP to database
+            var otpModel = new ForgetPasswordOTP
+            {
+                UserID = userId,
+                Email = user.Email,
+                OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+                IsUsed = false
+            };
+
+            _context.ForgetPasswordOTPs.Add(otpModel);
+            await _context.SaveChangesAsync();
+
+            // Send OTP email
+            var emailBody = $@"
+                <h2>Email Verification</h2>
+                <p>Dear {user.Username},</p>
+                <p>Please use the following code to verify your email address:</p>
+                <h1 style='color: #5e72e4; background: #f0f8ff; display: inline-block; padding: 8px 24px; border-radius: 8px; letter-spacing: 2px;'>{otp}</h1>
+                <p>This code will expire in 15 minutes.</p>
+                <p>If you did not request this verification, please ignore this email.</p>
+                <p>Thank you,<br/>ShineUp Support Team</p>";
+
+            await _emailService.SendEmailAsync(user.Email, "Email Verification", emailBody);
+
+            _logger.LogInformation($"Verification OTP sent to user {userId}");
+            return Ok(new { success = true, message = "Verification code sent successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error sending verification OTP");
+            return StatusCode(500, new { success = false, message = "Internal server error" });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDTO model)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                _logger.LogWarning($"Invalid user ID claim. Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
+                return BadRequest(new { message = "Invalid user ID" });
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserID == userId);
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found for ID: {userId}");
+                return NotFound(new { message = "User not found" });
+            }
+
+            if (user.Verified)
+                return BadRequest(new { message = "Email is already verified" });
+
+            // Get the most recent OTP for this user
+            var otpRecord = await _context.ForgetPasswordOTPs
+                .Where(o => o.UserID == userId && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+                .OrderByDescending(o => o.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (otpRecord == null)
+            {
+                _logger.LogWarning($"No valid OTP found for user ID: {userId}");
+                return BadRequest(new { message = "Verification code has expired. Please request a new one." });
+            }
+
+            // Verify the OTP
+            bool isValid = BCrypt.Net.BCrypt.Verify(model.OTP, otpRecord.OTPCode);
+            if (!isValid)
+            {
+                _logger.LogWarning($"Invalid OTP for user ID: {userId}");
+                return BadRequest(new { message = "Invalid verification code" });
+            }
+
+            // Mark OTP as used
+            otpRecord.IsUsed = true;
+            await _context.SaveChangesAsync();
+
+            // Update user verification status
+            user.Verified = true;
+            await _context.SaveChangesAsync();
+
+            // Generate new token with updated claims
+            var token = GenerateToken(user);
+
+            return Ok(new { 
+                message = "Email verified successfully",
+                token = token,
+                user = new {
+                    username = user.Username,
+                    email = user.Email,
+                    verified = user.Verified,
+                    profileImageURL = user.ProfileImageURL
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error verifying email: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("resend-verification-otp")]
+    public async Task<IActionResult> ResendVerificationOTP()
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirst("UserID")?.Value);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == userId);
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+
+            if (user.Verified)
+                return BadRequest(new { message = "Email is already verified" });
+
+            var otp = GenerateOTP();
+            await _authRepository.SaveOTP(userId, otp);
+
+            // Send OTP email
+            var emailBody = $"Your verification code is: {otp}";
+            await _emailService.SendEmailAsync(user.Email, "Email Verification", emailBody);
+
+            return Ok(new { message = "Verification code resent successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error resending verification OTP: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
     private string GenerateToken(User user)
     {
         // Tạo khóa bảo mật từ chuỗi ký tự được lưu trong cấu hình (appsettings.json)
@@ -241,5 +414,12 @@ public class AuthController : ControllerBase
 
         // Trả về chuỗi token đã được mã hóa
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private string GenerateOTP()
+    {
+        // Implement OTP generation logic
+        // This is a placeholder and should be replaced with a secure OTP generation method
+        return "123456"; // Placeholder OTP
     }
 }

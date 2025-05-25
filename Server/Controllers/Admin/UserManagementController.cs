@@ -98,6 +98,30 @@ public class UserManagementController : ControllerBase
         }
     }
 
+    [HttpPut("{userId}/status")]
+    public async Task<ActionResult<UserDTO>> UpdateUserStatus(int userId, [FromBody] UpdateUserStatusDTO statusUpdate)
+    {
+        if (!IsAdmin())
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var user = await _userManagementRepository.UpdateUserStatus(userId, statusUpdate.Field, statusUpdate.Value);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+            return Ok(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error updating user status: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
     [HttpDelete("{userId}")]
     public async Task<IActionResult> DeleteUser(int userId)
     {

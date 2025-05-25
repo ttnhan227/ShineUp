@@ -10,4 +10,6 @@ public class UserDTO
     public int RoleID { get; set; }
     public string TalentArea { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsActive { get; set; }
+    public bool Verified { get; set; }
 }

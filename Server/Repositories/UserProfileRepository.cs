@@ -36,7 +36,9 @@ public class UserProfileRepository : IUserProfileRepository
             ProfileImageURL = user.ProfileImageURL,
             RoleID = user.RoleID,
             TalentArea = user.TalentArea,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            IsActive = user.IsActive,
+            Verified = user.Verified
         };
     }
 
