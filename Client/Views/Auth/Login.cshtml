@@ -1,60 +1,77 @@
 @model Client.Models.LoginViewModel
 @inject IConfiguration Configuration
 
-<div class="login-container">
-    <div class="login-box">
-        <div class="login-header">
-            <h2>Welcome Back</h2>
-            <p>Please login to continue</p>
-        </div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4 class="card-title">Welcome Back</h4>
+                        <p class="text-muted">Please login to continue</p>
+                    </div>
 
-        <form asp-controller="Auth" asp-action="Login" method="post" class="login-form" id="loginForm">
-            <div class="form-group">
-                <label asp-for="Email"></label>
-                <div class="input-group">
-                    <i class="fas fa-envelope"></i>
-                    <input asp-for="Email" class="form-control" placeholder="Enter your email" required />
+                    <form asp-controller="Auth" asp-action="Login" method="post" class="login-form" id="loginForm">
+                        <div class="form-group mb-4">
+                            <label asp-for="Email" class="form-label">
+                                <i class='bx bx-envelope'></i> Email
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email" required />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="form-label">
+                                <i class='bx bx-lock-alt'></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" required />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class='bx bx-log-in'></i> Sign In
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a asp-controller="Auth" asp-action="ForgotPassword" class="text-primary">
+                                <i class='bx bx-help-circle'></i> Forgot your password?
+                            </a>
+                        </div>
+                    </form>
+
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+
+                    <div class="google-signin">
+                        <div id="g_id_onload"
+                             data-client_id="@Configuration["Authentication:Google:ClientId"]"
+                             data-context="signin"
+                             data-callback="handleCredentialResponse">
+                        </div>
+                        <div class="g_id_signin"
+                             data-type="standard"
+                             data-size="large"
+                             data-theme="outline"
+                             data-text="sign_in_with"
+                             data-shape="rectangular"
+                             data-logo_alignment="left">
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">Don't have an account? 
+                            <a asp-controller="Auth" asp-action="Register" class="text-primary">Register</a>
+                        </p>
+                    </div>
                 </div>
-                <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Password"></label>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" required />
-                </div>
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary btn-block mb-2">Sign In</button>
-            </div>
-            <div class="text-center mt-2">
-                <a asp-controller="Auth" asp-action="ForgotPassword">Forgot your password?</a>
-            </div>
-        </form>
-
-        <div class="divider">
-            <span>OR</span>
-        </div>
-
-        <div class="google-signin">
-            <div id="g_id_onload"
-                 data-client_id="@Configuration["Authentication:Google:ClientId"]"
-                 data-context="signin"
-                 data-callback="handleCredentialResponse">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
-            </div>
-        </div>
-
-        <div class="text-center mt-3">
-            Don't have an account? <a asp-controller="Auth" asp-action="Register">Register</a>
         </div>
     </div>
 </div>
@@ -74,82 +91,104 @@
 }
 
 @section Scripts {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <style>
-        .login-container {
-            min-height: 100vh;
+        .card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+
+        .card-title {
+            color: #32325d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .text-muted {
+            color: #8898aa !important;
+        }
+
+        .form-label {
             display: flex;
             align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 20px;
+            gap: 0.5rem;
+            color: #8898aa;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        .form-label i {
+            font-size: 1.25rem;
+            color: #5e72e4;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
+        }
+
+        .text-danger {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-start;
+            margin-top: 2rem;
+        }
+
+        .button-group .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border-radius: 8px;
             width: 100%;
-            max-width: 400px;
         }
 
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
+        .button-group .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .login-header h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .login-form .form-group {
-            margin-bottom: 20px;
-        }
-
-        .login-form .input-group {
-            position: relative;
-        }
-
-        .login-form .input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-        }
-
-        .login-form .form-control {
-            padding-left: 40px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            height: 45px;
-        }
-
-        .login-form .btn-block {
-            height: 45px;
-            font-size: 16px;
-            background: #007bff;
+        .btn-primary {
+            background: #5e72e4;
             border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
         }
 
-        .login-form .btn-block:hover {
-            background: #0056b3;
+        .text-primary {
+            color: #5e72e4 !important;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .text-primary:hover {
+            color: #2e59d9 !important;
+            text-decoration: none;
         }
 
         .divider {
             text-align: center;
-            margin: 20px 0;
+            margin: 2rem 0;
             position: relative;
         }
 
@@ -160,7 +199,7 @@
             top: 50%;
             width: 45%;
             height: 1px;
-            background-color: #ddd;
+            background-color: #e9ecef;
         }
 
         .divider::before {
@@ -173,38 +212,15 @@
 
         .divider span {
             background: white;
-            padding: 0 10px;
-            color: #666;
-            font-size: 0.9rem;
+            padding: 0 1rem;
+            color: #8898aa;
+            font-size: 0.875rem;
         }
 
         .google-signin {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
-        }
-
-        .text-center {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .text-center a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .text-center a:hover {
-            text-decoration: underline;
-        }
-
-        .alert {
-            border-radius: 5px;
-            padding: 15px;
-        }
-
-        .alert i {
-            margin-right: 10px;
+            margin: 1.5rem 0;
         }
 
         .loading-overlay {
@@ -225,28 +241,39 @@
             display: none !important;
         }
 
-        .text-danger {
-            color: #dc3545;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            display: block;
-        }
-        
         .input-validation-error {
             border-color: #dc3545;
         }
 
-        /* Add button group styles */
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+        .validation-summary-errors {
+            background-color: #fff3f3;
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .button-group button {
-            width: 100%;
+        .validation-summary-errors ul {
+            list-style: none;
+            padding: 0;
             margin: 0;
+        }
+
+        .validation-summary-errors li {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
     <script src="https://accounts.google.com/gsi/client" async></script>
