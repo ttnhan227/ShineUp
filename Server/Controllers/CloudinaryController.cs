@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
@@ -35,7 +36,6 @@ public class VideosController : ControllerBase
 
         var video = new Video
         {
-            VideoID = uploadResult.PublicId, // Dùng publicId làm khóa chính
             UserID = userId,
             CategoryID = dto.CategoryID,
             Title = dto.Title,
@@ -72,12 +72,21 @@ public class VideosController : ControllerBase
         {
             return BadRequest("Public ID is required");
         }
+        
+        //Find video in database
+        var video = await _db.Videos.FirstOrDefaultAsync(v => v.CloudPublicId == publicId);
+        if (video == null)
+        {
+            return NotFound("Video not found");
+        }
 
         var deletionResult = await _cloudinary.DeleteAsync(publicId);
         if (deletionResult.Error != null)
         {
             return BadRequest(deletionResult.Error.Message);
-        }
+        } 
+        _db.Videos.Remove(video);
+        await _db.SaveChangesAsync();
 
         return Ok(new { Message = "File deleted successfully" });
     }

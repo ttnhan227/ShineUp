@@ -2,7 +2,7 @@ namespace Server.DTOs;
 
 public class VideoDTO
 {
-    public string VideoID { get; set; }
+    public Guid VideoID { get; set; }
     public int UserID { get; set; }
     public int CategoryID { get; set; }
     public string Title { get; set; }

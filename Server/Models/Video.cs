@@ -5,7 +5,7 @@ namespace Server.Models;
 
 public class Video
 {
-    [Key] public string VideoID { get; set; }
+    [Key] public Guid VideoID { get; set; }
     public string? CloudPublicId { get; set; }
 
     [ForeignKey("User")]
