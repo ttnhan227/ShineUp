@@ -1,49 +1,33 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
 
 namespace Server.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ContestsController : ControllerBase
 {
-    private readonly IContestRepositories _repository;
+    private readonly IContestRepositories _contestRepository;
+    private readonly INotificationRepository _notificationRepository;
+    private readonly DatabaseContext _context;
 
-    public ContestsController(IContestRepositories repository)
+    public ContestsController(IContestRepositories contestRepository, INotificationRepository notificationRepository, DatabaseContext context)
     {
-        _repository = repository;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var contests = await _repository.GetAllAsync();
-        return Ok(contests);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var contest = await _repository.GetByIdAsync(id);
-        return contest == null ? NotFound() : Ok(contest);
+        _contestRepository = contestRepository;
+        _notificationRepository = notificationRepository;
+        _context = context;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ContestDTO dto)
+    public async Task<IActionResult> CreateContest([FromBody] ContestDTO dto)
     {
-        if (dto.StartDate >= dto.EndDate)
-        {
-            return BadRequest("Start date must be before end date.");
-        }
-
-        if (dto.EndDate < DateTime.UtcNow)
-        {
-            return BadRequest("End date must be in the future.");
-        }
-
-        var entity = new Contest
+        var contest = new Contest
         {
             Title = dto.Title,
             Description = dto.Description,
@@ -51,28 +35,35 @@ public class ContestsController : ControllerBase
             EndDate = dto.EndDate
         };
 
-        await _repository.AddAsync(entity);
-        dto.ContestID = entity.ContestID;
-        return CreatedAtAction(nameof(GetById), new { id = entity.ContestID }, dto);
+        await _contestRepository.AddAsync(contest);
+
+        // Notify all users about the new contest
+        var users = await _context.Users.ToListAsync();
+        foreach (var user in users)
+        {
+            var notification = new Notification
+            {
+                UserID = user.UserID,
+                NotificationType = "ContestUpdate",
+                Message = $"New contest created: {contest.Title}",
+                ContestID = contest.ContestID,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            await _notificationRepository.AddAsync(notification);
+        }
+
+        dto.ContestID = contest.ContestID;
+        return Ok(dto);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ContestDTO dto)
+    [HttpPut("{contestId}")]
+    public async Task<IActionResult> UpdateContest(int contestId, [FromBody] ContestDTO dto)
     {
-        if (id != dto.ContestID)
-        {
-            return BadRequest();
-        }
-
-        if (dto.StartDate >= dto.EndDate)
-        {
-            return BadRequest("Start date must be before end date.");
-        }
-
-        var contest = await _repository.GetByIdAsync(id);
+        var contest = await _contestRepository.GetByIdAsync(contestId);
         if (contest == null)
         {
-            return NotFound();
+            return NotFound("Contest not found");
         }
 
         contest.Title = dto.Title;
@@ -80,16 +71,24 @@ public class ContestsController : ControllerBase
         contest.StartDate = dto.StartDate;
         contest.EndDate = dto.EndDate;
 
-        await _repository.UpdateAsync(contest);
-        //return NoContent(); // 204, api nội bộ
-        return Ok(dto); // hoặc return Ok(contest);
-    }
+        await _contestRepository.UpdateAsync(contest);
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        await _repository.DeleteAsync(id);
-        //return NoContent();
-        return Ok(new { message = "Deleted successfully", contestId = id });
+        // Notify all users about the contest update
+        var users = await _context.Users.ToListAsync();
+        foreach (var user in users)
+        {
+            var notification = new Notification
+            {
+                UserID = user.UserID,
+                NotificationType = "ContestUpdate",
+                Message = $"Contest updated: {contest.Title}",
+                ContestID = contest.ContestID,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            await _notificationRepository.AddAsync(notification);
+        }
+
+        return Ok(dto);
     }
 }

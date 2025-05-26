@@ -22,6 +22,9 @@ public class DatabaseContext : DbContext
     public DbSet<Message> Messages { get; set; }
     public DbSet<Vote> Votes { get; set; } //anh
 
+    public DbSet<Notification> Notifications { get; set; } // Phat
+    public DbSet<Share> Shares { get; set; } // Phat
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Configure relationships
@@ -139,5 +142,31 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<ForgetPasswordOTP>()
             .HasIndex(f => f.Email);  // Index for faster email lookups
+
+        //  Phat Notification 
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserID); // Index for faster user-based queries
+
+        // Phat Share
+        modelBuilder.Entity<Share>()
+            .HasOne(s => s.User)
+            .WithMany()
+            .HasForeignKey(s => s.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Share>()
+            .HasOne(s => s.Video)
+            .WithMany()
+            .HasForeignKey(s => s.VideoID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Share>()
+            .HasIndex(s => new { s.UserID, s.VideoID }); // Index for faster lookups
     }
 }

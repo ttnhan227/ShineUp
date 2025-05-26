@@ -152,6 +152,10 @@ builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
+//Phat 
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IShareRepository, ShareRepository>();
+
 // Update CORS configuration
 builder.Services.AddCors(options =>
 {
