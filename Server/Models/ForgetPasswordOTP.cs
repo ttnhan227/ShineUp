@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models;
 
-public class ForgetPasswordOTP
+public class OTP
 {
     [Key]
     public int Id { get; set; }

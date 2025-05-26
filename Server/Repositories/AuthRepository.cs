@@ -123,7 +123,7 @@ public class AuthRepository : IAuthRepository
         if (user == null) throw new Exception("User not found");
 
         var otp = new Random().Next(100000, 999999).ToString();
-        var otpModel = new ForgetPasswordOTP
+        var otpModel = new OTP
         {
             Email = email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
@@ -133,7 +133,7 @@ public class AuthRepository : IAuthRepository
             UserID = user.UserID
         };
 
-        _context.ForgetPasswordOTPs.Add(otpModel);
+        _context.OTPs.Add(otpModel);
         await _context.SaveChangesAsync();
 
         return otp;
@@ -141,7 +141,7 @@ public class AuthRepository : IAuthRepository
 
     public async Task<bool> ValidateOTP(string email, string otp)
     {
-        var otpModel = await _context.ForgetPasswordOTPs
+        var otpModel = await _context.OTPs
             .Where(o => o.Email == email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
@@ -192,7 +192,7 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        var otpModel = new ForgetPasswordOTP
+        var otpModel = new OTP
         {
             Email = user.Email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
@@ -202,7 +202,7 @@ public class AuthRepository : IAuthRepository
             UserID = userId
         };
 
-        _context.ForgetPasswordOTPs.Add(otpModel);
+        _context.OTPs.Add(otpModel);
         await _context.SaveChangesAsync();
         return true;
     }
@@ -212,7 +212,7 @@ public class AuthRepository : IAuthRepository
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return false;
 
-        var otpModel = await _context.ForgetPasswordOTPs
+        var otpModel = await _context.OTPs
             .Where(o => o.Email == user.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();

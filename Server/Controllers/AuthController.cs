@@ -256,7 +256,7 @@ public class AuthController : ControllerBase
             var otp = new Random().Next(100000, 999999).ToString();
             
             // Save OTP to database
-            var otpModel = new ForgetPasswordOTP
+            var otpModel = new OTP
             {
                 UserID = userId,
                 Email = user.Email,
@@ -266,7 +266,7 @@ public class AuthController : ControllerBase
                 IsUsed = false
             };
 
-            _context.ForgetPasswordOTPs.Add(otpModel);
+            _context.OTPs.Add(otpModel);
             await _context.SaveChangesAsync();
 
             // Send OTP email
@@ -317,7 +317,7 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Email is already verified" });
 
             // Get the most recent OTP for this user
-            var otpRecord = await _context.ForgetPasswordOTPs
+            var otpRecord = await _context.OTPs
                 .Where(o => o.UserID == userId && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync();
