@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models;
 
-public class ForgetPasswordOTP
+public class OTP
 {
     [Key]
     public int Id { get; set; }
@@ -20,6 +20,7 @@ public class ForgetPasswordOTP
 
     // Optional: Add relation to User if you want to track which user requested the OTP
     [ForeignKey("User")]
-    public int? UserID { get; set; }
-    public User? User { get; set; }
+    [Required]
+    public int UserID { get; set; }
+    public User User { get; set; }
 }

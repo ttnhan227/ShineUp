@@ -7,7 +7,9 @@ using Server;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
+using Server.Interfaces.Admin;
 using Server.Repositories;
+using Server.Repositories.Admin;
 using Server.Services;
 using System.Text;
 using System.Security.Claims;
@@ -152,9 +154,8 @@ builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 
-//Phat 
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-builder.Services.AddScoped<IShareRepository, ShareRepository>();
+// Add Admin Repositories
+builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
 
 // Update CORS configuration
 builder.Services.AddCors(options =>

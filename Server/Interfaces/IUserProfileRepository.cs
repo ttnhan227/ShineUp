@@ -8,6 +8,5 @@ public interface IUserProfileRepository
     Task<UserDTO?> GetUserProfile(int userId);
 
     Task<User> UpdateProfile(User user);
-
     Task<bool> ChangePassword(int userId, string currentPassword, string newPassword);
 }

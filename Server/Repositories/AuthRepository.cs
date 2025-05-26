@@ -40,12 +40,36 @@ public class AuthRepository : IAuthRepository
             return null;
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (!user.IsActive)
         {
             return null;
         }
 
-        return user;
+        // Check if user has a password hash (not a Google user)
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            _logger.LogWarning($"User {user.Email} has no password hash (possibly a Google user)");
+            return null;
+        }
+
+        try
+        {
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                return null;
+            }
+
+            // Update LastLoginTime
+            user.LastLoginTime = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return user;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error verifying password for user {user.Email}: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<bool> UserExists(string email, string username)
@@ -103,16 +127,17 @@ public class AuthRepository : IAuthRepository
         if (user == null) throw new Exception("User not found");
 
         var otp = new Random().Next(100000, 999999).ToString();
-        var otpModel = new ForgetPasswordOTP
+        var otpModel = new OTP
         {
             Email = email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
-            IsUsed = false
+            IsUsed = false,
+            UserID = user.UserID
         };
 
-        _context.ForgetPasswordOTPs.Add(otpModel);
+        _context.OTPs.Add(otpModel);
         await _context.SaveChangesAsync();
 
         return otp;
@@ -120,7 +145,7 @@ public class AuthRepository : IAuthRepository
 
     public async Task<bool> ValidateOTP(string email, string otp)
     {
-        var otpModel = await _context.ForgetPasswordOTPs
+        var otpModel = await _context.OTPs
             .Where(o => o.Email == email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
@@ -160,5 +185,58 @@ public class AuthRepository : IAuthRepository
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<bool> SaveOTP(int userId, string otp)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning($"User not found for ID: {userId}");
+            return false;
+        }
+
+        var otpModel = new OTP
+        {
+            Email = user.Email,
+            OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            IsUsed = false,
+            UserID = userId
+        };
+
+        _context.OTPs.Add(otpModel);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> VerifyOTP(int userId, string otp)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        var otpModel = await _context.OTPs
+            .Where(o => o.Email == user.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(o => o.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (otpModel == null)
+        {
+            _logger.LogWarning($"No valid OTP found for user ID: {userId}");
+            return false;
+        }
+
+        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+        
+        if (isValid)
+        {
+            otpModel.IsUsed = true;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        _logger.LogWarning($"OTP validation failed for user ID: {userId}");
+        return false;
     }
 }

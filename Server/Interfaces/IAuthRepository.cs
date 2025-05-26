@@ -12,4 +12,6 @@ public interface IAuthRepository
     Task<string> GenerateOTP(string email);
     Task<bool> ValidateOTP(string email, string otp);
     Task<bool> ResetPassword(string email, string newPassword);
+    Task<bool> SaveOTP(int userId, string otp);
+    Task<bool> VerifyOTP(int userId, string otp);
 }

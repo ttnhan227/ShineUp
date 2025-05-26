@@ -80,6 +80,12 @@ public class UserProfileController : ControllerBase
                 updateProfile.ProfileImageUrl = uploadResult.SecureUrl.ToString();
             }
 
+            var existingUser = await _userProfileRepository.GetUserProfile(userId);
+            if (existingUser == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
             var userModel = new Server.Models.User
             {
                 UserID = userId, // Ensure the ID is set for the update
@@ -87,8 +93,8 @@ public class UserProfileController : ControllerBase
                 Email = updateProfile.Email,
                 Bio = updateProfile.Bio,
                 ProfileImageURL = updateProfile.ProfileImageUrl, // Use the potentially new URL
-                TalentArea = updateProfile.TalentArea
-                // Do not set RoleID or CreatedAt here, as they are not part of the update DTO
+                TalentArea = updateProfile.TalentArea,
+                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUser.ProfilePrivacy // Use the value from DTO, fallback to existing
             };
 
             var updatedUser = await _userProfileRepository.UpdateProfile(userModel);
@@ -114,33 +120,44 @@ public class UserProfileController : ControllerBase
         }
     }
 
-    [HttpPut("{userId}/password")]
-    [Produces("application/json")] // Added back for this specific action
-    public async Task<IActionResult> ChangePassword(int userId, ChangePasswordDto passwordDto)
+    [HttpPost("ChangePassword")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        try
         {
-            return Unauthorized("Invalid token");
-        }
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized(new { message = "Invalid token or user ID not found." });
+            }
 
-        var currentUserId = int.Parse(userIdClaim.Value);
-        if (userId != currentUserId)
+            var currentUserId = int.Parse(userIdClaim.Value);
+
+            // The DTO doesn't contain userId, so we use the one from the claim.
+            // No need to compare route userId with claim userId here as there's no route parameter for userId.
+
+            var success = await _userProfileRepository.ChangePassword(
+                currentUserId,
+                changePasswordDto.CurrentPassword,
+                changePasswordDto.NewPassword
+            );
+
+            if (success)
+            {
+                return Ok(new { message = "Password changed successfully." });
+            }
+            else
+            {
+                // This could be due to incorrect current password or user not found (though user not found should be caught by Unauthorized above)
+                return BadRequest(new { message = "Failed to change password. Please check your current password." });
+            }
+        }
+        catch (Exception ex)
         {
-            return Unauthorized("You can only change your own password");
+            _logger.LogError($"Error changing password: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error." });
         }
-
-        var result = await _userProfileRepository.ChangePassword(
-            userId,
-            passwordDto.CurrentPassword,
-            passwordDto.NewPassword
-        );
-
-        if (result)
-        {
-            return Ok(new { message = "Password updated successfully" });
-        }
-
-        return BadRequest("Invalid current password");
     }
 }

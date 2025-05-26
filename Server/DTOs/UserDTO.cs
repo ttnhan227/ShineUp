@@ -1,3 +1,5 @@
+using Server.Models;
+
 namespace Server.DTOs;
 
 public class UserDTO
@@ -10,4 +12,10 @@ public class UserDTO
     public int RoleID { get; set; }
     public string TalentArea { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsActive { get; set; }
+    public bool Verified { get; set; }
+    public DateTime? LastLoginTime { get; set; }
+    public ProfilePrivacy ProfilePrivacy { get; set; }
+    public int ProfileCompletionPercentage { get; set; }
+    public bool IsGoogleAccount { get; set; }
 }
