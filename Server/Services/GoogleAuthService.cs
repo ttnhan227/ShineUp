@@ -47,15 +47,25 @@ public class GoogleAuthService : IGoogleAuthService
                 Bio = "",
                 RoleID = defaultRole?.RoleID ?? 1,
                 TalentArea = "",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true // New users are active by default
             };
             await _context.Users.AddAsync(user);
         }
-        else if (user.GoogleId == null)
+        else
         {
-            user.GoogleId = payload.Subject;
-            user.ProfileImageURL = payload.Picture ?? user.ProfileImageURL;
-            _context.Users.Update(user);
+            // Check if the account is active
+            if (!user.IsActive)
+            {
+                throw new InvalidOperationException("Your account is inactive. Please contact support for assistance.");
+            }
+
+            if (user.GoogleId == null)
+            {
+                user.GoogleId = payload.Subject;
+                user.ProfileImageURL = payload.Picture ?? user.ProfileImageURL;
+                _context.Users.Update(user);
+            }
         }
 
         await _context.SaveChangesAsync();

@@ -20,7 +20,8 @@
                                     <th>Role</th>
                                     <th>Talent Area</th>
                                     <th>Status</th>
-                                    <th>Created At</th>
+                                    <th>Email Verified</th>
+                                    <th>Joined Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -36,28 +37,28 @@
                                         <td>@(user.RoleID == 2 ? "Admin" : "User")</td>
                                         <td>@user.TalentArea</td>
                                         <td>
-                                            <div class="d-flex gap-2">
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="isActive_@user.UserID" 
-                                                           @(user.IsActive ? "checked" : "")
-                                                           onchange="updateUserStatus(@user.UserID, 'isActive', this.checked)">
-                                                    <label class="form-check-label" for="isActive_@user.UserID">
-                                                        Active
-                                                    </label>
-                                                </div>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="verified_@user.UserID" 
-                                                           @(user.Verified ? "checked" : "")
-                                                           onchange="updateUserStatus(@user.UserID, 'verified', this.checked)">
-                                                    <label class="form-check-label" for="verified_@user.UserID">
-                                                        Verified
-                                                    </label>
-                                                </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="isActive_@user.UserID" 
+                                                       @(user.IsActive ? "checked" : "")
+                                                       onchange="updateUserStatus(@user.UserID, 'isActive', this.checked)">
+                                                <label class="form-check-label" for="isActive_@user.UserID">
+                                                    Active
+                                                </label>
                                             </div>
                                         </td>
-                                        <td>@@user.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="verified_@user.UserID" 
+                                                       @(user.Verified ? "checked" : "")
+                                                       onchange="updateUserStatus(@user.UserID, 'verified', this.checked)">
+                                                <label class="form-check-label" for="verified_@user.UserID">
+                                                    @(user.Verified ? "Verified" : "Not Verified")
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>@user.CreatedAt.ToString("dd MMM yyyy, h:mm tt")</td>
                                         <td>
                                             <div class="button-group">
                                                 <a asp-action="EditUser" asp-route-id="@user.UserID" class="btn btn-primary">
