@@ -1,7 +1,7 @@
 using Client.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Client.Models.Admin;
+using Client.Areas.Admin.Models;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -9,23 +9,19 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Client.Controllers.Admin
+namespace Client.Areas.Admin.Controllers
 {
+    [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class AdminController : Controller
+    public class UserManagementController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public AdminController(IHttpClientFactory httpClientFactory)
+        public UserManagementController(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        public async Task<IActionResult> Users()
+        public async Task<IActionResult> Index()
         {
             var token = User.FindFirst("JWT")?.Value;
             if (string.IsNullOrEmpty(token))
@@ -37,11 +33,11 @@ namespace Client.Controllers.Admin
             var response = await client.GetAsync("api/admin/UserManagement");
             if (!response.IsSuccessStatusCode)
             {
-                return View("~/Views/Admin/UserManagement/Users.cshtml", new List<UserViewModel>());
+                return View(new List<UserViewModel>());
             }
             var json = await response.Content.ReadAsStringAsync();
             var users = JsonConvert.DeserializeObject<List<UserViewModel>>(json);
-            return View("~/Views/Admin/UserManagement/Users.cshtml", users);
+            return View(users);
         }
 
         public async Task<IActionResult> EditUser(int id)
@@ -56,7 +52,7 @@ namespace Client.Controllers.Admin
                 return NotFound();
             var json = await response.Content.ReadAsStringAsync();
             var user = JsonConvert.DeserializeObject<UserViewModel>(json);
-            return View("~/Views/Admin/UserManagement/EditUser.cshtml", user);
+            return View("~/Areas/Admin/Views/UserManagement/EditUser.cshtml", user);
         }
 
         [HttpPost]
@@ -80,9 +76,9 @@ namespace Client.Controllers.Admin
                     user = JsonConvert.DeserializeObject<UserViewModel>(json);
                 }
                 ModelState.AddModelError("", "Failed to update user role.");
-                return View("~/Views/Admin/UserManagement/EditUser.cshtml", user);
+                return View("~/Areas/Admin/Views/UserManagement/EditUser.cshtml", user);
             }
-            return RedirectToAction("Users");
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
@@ -120,7 +116,7 @@ namespace Client.Controllers.Admin
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var response = await client.DeleteAsync($"api/admin/UserManagement/{id}");
             // Optionally handle errors
-            return RedirectToAction("Users");
+            return RedirectToAction("Index");
         }
     }
-}
+} 

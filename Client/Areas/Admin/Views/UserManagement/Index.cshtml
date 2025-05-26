@@ -57,7 +57,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>@user.CreatedAt?.ToString("yyyy-MM-dd")</td>
+                                        <td>@@user.CreatedAt?.ToString("yyyy-MM-dd")</td>
                                         <td>
                                             <div class="button-group">
                                                 <a asp-action="EditUser" asp-route-id="@user.UserID" class="btn btn-primary">
@@ -185,7 +185,7 @@
 
     <script>
         function updateUserStatus(userId, field, value) {
-            fetch(`/Admin/UpdateUserStatus/${userId}`, {
+            fetch(`/Admin/UserManagement/UpdateUserStatus/${userId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -214,4 +214,4 @@
             });
         }
     </script>
-}
+} 

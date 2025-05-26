@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Client.Models.Admin
+namespace Client.Areas.Admin.Models
 {
     public class UpdateUserStatusViewModel
     {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Client.Models.Admin
+namespace Client.Areas.Admin.Models
 {
     public class EditUserRoleViewModel
     {
@@ -8,4 +8,4 @@ namespace Client.Models.Admin
         [Required]
         public int RoleID { get; set; }
     }
-}
+} 
