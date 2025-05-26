@@ -141,6 +141,7 @@ namespace Client.Controllers
             formData.Add(new StringContent(model.Email ?? string.Empty), "Email");
             formData.Add(new StringContent(model.Bio ?? string.Empty), "Bio");
             formData.Add(new StringContent(model.TalentArea ?? string.Empty), "TalentArea");
+            formData.Add(new StringContent(model.ProfilePrivacy.ToString()), "ProfilePrivacy");
             
             // Add existing ProfileImageURL if it's not being replaced
             if (!string.IsNullOrEmpty(model.ProfileImageURL) && model.ProfileImageFile == null)
@@ -156,7 +157,7 @@ namespace Client.Controllers
                 formData.Add(fileStreamContent, "ProfileImageFile", model.ProfileImageFile.FileName);
             }
 
-            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}", formData); // Send formData
+            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}", formData);
 
             if (response.IsSuccessStatusCode)
             {

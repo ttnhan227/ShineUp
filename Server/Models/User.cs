@@ -25,6 +25,10 @@ public class User
     public bool IsActive { get; set; } = true; // Default to true for existing users
     public bool Verified { get; set; } = false; // Default to false, needs verification
 
+    // New properties for profile enhancements
+    public DateTime? LastLoginTime { get; set; }
+    public ProfilePrivacy ProfilePrivacy { get; set; } = ProfilePrivacy.Public; // Default to public
+
     // Navigation properties
     public ICollection<Video> Videos { get; set; }
     public ICollection<Comment> Comments { get; set; }

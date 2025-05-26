@@ -27,6 +27,9 @@ public class UserProfileRepository : IUserProfileRepository
 
         if (user == null) return null;
 
+        // Calculate profile completion percentage
+        var completionPercentage = CalculateProfileCompletion(user);
+
         return new UserDTO
         {
             UserID = user.UserID,
@@ -38,8 +41,27 @@ public class UserProfileRepository : IUserProfileRepository
             TalentArea = user.TalentArea,
             CreatedAt = user.CreatedAt,
             IsActive = user.IsActive,
-            Verified = user.Verified
+            Verified = user.Verified,
+            LastLoginTime = user.LastLoginTime,
+            ProfilePrivacy = user.ProfilePrivacy,
+            ProfileCompletionPercentage = completionPercentage
         };
+    }
+
+    private int CalculateProfileCompletion(User user)
+    {
+        var totalFields = 5; // Total number of fields to check
+        var completedFields = 0;
+
+        // Check each field and increment completedFields if it's filled
+        if (!string.IsNullOrWhiteSpace(user.Username)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.Email)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.Bio)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.ProfileImageURL)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.TalentArea)) completedFields++;
+
+        // Calculate percentage
+        return (int)((double)completedFields / totalFields * 100);
     }
 
     public async Task<User> UpdateProfile(User userToUpdate)
@@ -78,6 +100,9 @@ public class UserProfileRepository : IUserProfileRepository
         {
             existingUser.TalentArea = userToUpdate.TalentArea;
         }
+
+        // Update profile privacy if provided
+        existingUser.ProfilePrivacy = userToUpdate.ProfilePrivacy;
 
         try
         {

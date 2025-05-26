@@ -144,6 +144,11 @@ public class AuthController : ControllerBase
         {
             var payload = await _googleAuthService.VerifyGoogleToken(googleAuth.IdToken);
             var user = await _googleAuthService.HandleGoogleUser(payload);
+            
+            // Update LastLoginTime for Google logins
+            user.LastLoginTime = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
             var token = GenerateToken(user);
 
             // Make sure we're returning the correct profile image URL and include Verified status

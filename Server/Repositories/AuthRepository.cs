@@ -58,14 +58,18 @@ public class AuthRepository : IAuthRepository
             {
                 return null;
             }
+
+            // Update LastLoginTime
+            user.LastLoginTime = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return user;
         }
         catch (Exception ex)
         {
             _logger.LogError($"Error verifying password for user {user.Email}: {ex.Message}");
             return null;
         }
-
-        return user;
     }
 
     public async Task<bool> UserExists(string email, string username)

@@ -80,6 +80,12 @@ public class UserProfileController : ControllerBase
                 updateProfile.ProfileImageUrl = uploadResult.SecureUrl.ToString();
             }
 
+            var existingUser = await _userProfileRepository.GetUserProfile(userId);
+            if (existingUser == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
             var userModel = new Server.Models.User
             {
                 UserID = userId, // Ensure the ID is set for the update
@@ -87,8 +93,8 @@ public class UserProfileController : ControllerBase
                 Email = updateProfile.Email,
                 Bio = updateProfile.Bio,
                 ProfileImageURL = updateProfile.ProfileImageUrl, // Use the potentially new URL
-                TalentArea = updateProfile.TalentArea
-                // Do not set RoleID or CreatedAt here, as they are not part of the update DTO
+                TalentArea = updateProfile.TalentArea,
+                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUser.ProfilePrivacy // Use the value from DTO, fallback to existing
             };
 
             var updatedUser = await _userProfileRepository.UpdateProfile(userModel);

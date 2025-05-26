@@ -30,6 +30,46 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Profile Completion Card -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3">
+                        <i class='bx bx-task'></i> Profile Completion
+                    </h6>
+                    <div class="progress mb-3" style="height: 25px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: @Model.ProfileCompletionPercentage%;" 
+                             aria-valuenow="@Model.ProfileCompletionPercentage" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            @Model.ProfileCompletionPercentage%
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        @if (Model.ProfileCompletionPercentage < 100)
+                        {
+                            <span>Complete your profile to get the most out of ShineUp!</span>
+                        }
+                        else
+                        {
+                            <span>Your profile is complete! Great job!</span>
+                        }
+                    </small>
+                </div>
+            </div>
+
+            <!-- Last Login Card -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3">
+                        <i class='bx bx-time'></i> Last Login
+                    </h6>
+                    <p class="mb-0">
+                        @(Model.LastLoginTime?.ToString("MMM dd, yyyy HH:mm") ?? "Never")
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -77,6 +117,18 @@
                         <div class="profile-detail-item">
                             <label><i class='bx bx-star'></i> Talent Area</label>
                             <span>@Model.TalentArea</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
+                            <span>
+                                @(Model.ProfilePrivacy switch
+                                {
+                                    0 => "Public - Anyone can view your profile",
+                                    1 => "Friends Only - Only your friends can view your profile",
+                                    2 => "Private - Only you can view your profile",
+                                    _ => "Unknown"
+                                })
+                            </span>
                         </div>
                     </div>
 
@@ -149,34 +201,36 @@
         .profile-details {
             display: grid;
             gap: 1.5rem;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .profile-detail-item {
             padding: 1.5rem;
-            background: #f8f9fa;
+            background: #fff;
             border-radius: 10px;
+            border: 1px solid #e9ecef;
             transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
         }
 
         .profile-detail-item:hover {
-            background: #fff;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            background: #f8f9fa;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
         }
 
         .profile-detail-item label {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: #8898aa;
-            font-size: 0.875rem;
+            color: #525f7f;
+            font-size: 0.9rem;
             margin-bottom: 0.5rem;
             font-weight: 600;
         }
 
         .profile-detail-item label i {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             color: #5e72e4;
         }
 
@@ -190,6 +244,7 @@
             display: flex;
             gap: 1rem;
             justify-content: flex-start;
+            margin-top: 2rem;
         }
 
         .button-group .btn {
@@ -285,6 +340,31 @@
         .loading-overlay .spinner-border {
             width: 3rem;
             height: 3rem;
+        }
+
+        .progress {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background-color: #5e72e4;
+            transition: width 0.6s ease;
+        }
+
+        .card-subtitle {
+            color: #8898aa;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-subtitle i {
+            color: #5e72e4;
+            font-size: 1.25rem;
         }
     </style>
 

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Client.Models
 {
     public class UserViewModel
@@ -12,5 +14,8 @@ namespace Client.Models
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public bool Verified { get; set; }
+        public DateTime? LastLoginTime { get; set; }
+        public int ProfilePrivacy { get; set; }
+        public int ProfileCompletionPercentage { get; set; }
     }
 }

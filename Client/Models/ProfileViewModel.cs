@@ -17,5 +17,7 @@ namespace Client.Models
         public string? TalentArea { get; set; }
         [Display(Name = "Upload New Profile Image")]
         public IFormFile? ProfileImageFile { get; set; } // Added for image upload
+        [Display(Name = "Profile Privacy")]
+        public int ProfilePrivacy { get; set; }
     }
 }
