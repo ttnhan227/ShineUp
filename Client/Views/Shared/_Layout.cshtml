@@ -9,6 +9,24 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Client.styles.css" asp-append-version="true"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .profile-image-placeholder-sm {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #5e72e4; /* Adjusted border size */
+        }
+
+        .profile-image-placeholder-sm i {
+            font-size: 1rem; /* Adjusted icon size */
+            color: #5e72e4;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -27,8 +45,7 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>                    @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
-                    {
-                        <li class="nav-item">
+                    {                        <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
                         </li>
                     }
@@ -41,10 +58,19 @@
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="@(profileImageUrl ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")" 
-                                     alt="Profile" 
-                                     class="rounded-circle me-2" 
-                                     style="width: 30px; height: 30px; object-fit: cover;" />
+                                @if (!string.IsNullOrEmpty(profileImageUrl))
+                                {
+                                    <img src="@profileImageUrl"
+                                         alt="Profile"
+                                         class="rounded-circle me-2"
+                                         style="width: 30px; height: 30px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="profile-image-placeholder-sm me-2">
+                                        <i class='bx bx-user'></i>
+                                    </div>
+                                }
                                 <span>Welcome @userEmail!</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

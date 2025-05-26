@@ -42,7 +42,7 @@ public class UserProfileRepository : IUserProfileRepository
             CreatedAt = user.CreatedAt,
             IsActive = user.IsActive,
             Verified = user.Verified,
-            LastLoginTime = user.LastLoginTime,
+            LastLoginTime = user.LastLoginTime?.ToUniversalTime(), // Convert to UTC
             ProfilePrivacy = user.ProfilePrivacy,
             ProfileCompletionPercentage = completionPercentage
         };
@@ -55,10 +55,17 @@ public class UserProfileRepository : IUserProfileRepository
 
         // Check each field and increment completedFields if it's filled
         if (!string.IsNullOrWhiteSpace(user.Username)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.Email)) completedFields++;
+        // We'll assume Email is always filled if user exists, but we will check verification status
+        // if (!string.IsNullOrWhiteSpace(user.Email)) completedFields++; // Email is a required field, so it's always counted as 'filled'
         if (!string.IsNullOrWhiteSpace(user.Bio)) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.ProfileImageURL)) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.TalentArea)) completedFields++;
+
+        // Check if email is verified and count it towards completion
+        if (user.Verified) completedFields++;
+
+        // Check if Profile Privacy has been set (assuming default is Public)
+        // if (user.ProfilePrivacy != Models.ProfilePrivacy.Public) completedFields++; // Removed check for Profile Privacy
 
         // Calculate percentage
         return (int)((double)completedFields / totalFields * 100);

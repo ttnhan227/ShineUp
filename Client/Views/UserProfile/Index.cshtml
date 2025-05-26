@@ -9,7 +9,7 @@
         <!-- Left Sidebar -->
         <div class="col-md-3">
             <div class="card newsfeed-user-card h-100">
-                <div class="row newsfeed-logged-user text-center pb-5">
+                <div class="row newsfeed-logged-user text-center">
                     <div class="col-md-12">
                         @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                         {
@@ -29,45 +29,41 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Profile Completion Card -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-3">
-                        <i class='bx bx-task'></i> Profile Completion
-                    </h6>
-                    <div class="progress mb-3" style="height: 25px;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: @Model.ProfileCompletionPercentage%;" 
-                             aria-valuenow="@Model.ProfileCompletionPercentage" 
-                             aria-valuemin="0" 
-                             aria-valuemax="100">
-                            @Model.ProfileCompletionPercentage%
+                <div class="card-footer">
+                    <div class="profile-additional-info">
+                        <h6 class="card-subtitle mb-3">
+                            <i class='bx bx-task'></i> Profile Completion
+                        </h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @Model.ProfileCompletionPercentage%;" 
+                                 aria-valuenow="@Model.ProfileCompletionPercentage" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                @Model.ProfileCompletionPercentage%
+                            </div>
                         </div>
+                        <small class="text-muted">
+                            @if (Model.ProfileCompletionPercentage < 100)
+                            {
+                                <span>Complete your profile to get the most out of ShineUp!</span>
+                            }
+                            else
+                            {
+                                <span>Your profile is complete! Great job!</span>
+                            }
+                        </small>
                     </div>
-                    <small class="text-muted">
-                        @if (Model.ProfileCompletionPercentage < 100)
-                        {
-                            <span>Complete your profile to get the most out of ShineUp!</span>
-                        }
-                        else
-                        {
-                            <span>Your profile is complete! Great job!</span>
-                        }
-                    </small>
-                </div>
-            </div>
 
-            <!-- Last Login Card -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-3">
-                        <i class='bx bx-time'></i> Last Login
-                    </h6>
-                    <p class="mb-0">
-                        @(Model.LastLoginTime?.ToString("MMM dd, yyyy HH:mm") ?? "Never")
+                    <div class="profile-additional-info">
+                        <h6 class="card-subtitle mb-3">
+                            <i class='bx bx-time'></i> Last Login
+                        </h6>
+                    <p class="mb-0" id="lastLoginTime">
+                        @(Model.LastLoginTime?.ToString("o") ?? "Never")
                     </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -181,6 +177,53 @@
         .profile-image-placeholder i {
             font-size: 4rem;
             color: #5e72e4;
+        }
+
+        .newsfeed-user-info .card-body {
+            padding-bottom: 1.5rem;
+        }
+
+        .newsfeed-user-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-footer {
+            background-color: #fff;
+            border-top: 1px solid #e9ecef;
+            padding: 1.5rem;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .profile-additional-info {
+            padding: 1rem 1.5rem; /* Adjusted padding for better fit */
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem; /* Adjusted margin-top */
+        }
+
+        .profile-additional-info:first-of-type {
+            border-top: none; /* Remove border for the first section */
+            margin-top: 0; /* Remove margin-top for the first section */
+        }
+
+        .profile-additional-info h6.card-subtitle {
+            margin-bottom: 0.5rem; /* Slightly reduced margin */
+        }
+
+        .profile-additional-info .progress {
+            margin-bottom: 0.75rem !important; /* Adjusted margin */
+        }
+
+        .profile-additional-info small.text-muted {
+            display: block;
+            margin-bottom: 0;
+            font-size: 0.8rem; /* Smaller font size for completion text */
+        }
+
+        .profile-additional-info p {
+            margin-bottom: 0;
+            font-size: 0.9rem; /* Slightly smaller font size for last login */
+            color: #525f7f; /* Darker color for better readability */
         }
 
         .newsfeed-user-info .card-title {
@@ -457,6 +500,37 @@
                 } catch (error) {
                     console.error('Error parsing user data from localStorage:', error);
                     // Fallback to server-rendered content if localStorage is invalid
+                }
+            }
+        });
+        // Convert Last Login Time to local time
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastLoginTimeElement = document.getElementById('lastLoginTime');
+            if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
+                try {
+                    const utcTime = lastLoginTimeElement.textContent.trim();
+                    const localTime = new Date(utcTime);
+                    
+                    // Check if the date is valid
+                    if (isNaN(localTime.getTime())) {
+                        lastLoginTimeElement.textContent = 'Never';
+                        return;
+                    }
+
+                    // Format the date and time for display
+                    const options = { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    };
+                    
+                    lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
+                } catch (error) {
+                    console.error('Error formatting date:', error);
+                    lastLoginTimeElement.textContent = 'Never';
                 }
             }
         });
