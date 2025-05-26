@@ -12,15 +12,4 @@
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.10.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Areas\Admin\Controllers\" />
-      <Folder Include="Areas\Admin\Models\" />
-      <Folder Include="Areas\Admin\Views\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Areas\Admin\Views\UserManagement\EditUser.cshtml" />
-      <AdditionalFiles Include="Areas\Admin\Views\UserManagement\Users.cshtml" />
-    </ItemGroup>
-
 </Project>
