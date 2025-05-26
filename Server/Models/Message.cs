@@ -5,16 +5,27 @@ namespace Server.Models;
 
 public class Message
 {
-    [Key] public int MessageID { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string ConversationId { get; set; }
+    public int SenderId { get; set; } // User ID of the sender
 
-    [ForeignKey("Sender")] public int SenderID { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public MessageType Type { get; set; } = MessageType.Text;
 
-    public User Sender { get; set; }
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
+    public bool IsRead { get; set; } = false;
 
-    [ForeignKey("Receiver")] public int ReceiverID { get; set; }
+    public string? MediaUrl { get; set; }  // if Type is Image, Video, or File, this will contain the URL to the media file
+    
+    public User Sender { get; set; }     //  1-n with User
+    public Conversation Conversation { get; set; } // 1-n with Conversation
+}
 
-    public User Receiver { get; set; }
-
-    public string MessageContent { get; set; }
-    public DateTime SentAt { get; set; }
+public enum MessageType // Type of message content
+{
+    Text,
+    Image,
+    Video,
+    File,
+    System
 }

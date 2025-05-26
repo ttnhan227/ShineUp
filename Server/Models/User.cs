@@ -28,4 +28,6 @@ public class User
     public ICollection<ContestEntry> ContestEntries { get; set; }
     public ICollection<Message> SentMessages { get; set; }
     public ICollection<Message> ReceivedMessages { get; set; }
+    public ICollection<UserConversation> Conversations { get; set; }
+
 }

@@ -21,8 +21,10 @@ public class DatabaseContext : DbContext
     public DbSet<ContestEntry> ContestEntries { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Vote> Votes { get; set; } //anh
+    public DbSet<UserConversation> UserConversations { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+   protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Configure relationships
         modelBuilder.Entity<User>()
@@ -59,18 +61,7 @@ public class DatabaseContext : DbContext
             .HasMany(c => c.ContestEntries)
             .WithOne(ce => ce.Contest)
             .HasForeignKey(ce => ce.ContestID);
-
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.SentMessages)
-            .WithOne(m => m.Sender)
-            .HasForeignKey(m => m.SenderID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for sender
-
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.ReceivedMessages)
-            .WithOne(m => m.Receiver)
-            .HasForeignKey(m => m.ReceiverID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for receiver
+        
 
         modelBuilder.Entity<Category>()
             .HasMany(c => c.Videos)
@@ -82,21 +73,6 @@ public class DatabaseContext : DbContext
             .WithOne(c => c.Video)
             .HasForeignKey(c => c.VideoID);
 
-        modelBuilder.Entity<Comment>()
-            .HasOne(c => c.Video)
-            .WithMany(v => v.Comments)
-            .HasForeignKey(c => c.VideoID);
-
-        modelBuilder.Entity<Like>()
-            .HasOne(l => l.Video)
-            .WithMany(v => v.Likes)
-            .HasForeignKey(l => l.VideoID);
-
-        modelBuilder.Entity<ContestEntry>()
-            .HasOne(ce => ce.Video)
-            .WithMany(v => v.ContestEntries)
-            .HasForeignKey(ce => ce.VideoID);
-
         // Many-to-many relationship between User and Video via Likes is handled by the Likes entity
 
         // Configure the many-to-many relationship between User and Video through the Like entity
@@ -107,6 +83,11 @@ public class DatabaseContext : DbContext
             .HasOne(l => l.User)
             .WithMany(u => u.Likes)
             .HasForeignKey(l => l.UserID);
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Video)
+            .WithMany(v => v.Likes)
+            .HasForeignKey(l => l.VideoID);
 
         // Configure the one-to-many relationship between Role and User
         modelBuilder.Entity<Role>()
@@ -139,5 +120,45 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<ForgetPasswordOTP>()
             .HasIndex(f => f.Email);  // Index for faster email lookups
+        
+        modelBuilder.Entity<Message>()
+            .HasKey(m => m.Id); // Đảm bảo EF hiểu rõ khoá chính
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => m.ConversationId);
+
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => new { m.ConversationId, m.SentAt });
+
+        
+        modelBuilder.Entity<UserConversation>()
+            .HasKey(uc => new { uc.UserId, uc.ConversationId }); 
+
+        
+        // Quan hệ Conversation - UserConversation
+        modelBuilder.Entity<UserConversation>()
+            .HasOne(uc => uc.Conversation)
+            .WithMany(c => c.Participants)
+            .HasForeignKey(uc => uc.ConversationId);
+
+        modelBuilder.Entity<UserConversation>()
+            .HasOne(uc => uc.User)
+            .WithMany(u => u.Conversations)
+            .HasForeignKey(uc => uc.UserId);
+
+        // Quan hệ Conversation - Message
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany(u => u.SentMessages)
+            .HasForeignKey(m => m.SenderId)
+            .HasPrincipalKey(u => u.UserID);
+
+        
+
     }
 }

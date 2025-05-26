@@ -11,6 +11,9 @@ using Server.Repositories;
 using Server.Services;
 using System.Text;
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
+using Serilog;
+using Server.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -172,6 +175,14 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/messages.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog(); 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
