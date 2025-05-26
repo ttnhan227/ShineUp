@@ -129,7 +129,8 @@ public class AuthRepository : IAuthRepository
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
-            IsUsed = false
+            IsUsed = false,
+            UserID = user.UserID
         };
 
         _context.ForgetPasswordOTPs.Add(otpModel);
