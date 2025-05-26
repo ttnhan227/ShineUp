@@ -104,21 +104,20 @@ app.UseAuthorization();
 // Add Session middleware
 app.UseSession();
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute(
-        name: "areas",
-        pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+// Area route
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-    endpoints.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
-        
-    // Add explicit route for google-auth
-    endpoints.MapControllerRoute(
-        name: "googleAuth",
-        pattern: "Auth/google-auth",
-        defaults: new { controller = "Auth", action = "GoogleAuth" });
-});
+// Default route
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Explicit route for google-auth
+app.MapControllerRoute(
+    name: "googleAuth",
+    pattern: "Auth/google-auth",
+    defaults: new { controller = "Auth", action = "GoogleAuth" });
 
 app.Run();
