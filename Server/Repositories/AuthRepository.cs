@@ -40,8 +40,28 @@ public class AuthRepository : IAuthRepository
             return null;
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (!user.IsActive)
         {
+            return null;
+        }
+
+        // Check if user has a password hash (not a Google user)
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            _logger.LogWarning($"User {user.Email} has no password hash (possibly a Google user)");
+            return null;
+        }
+
+        try
+        {
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error verifying password for user {user.Email}: {ex.Message}");
             return null;
         }
 

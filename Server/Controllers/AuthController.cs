@@ -107,6 +107,11 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid email/username: Account not found.");
         }
 
+        if (!existingUser.IsActive)
+        {
+            return Unauthorized("Your account is inactive. Please contact support for assistance.");
+        }
+
         var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
 
         if (user == null)
@@ -119,10 +124,16 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             Token = token,
-            user.Username,
-            user.Email,
-            user.ProfileImageURL,
-            user.Verified
+            User = new
+            {
+                UserID = user.UserID,
+                Username = user.Username,
+                Email = user.Email,
+                ProfileImageURL = user.ProfileImageURL,
+                Role = user.Role.Name,
+                RoleID = user.RoleID,
+                Verified = user.Verified
+            }
         });
     }
 

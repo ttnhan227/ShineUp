@@ -78,7 +78,7 @@ namespace Client.Controllers
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -95,21 +95,28 @@ namespace Client.Controllers
                     Password = model.Password
                 });
 
+                var content = await response.Content.ReadAsStringAsync();
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
                     var result = JsonConvert.DeserializeObject<dynamic>(content);
+                    
+                    if (result == null)
+                    {
+                        ModelState.AddModelError("", "Invalid response from server.");
+                        return View(model);
+                    }
 
                     var claims = new List<Claim>
                     {
-                        new Claim(ClaimTypes.Name, result.user.username.ToString()),
-                        new Claim(ClaimTypes.Email, result.user.email.ToString()),
-                        new Claim(ClaimTypes.NameIdentifier, result.user.userID.ToString()),
-                        new Claim(ClaimTypes.Role, result.user.role.ToString()),
-                        new Claim("RoleID", result.user.roleID.ToString()),
-                        new Claim("JWT", result.token.ToString()),
-                        new Claim("ProfileImageURL", result.user.profileImageURL?.ToString() ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
-                        new Claim("Verified", result.user.verified.ToString())
+                        new Claim(ClaimTypes.Name, result.User.Username.ToString()),
+                        new Claim(ClaimTypes.Email, result.User.Email.ToString()),
+                        new Claim(ClaimTypes.NameIdentifier, result.User.UserID.ToString()),
+                        new Claim(ClaimTypes.Role, result.User.Role.ToString()),
+                        new Claim("RoleID", result.User.RoleID.ToString()),
+                        new Claim("JWT", result.Token.ToString()),
+                        new Claim("ProfileImageURL", result.User.ProfileImageURL?.ToString() ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
+                        new Claim("Verified", result.User.Verified.ToString())
                     };
 
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -128,8 +135,29 @@ namespace Client.Controllers
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", "Invalid login attempt.");
+                    var errorMessage = content;
+                    try
+                    {
+                        // Try to parse the error message from the response
+                        var error = JsonConvert.DeserializeObject<dynamic>(content);
+                        if (error != null && error.message != null)
+                        {
+                            errorMessage = error.message.ToString().Trim('"');
+                        }
+                        else
+                        {
+                            // If we can't parse the error message, use the raw content
+                            errorMessage = content.Trim('"');
+                        }
+                    }
+                    catch
+                    {
+                        // If we can't parse the error message, use the raw content
+                        errorMessage = content.Trim('"');
+                    }
+
+                    // Add the error message to ModelState
+                    ModelState.AddModelError("", errorMessage);
                     return View(model);
                 }
             }
