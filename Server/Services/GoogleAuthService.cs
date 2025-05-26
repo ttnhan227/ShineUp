@@ -48,7 +48,8 @@ public class GoogleAuthService : IGoogleAuthService
                 RoleID = defaultRole?.RoleID ?? 1,
                 TalentArea = "",
                 CreatedAt = DateTime.UtcNow,
-                IsActive = true // New users are active by default
+                IsActive = true, // New users are active by default
+                Verified = true // Google accounts are verified by default
             };
             await _context.Users.AddAsync(user);
         }
@@ -60,12 +61,11 @@ public class GoogleAuthService : IGoogleAuthService
                 throw new InvalidOperationException("Your account is inactive. Please contact support for assistance.");
             }
 
-            if (user.GoogleId == null)
-            {
-                user.GoogleId = payload.Subject;
-                user.ProfileImageURL = payload.Picture ?? user.ProfileImageURL;
-                _context.Users.Update(user);
-            }
+            // Always update GoogleId and ProfileImageURL for Google users
+            user.GoogleId = payload.Subject;
+            user.ProfileImageURL = payload.Picture ?? user.ProfileImageURL;
+            user.Verified = true; // Ensure Google accounts are marked as verified
+            _context.Users.Update(user);
         }
 
         await _context.SaveChangesAsync();

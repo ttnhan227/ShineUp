@@ -26,6 +26,13 @@
                         <div class="card-body">
                             <h5 class="card-title"><a href="#" class="fs-1">@Model.Username</a></h5>
                             <p class="card-text mb-4 fs-7">@Model.TalentArea</p>
+                            @if (Model.IsGoogleAccount)
+                            {
+                                <div class="google-account-badge mt-2">
+                                    <i class='bx bxl-google'></i>
+                                    <span>Linked with Google</span>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -83,22 +90,16 @@
                     <div class="profile-details">
                         <div class="profile-detail-item">
                             <label><i class='bx bx-envelope'></i> Email</label>
-                            <span>@Model.Email</span>
-                            <div class="verification-status mt-2">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-envelope me-2"></i>
+                                <span>@Model.Email</span>
                                 @if (Model.Verified)
                                 {
-                                    <span class="badge bg-success">
-                                        <i class='bx bx-check-circle'></i> Email Verified
-                                    </span>
+                                    <span class="badge bg-success ms-2">Verified</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning">
-                                        <i class='bx bx-error-circle'></i> Email Not Verified
-                                    </span>
-                                    <button type="button" class="btn btn-sm btn-primary mt-2" onclick="sendVerificationOTP()">
-                                        <i class='bx bx-envelope'></i> Verify Email
-                                    </button>
+                                    <span class="badge bg-warning ms-2">Unverified</span>
                                 }
                             </div>
                         </div>
@@ -408,6 +409,43 @@
         .card-subtitle i {
             color: #5e72e4;
             font-size: 1.25rem;
+        }
+
+        .google-account-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e6f7ff; /* Light blue background for prominence */
+            border: 1px solid #91d5ff; /* Blue border */
+            border-radius: 20px;
+            padding: 8px 15px; /* Increased padding */
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #1890ff; /* Blue text color */
+            font-weight: 600; /* Make text bolder */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        .google-account-badge i {
+            color: #4285F4;
+            margin-right: 8px;
+        }
+
+        .google-account-action {
+            margin: 10px 0;
+        }
+
+        .google-account-action .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .google-account-action .btn i {
+            font-size: 1rem;
         }
     </style>
 

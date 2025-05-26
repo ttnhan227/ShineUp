@@ -206,7 +206,8 @@ namespace Client.Controllers
                     new(ClaimTypes.Email, result.Email),
                     new("JWT", result.Token),
                     // Ensure profile image URL is properly set
-                    new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U")
+                    new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
+                    new("IsGoogleAccount", result.IsGoogleAccount.ToString())
                 };
 
                 // Extract UserID, Role and RoleID from JWT
@@ -377,7 +378,8 @@ namespace Client.Controllers
         public string Token { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
-        public string? ProfileImageURL { get; set; } // Added ProfileImageURL
+        public string? ProfileImageURL { get; set; }
+        public bool IsGoogleAccount { get; set; }
     }
 
     public class GoogleAuthDTO

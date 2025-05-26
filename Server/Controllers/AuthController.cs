@@ -158,7 +158,8 @@ public class AuthController : ControllerBase
                 Username = user.Username,
                 Email = user.Email,
                 ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
-                Verified = user.Verified
+                Verified = user.Verified,
+                IsGoogleAccount = true // Added to indicate Google authentication
             });
         }
         catch (Exception ex)

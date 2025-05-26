@@ -17,5 +17,6 @@ namespace Client.Models
         public DateTime? LastLoginTime { get; set; }
         public int ProfilePrivacy { get; set; }
         public int ProfileCompletionPercentage { get; set; }
+        public bool IsGoogleAccount { get; set; }
     }
 }

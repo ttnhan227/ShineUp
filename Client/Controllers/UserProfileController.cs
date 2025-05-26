@@ -53,7 +53,9 @@ namespace Client.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation($"User profile response: {content}");
                 var userProfile = JsonConvert.DeserializeObject<UserViewModel>(content);
+                _logger.LogInformation($"Deserialized IsGoogleAccount: {userProfile.IsGoogleAccount}");
                 return View(userProfile);
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)

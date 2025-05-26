@@ -17,4 +17,5 @@ public class UserDTO
     public DateTime? LastLoginTime { get; set; }
     public ProfilePrivacy ProfilePrivacy { get; set; }
     public int ProfileCompletionPercentage { get; set; }
+    public bool IsGoogleAccount { get; set; }
 }

@@ -30,6 +30,10 @@ public class UserProfileRepository : IUserProfileRepository
         // Calculate profile completion percentage
         var completionPercentage = CalculateProfileCompletion(user);
 
+        // A user is considered a Google account if they have a GoogleId or no password hash
+        var isGoogleAccount = !string.IsNullOrEmpty(user.GoogleId) || string.IsNullOrEmpty(user.PasswordHash);
+        _logger.LogInformation($"User {user.UserID} - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
+
         return new UserDTO
         {
             UserID = user.UserID,
@@ -44,7 +48,8 @@ public class UserProfileRepository : IUserProfileRepository
             Verified = user.Verified,
             LastLoginTime = user.LastLoginTime?.ToUniversalTime(), // Convert to UTC
             ProfilePrivacy = user.ProfilePrivacy,
-            ProfileCompletionPercentage = completionPercentage
+            ProfileCompletionPercentage = completionPercentage,
+            IsGoogleAccount = isGoogleAccount
         };
     }
 
