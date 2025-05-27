@@ -15,9 +15,9 @@ public class MessageService : IMessageService
 {
     private readonly DatabaseContext _db;
     private readonly IHubContext<ChatHub> _hub;
-    private readonly ILogger _logger;
+    private readonly ILogger<MessageService> _logger;
 
-    public MessageService(DatabaseContext db, IHubContext<ChatHub> hub, ILogger logger)
+    public MessageService(DatabaseContext db, IHubContext<ChatHub> hub, ILogger<MessageService> logger)
     {
         _db = db;
         _hub = hub;
@@ -28,10 +28,10 @@ public class MessageService : IMessageService
     {
         // Validate content
         if (string.IsNullOrWhiteSpace(dto.ConversationId) || string.IsNullOrWhiteSpace(dto.Content))
-            throw new ArgumentException("Conversation ID và nội dung không được trống.");
+            throw new ArgumentException("Conversation ID and content cannot be empty.");    
 
         if (dto.Content.Length > 1000)
-            throw new ArgumentException("Nội dung không được vượt quá 1000 ký tự.");
+            throw new ArgumentException("Content exceeds maximum length of 1000 characters.");
 
         var isMember = await _db.UserConversations
             .AnyAsync(x => x.ConversationId == dto.ConversationId && x.UserId == senderId);

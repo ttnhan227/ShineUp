@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -13,6 +14,8 @@ namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Ensure the user is authenticated
+    // The ChatController is responsible for handling chat-related operations such as sending messages, creating conversations, and managing group chats.
     public class ChatController : ControllerBase
     {
         private readonly DatabaseContext _context;
@@ -67,9 +70,13 @@ namespace Server.Controllers
             //Check if conversation already exists
             var existingConversation = await _context.Conversations
                 .Where(c => !c.IsGroup)
+                .Where(c => c.Participants.Count == 2)
+                .Where(c => c.Participants.Any(p => p.UserId == currentUserId))
                 .Where(c => c.Participants.Any(p => p.UserId == targetUserId))
-                .Where(c => c.Participants.Any(p => p.UserId == currentUserId ))
+                .Include(c => c.Participants)
                 .FirstOrDefaultAsync();
+
+            
             if (existingConversation == null)
             {
                 return Ok(existingConversation); // Return existing conversation if found without creating a new one
@@ -97,41 +104,86 @@ namespace Server.Controllers
         }
             
         [HttpPost("group")]
+
         public async Task<IActionResult> CreateGroupChat([FromBody] CreateGroupDTO dto)
+{
+    var currentUserId = GetCurrentUserId();
+
+    // Validate group name
+    if (string.IsNullOrWhiteSpace(dto.GroupName) || dto.GroupName.Length > 100)
+        return BadRequest("Invalid group name. It must be between 1 and 100 characters.");
+
+    // Validate user list
+    if (dto.UserIds == null || dto.UserIds.Count == 0)
+        return BadRequest("UserIds cannot be null or empty.");
+
+    var userIds = dto.UserIds.Distinct().ToList(); 
+    // Distinct(): to remove duplicates (ensures unique user IDs)
+    if (!userIds.Contains(currentUserId)) userIds.Add(currentUserId); 
+    // Ensure the current user is included in the group chat
+
+    // Validate that all user IDs exist in the database
+    // Select the UserID from the Users table where the UserID is in the userIds list
+    var exists = await _context.Users
+        .Where(u => userIds.Contains(u.UserID))
+        .Select(u => u.UserID)
+        .ToListAsync();
+
+    var invalid = userIds.Except(exists).ToList(); // Except(): to find the invalid user IDs
+    if (invalid.Any())
+        return BadRequest($"Users are not exist: {string.Join(",", invalid)}");
+
+    // Strict validation: check for existing group with same name and exact users
+    var possibleGroups = await _context.Conversations
+        .Where(c => c.IsGroup && c.GroupName == dto.GroupName)
+        .Include(c => c.Participants)
+        .ToListAsync();
+
+    foreach (var group in possibleGroups)
+    {
+        var groupUserIds = group.Participants.Select(p => p.UserId).OrderBy(x => x).ToList();
+        var inputUserIds = userIds.OrderBy(x => x).ToList();
+
+        // Check for exact same members
+        if (groupUserIds.SequenceEqual(inputUserIds))
         {
-            var currentUserId = GetCurrentUserId();
-
-            if (string.IsNullOrWhiteSpace(dto.GroupName) || dto.GroupName.Length > 100)
-                return BadRequest("Invalid group name. It must be between 1 and 100 characters.");
-
-            if (dto.UserIds == null || dto.UserIds.Count == 0)
-                return BadRequest("UserIds cannot be null or empty.");
-
-            
-            var userIds = dto.UserIds.Distinct().ToList(); 
-            //Distinct() : to remove duplicates( in this fucntion Distinct() helps to ensure that the userIds list contains unique user IDs)
-            if (!userIds.Contains(currentUserId)) userIds.Add(currentUserId); // Ensure the current user is included in the group chat
-
-            // Validate that all user IDs exist in the database
-            //Select the UserID from the Users table where the UserID is in the userIds list
-            var exists = await _context.Users.Where(u => userIds.Contains(u.UserID)).Select(u => u.UserID).ToListAsync();
-            //Except() : to find the user IDs that are not in the exists list 
-            var invalid = userIds.Except(exists).ToList();
-            if (invalid.Any())
-                return BadRequest($"Users are not exist: {string.Join(",", invalid)}");
-
-            var conv = new Conversation { IsGroup = true, GroupName = dto.GroupName };
-            _context.Conversations.Add(conv);
-
-            foreach (var id in userIds)
+            return Ok(new
             {
-                _context.UserConversations.Add(new UserConversation { UserId = id, Conversation = conv });
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(conv);
+                Message = "Group already exists with the same name and users.",
+                ConversationId = group.Id
+            });
         }
-        
+    }
+
+    // Create new group
+    var conv = new Conversation
+    {
+        IsGroup = true,
+        GroupName = dto.GroupName,
+        CreatedAt = DateTime.UtcNow // Optional: track creation time
+    };
+
+    _context.Conversations.Add(conv);
+
+    foreach (var id in userIds)
+    {
+        _context.UserConversations.Add(new UserConversation
+        {
+            UserId = id,
+            Conversation = conv
+        });
+    }
+
+    await _context.SaveChangesAsync();
+
+    return Ok(new
+    {
+        Message = "Group chat created successfully.",
+        ConversationId = conv.Id,
+        Users = userIds
+    });
+}
+
         [HttpPost("leave")]
         public async Task<IActionResult> LeaveGroup([FromBody] LeaveGroupDTO dto)
         {

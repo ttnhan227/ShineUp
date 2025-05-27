@@ -26,6 +26,12 @@ public class DatabaseContext : DbContext
 
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        
+        //HasData seeding for roles
+        modelBuilder.Entity<Role>().HasData(
+            new Role { RoleID = 1, Name = "User" },
+            new Role { RoleID = 2, Name = "Admin" }
+        );
         // Configure relationships
         modelBuilder.Entity<User>()
             .HasMany(u => u.Videos)
