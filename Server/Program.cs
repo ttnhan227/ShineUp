@@ -157,6 +157,7 @@ builder.Services.AddScoped<ILikeRepository, LikeRepository>();
 builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 
 // Add Admin Repositories
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();

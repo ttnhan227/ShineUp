@@ -24,23 +24,16 @@ public class DatabaseContext : DbContext
 
     public DbSet<Notification> Notifications { get; set; } // Phat
     public DbSet<Share> Shares { get; set; } // Phat
+    public DbSet<UserConversation> UserConversations { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
-     modelBuilder.Entity<Role>().HasData(
+     //HasData seeding for roles
+        modelBuilder.Entity<Role>().HasData(
             new Role { RoleID = 1, Name = "User" },
             new Role { RoleID = 2, Name = "Admin" }
         );
-        // Configure User entity
-        modelBuilder.Entity<User>()
-            .Property(u => u.IsActive)
-            .HasDefaultValue(true);
-
-        modelBuilder.Entity<User>()
-            .Property(u => u.Verified)
-            .HasDefaultValue(false);
-
         // Configure relationships
         modelBuilder.Entity<User>()
             .HasMany(u => u.Videos)
@@ -76,18 +69,7 @@ public class DatabaseContext : DbContext
             .HasMany(c => c.ContestEntries)
             .WithOne(ce => ce.Contest)
             .HasForeignKey(ce => ce.ContestID);
-
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.SentMessages)
-            .WithOne(m => m.Sender)
-            .HasForeignKey(m => m.SenderID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for sender
-
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.ReceivedMessages)
-            .WithOne(m => m.Receiver)
-            .HasForeignKey(m => m.ReceiverID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for receiver
+        
 
         modelBuilder.Entity<Category>()
             .HasMany(c => c.Videos)
@@ -99,21 +81,6 @@ public class DatabaseContext : DbContext
             .WithOne(c => c.Video)
             .HasForeignKey(c => c.VideoID);
 
-        modelBuilder.Entity<Comment>()
-            .HasOne(c => c.Video)
-            .WithMany(v => v.Comments)
-            .HasForeignKey(c => c.VideoID);
-
-        modelBuilder.Entity<Like>()
-            .HasOne(l => l.Video)
-            .WithMany(v => v.Likes)
-            .HasForeignKey(l => l.VideoID);
-
-        modelBuilder.Entity<ContestEntry>()
-            .HasOne(ce => ce.Video)
-            .WithMany(v => v.ContestEntries)
-            .HasForeignKey(ce => ce.VideoID);
-
         // Many-to-many relationship between User and Video via Likes is handled by the Likes entity
 
         // Configure the many-to-many relationship between User and Video through the Like entity
@@ -124,6 +91,11 @@ public class DatabaseContext : DbContext
             .HasOne(l => l.User)
             .WithMany(u => u.Likes)
             .HasForeignKey(l => l.UserID);
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Video)
+            .WithMany(v => v.Likes)
+            .HasForeignKey(l => l.VideoID);
 
         // Configure the one-to-many relationship between Role and User
         modelBuilder.Entity<Role>()
@@ -156,31 +128,42 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<OTP>()
             .HasIndex(f => f.Email);  // Index for faster email lookups
+        
+        modelBuilder.Entity<Message>()
+            .HasKey(m => m.Id); // Đảm bảo EF hiểu rõ khoá chính
 
-        //  Phat Notification 
-        modelBuilder.Entity<Notification>()
-            .HasOne(n => n.User)
-            .WithMany()
-            .HasForeignKey(n => n.UserID)
-            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => m.ConversationId);
 
-        modelBuilder.Entity<Notification>()
-            .HasIndex(n => n.UserID); // Index for faster user-based queries
+        modelBuilder.Entity<Message>()
+            .HasIndex(m => new { m.ConversationId, m.SentAt });
 
-        // Phat Share
-        modelBuilder.Entity<Share>()
-            .HasOne(s => s.User)
-            .WithMany()
-            .HasForeignKey(s => s.UserID)
-            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<UserConversation>()
+            .HasKey(uc => new { uc.UserId, uc.ConversationId }); 
 
-        modelBuilder.Entity<Share>()
-            .HasOne(s => s.Video)
-            .WithMany()
-            .HasForeignKey(s => s.VideoID)
-            .OnDelete(DeleteBehavior.Cascade);
+        
+        // Quan hệ Conversation - UserConversation
+        modelBuilder.Entity<UserConversation>()
+            .HasOne(uc => uc.Conversation)
+            .WithMany(c => c.Participants)
+            .HasForeignKey(uc => uc.ConversationId);
 
-        modelBuilder.Entity<Share>()
-            .HasIndex(s => new { s.UserID, s.VideoID }); // Index for faster lookups
+        modelBuilder.Entity<UserConversation>()
+            .HasOne(uc => uc.User)
+            .WithMany(u => u.Conversations)
+            .HasForeignKey(uc => uc.UserId);
+
+        // Quan hệ Conversation - Message
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId);
+
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany(u => u.SentMessages)
+            .HasForeignKey(m => m.SenderId)
+            .HasPrincipalKey(u => u.UserID);
     }
 }
