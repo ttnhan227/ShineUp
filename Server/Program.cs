@@ -13,6 +13,11 @@ using Server.Repositories.Admin;
 using Server.Services;
 using System.Text;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.SignalR;
+using Serilog;
+using Server.Hubs;
+using Server.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -149,7 +154,6 @@ builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();
-builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
@@ -176,6 +180,20 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
     logging.SetMinimumLevel(LogLevel.Information);
 });
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    o.JsonSerializerOptions.WriteIndented = true;
+});
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/messages.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Host.UseSerilog(); 
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -205,4 +223,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapHub<ChatHub>("/chathub");
 app.Run();
