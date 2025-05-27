@@ -27,6 +27,11 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+     modelBuilder.Entity<Role>().HasData(
+            new Role { RoleID = 1, Name = "User" },
+            new Role { RoleID = 2, Name = "Admin" }
+        );
         // Configure User entity
         modelBuilder.Entity<User>()
             .Property(u => u.IsActive)
