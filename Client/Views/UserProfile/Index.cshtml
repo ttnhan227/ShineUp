@@ -1,0 +1,579 @@
+@model Client.Models.UserViewModel
+
+@{
+    ViewData["Title"] = "User Profile";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="card newsfeed-user-card h-100">
+                <div class="row newsfeed-logged-user text-center">
+                    <div class="col-md-12">
+                        @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
+                        {
+                            <img src="@Model.ProfileImageURL" class="card-img-top w-shadow user-newsfeed-image" alt="Profile Image">
+                        }
+                        else
+                        {
+                            <div class="profile-image-placeholder">
+                                <i class='bx bx-user'></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-12 newsfeed-user-info">
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="#" class="fs-1">@Model.Username</a></h5>
+                            <p class="card-text mb-4 fs-7">@Model.TalentArea</p>
+                            @if (Model.IsGoogleAccount)
+                            {
+                                <div class="google-account-badge mt-2">
+                                    <i class='bx bxl-google'></i>
+                                    <span>Linked with Google</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="profile-additional-info">
+                        <h6 class="card-subtitle mb-3">
+                            <i class='bx bx-task'></i> Profile Completion
+                        </h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @Model.ProfileCompletionPercentage%;" 
+                                 aria-valuenow="@Model.ProfileCompletionPercentage" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                @Model.ProfileCompletionPercentage%
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            @if (Model.ProfileCompletionPercentage < 100)
+                            {
+                                <span>Complete your profile to get the most out of ShineUp!</span>
+                            }
+                            else
+                            {
+                                <span>Your profile is complete! Great job!</span>
+                            }
+                        </small>
+                    </div>
+
+                    <div class="profile-additional-info">
+                        <h6 class="card-subtitle mb-3">
+                            <i class='bx bx-time'></i> Last Login
+                        </h6>
+                    <p class="mb-0" id="lastLoginTime">
+                        @(Model.LastLoginTime?.ToString("o") ?? "Never")
+                    </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="profile-details">
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-envelope'></i> Email</label>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-envelope me-2"></i>
+                                <span>@Model.Email</span>
+                                @if (Model.Verified)
+                                {
+                                    <span class="badge bg-success ms-2">Verified</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning ms-2">Unverified</span>
+                                    <button type="button" class="btn btn-sm btn-primary ms-2" onclick="sendVerificationOTP()">
+                                        <i class='bx bx-envelope'></i> Verify Email
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-user'></i> Username</label>
+                            <span>@Model.Username</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-info-circle'></i> Bio</label>
+                            <span>@Model.Bio</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-star'></i> Talent Area</label>
+                            <span>@Model.TalentArea</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
+                            <span>
+                                @(Model.ProfilePrivacy switch
+                                {
+                                    0 => "Public - Anyone can view your profile",
+                                    1 => "Friends Only - Only your friends can view your profile",
+                                    2 => "Private - Only you can view your profile",
+                                    _ => "Unknown"
+                                })
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="button-group mt-4">
+                        <a asp-action="Edit" class="btn btn-primary">
+                            <i class='bx bx-edit'></i> Edit Profile
+                        </a>
+                        <a asp-action="ChangePassword" class="btn btn-secondary">
+                            <i class='bx bx-lock-alt'></i> Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .newsfeed-user-card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .user-newsfeed-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 20px auto;
+            border: 3px solid #5e72e4;
+            box-shadow: 0 0 20px rgba(94, 114, 228, 0.3);
+        }
+
+        .profile-image-placeholder {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            border: 3px solid #5e72e4;
+        }
+
+        .profile-image-placeholder i {
+            font-size: 4rem;
+            color: #5e72e4;
+        }
+
+        .newsfeed-user-info .card-body {
+            padding-bottom: 1.5rem;
+        }
+
+        .newsfeed-user-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .card-footer {
+            background-color: #fff;
+            border-top: 1px solid #e9ecef;
+            padding: 1.5rem;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        .profile-additional-info {
+            padding: 1rem 1.5rem; /* Adjusted padding for better fit */
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem; /* Adjusted margin-top */
+        }
+
+        .profile-additional-info:first-of-type {
+            border-top: none; /* Remove border for the first section */
+            margin-top: 0; /* Remove margin-top for the first section */
+        }
+
+        .profile-additional-info h6.card-subtitle {
+            margin-bottom: 0.5rem; /* Slightly reduced margin */
+        }
+
+        .profile-additional-info .progress {
+            margin-bottom: 0.75rem !important; /* Adjusted margin */
+        }
+
+        .profile-additional-info small.text-muted {
+            display: block;
+            margin-bottom: 0;
+            font-size: 0.8rem; /* Smaller font size for completion text */
+        }
+
+        .profile-additional-info p {
+            margin-bottom: 0;
+            font-size: 0.9rem; /* Slightly smaller font size for last login */
+            color: #525f7f; /* Darker color for better readability */
+        }
+
+        .newsfeed-user-info .card-title {
+            margin-bottom: 0.5rem;
+        }
+
+        .newsfeed-user-info .card-title a {
+            color: #32325d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .newsfeed-user-info .fs-7 {
+            color: #8898aa;
+            font-size: 0.875rem;
+        }
+
+        .profile-details {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .profile-detail-item {
+            padding: 1.5rem;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .profile-detail-item:hover {
+            background: #f8f9fa;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .profile-detail-item label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #525f7f;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .profile-detail-item label i {
+            font-size: 1.3rem;
+            color: #5e72e4;
+        }
+
+        .profile-detail-item span {
+            color: #32325d;
+            font-size: 1rem;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-start;
+            margin-top: 2rem;
+        }
+
+        .button-group .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .button-group .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: #5e72e4;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: #8898aa;
+            border: none;
+        }
+
+        .alert {
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .verification-status {
+            margin-top: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge i {
+            font-size: 1rem;
+        }
+
+        .bg-success {
+            background-color: #2dce89 !important;
+        }
+
+        .bg-warning {
+            background-color: #fb6340 !important;
+        }
+
+        @@media (max-width: 768px) {
+            .col-md-3 {
+                margin-bottom: 2rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .progress {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background-color: #5e72e4;
+            transition: width 0.6s ease;
+        }
+
+        .card-subtitle {
+            color: #8898aa;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-subtitle i {
+            color: #5e72e4;
+            font-size: 1.25rem;
+        }
+
+        .google-account-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e6f7ff; /* Light blue background for prominence */
+            border: 1px solid #91d5ff; /* Blue border */
+            border-radius: 20px;
+            padding: 8px 15px; /* Increased padding */
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #1890ff; /* Blue text color */
+            font-weight: 600; /* Make text bolder */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        .google-account-badge i {
+            color: #4285F4;
+            margin-right: 8px;
+        }
+
+        .google-account-action {
+            margin: 10px 0;
+        }
+
+        .google-account-action .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .google-account-action .btn i {
+            font-size: 1rem;
+        }
+    </style>
+
+    <!-- Add loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p id="loadingMessage" class="mt-3">Sending verification code...</p>
+    </div>
+
+    <script>
+        function showLoading(message) {
+            const overlay = document.getElementById('loadingOverlay');
+            const messageEl = document.getElementById('loadingMessage');
+            messageEl.textContent = message;
+            overlay.classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('d-none');
+        }
+
+        // Function to handle sending verification OTP
+        async function sendVerificationOTP() {
+            try {
+                showLoading('Sending verification code...');
+                
+                const response = await fetch('/UserProfile/SendVerificationOTP', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Redirect to verification page
+                    window.location.href = '/UserProfile/VerifyEmail';
+                } else {
+                    alert(data.message || 'Failed to send verification code');
+                }
+            } catch (error) {
+                console.error('Error sending verification OTP:', error);
+                alert('Failed to send verification code. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Read user data from localStorage and update the verification status
+        document.addEventListener('DOMContentLoaded', function() {
+            const userDataString = localStorage.getItem('user');
+            const verificationStatusContainer = document.querySelector('.verification-status');
+
+            // Get the server-rendered verification status
+            const serverVerified = @Model.Verified.ToString().ToLower();
+
+            if (userDataString && verificationStatusContainer) {
+                try {
+                    const userData = JSON.parse(userDataString);
+                    // Update the user data in localStorage with the server-rendered verification status
+                    userData.verified = serverVerified;
+                    localStorage.setItem('user', JSON.stringify(userData));
+
+                    let newStatusHtml = '';
+                    if (serverVerified) {
+                        // HTML for verified status
+                        newStatusHtml = `
+                            <span class="badge bg-success">
+                                <i class='bx bx-check-circle'></i> Email Verified
+                            </span>
+                        `;
+                    } else {
+                        // HTML for not verified status with button
+                         newStatusHtml = `
+                            <span class="badge bg-warning">
+                                <i class='bx bx-error-circle'></i> Email Not Verified
+                            </span>
+                            <button type="button" class="btn btn-sm btn-primary mt-2" onclick="sendVerificationOTP()">
+                                <i class='bx bx-envelope'></i> Verify Email
+                            </button>
+                        `;
+                    }
+                    // Replace the existing content of the verification status container
+                    verificationStatusContainer.innerHTML = newStatusHtml;
+                } catch (error) {
+                    console.error('Error parsing user data from localStorage:', error);
+                    // Fallback to server-rendered content if localStorage is invalid
+                }
+            }
+        });
+        // Convert Last Login Time to local time
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastLoginTimeElement = document.getElementById('lastLoginTime');
+            if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
+                try {
+                    const utcTime = lastLoginTimeElement.textContent.trim();
+                    const localTime = new Date(utcTime);
+                    
+                    // Check if the date is valid
+                    if (isNaN(localTime.getTime())) {
+                        lastLoginTimeElement.textContent = 'Never';
+                        return;
+                    }
+
+                    // Format the date and time for display
+                    const options = { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    };
+                    
+                    lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
+                } catch (error) {
+                    console.error('Error formatting date:', error);
+                    lastLoginTimeElement.textContent = 'Never';
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,366 @@
+@model Client.Models.VerifyEmailViewModel
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4 class="card-title">Verify Email</h4>
+                        <p class="text-muted">Please enter the verification code sent to your email</p>
+                    </div>
+
+                    <form asp-controller="UserProfile" asp-action="VerifyEmail" method="post" class="verify-form">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group mb-4">
+                            <label asp-for="OTP" class="form-label">
+                                <i class='bx bx-key'></i> Verification Code
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="OTP" class="form-control" placeholder="Enter verification code" required />
+                            </div>
+                            <span asp-validation-for="OTP" class="text-danger"></span>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class='bx bx-check'></i> Verify Email
+                            </button>
+                            <button type="button" id="resendBtn" class="btn btn-outline-primary" onclick="resendCode()">
+                                <i class='bx bx-refresh'></i> Resend Code <span id="timer" class="d-none">(60s)</span>
+                            </button>
+                            <a asp-controller="UserProfile" asp-action="Index" class="btn btn-secondary">
+                                <i class='bx bx-arrow-back'></i> Back to Profile
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Success!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your email has been verified successfully.</p>
+                <p>You will be redirected to your profile page.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="redirectToProfile()">
+                    <i class='bx bx-check'></i> Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <p id="loadingMessage" class="mt-2">Verifying email...</p>
+</div>
+
+@section Scripts {
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <style>
+        .card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+
+        .card-title {
+            color: #32325d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .text-muted {
+            color: #8898aa !important;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #8898aa;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-label i {
+            font-size: 1.25rem;
+            color: #5e72e4;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
+        }
+
+        .text-danger {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-start;
+            margin-top: 2rem;
+        }
+
+        .button-group .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .button-group .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: #5e72e4;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: #8898aa;
+            border: none;
+        }
+
+        .btn-outline-primary {
+            color: #5e72e4;
+            border: 1px solid #5e72e4;
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            color: white;
+            background: #5e72e4;
+        }
+
+        .btn-outline-primary:disabled {
+            color: #8898aa;
+            border-color: #8898aa;
+            background: transparent;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        .input-validation-error {
+            border-color: #dc3545;
+        }
+
+        .validation-summary-errors {
+            background-color: #fff3f3;
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .validation-summary-errors ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .validation-summary-errors li {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 1.5rem;
+        }
+
+        @@media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+    <script>
+        let countdown = 60;
+        let timerId = null;
+
+        function showLoading(message) {
+            const overlay = document.getElementById('loadingOverlay');
+            const messageEl = document.getElementById('loadingMessage');
+            messageEl.textContent = message;
+            overlay.classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('d-none');
+        }
+
+        function startTimer() {
+            const btn = document.getElementById('resendBtn');
+            const timerSpan = document.getElementById('timer');
+            btn.disabled = true;
+            countdown = 60;
+            timerSpan.classList.remove('d-none');
+
+            timerId = setInterval(() => {
+                countdown--;
+                timerSpan.textContent = `(${countdown}s)`;
+                
+                if (countdown <= 0) {
+                    clearInterval(timerId);
+                    btn.disabled = false;
+                    timerSpan.classList.add('d-none');
+                }
+            }, 1000);
+        }
+
+        function resendCode() {
+            showLoading('Resending verification code...');
+            fetch('/UserProfile/SendVerificationOTP', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    toastr.success('New verification code has been sent to your email');
+                    startTimer();
+                } else {
+                    toastr.error(data.message || 'Failed to resend code');
+                }
+            })
+            .catch(() => {
+                hideLoading();
+                toastr.error('Failed to resend code');
+            });
+        }
+
+        function redirectToProfile() {
+            window.location.href = '@Url.Action("Index", "UserProfile")';
+        }
+
+        // Show success modal and redirect
+        function showSuccessAndRedirect() {
+            var modal = new bootstrap.Modal(document.getElementById('successModal'));
+            modal.show();
+            setTimeout(function() {
+                window.location.href = '@Url.Action("Index", "UserProfile")';
+            }, 3000); // Redirect after 3 seconds
+        }
+
+        // Handle form submission
+        document.querySelector('.verify-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading('Verifying email...');
+
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    OTP: formData.get('OTP')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showSuccessAndRedirect();
+                } else {
+                    toastr.error(data.message || 'Failed to verify email');
+                }
+            })
+            .catch(() => {
+                hideLoading();
+                toastr.error('An error occurred while verifying your email');
+            });
+        });
+
+        // Start timer if coming back from a resend
+        if (@Json.Serialize(TempData["ResendOTP"] ?? false)) {
+            startTimer();
+        }
+
+        // Check if verification was successful
+        @if (TempData["VerificationSuccess"] != null && (bool)TempData["VerificationSuccess"])
+        {
+            <text>
+            $(document).ready(function() {
+                showSuccessAndRedirect();
+            });
+            </text>
+        }
+    </script>
+} 
