@@ -127,7 +127,7 @@ public class AuthRepository : IAuthRepository
         if (user == null) throw new Exception("User not found");
 
         var otp = new Random().Next(100000, 999999).ToString();
-        var otpModel = new OTP
+        var otpModel = new OTPs
         {
             Email = email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
@@ -196,7 +196,7 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        var otpModel = new OTP
+        var otpModel = new OTPs
         {
             Email = user.Email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),

@@ -262,7 +262,7 @@ public class AuthController : ControllerBase
             var otp = new Random().Next(100000, 999999).ToString();
             
             // Save OTP to database
-            var otpModel = new OTP
+            var otpModel = new OTPs
             {
                 UserID = userId,
                 Email = user.Email,
