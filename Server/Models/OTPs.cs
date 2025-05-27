@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models;
 
-public class OTP
+public class OTPs
 {
     [Key]
     public int Id { get; set; }
