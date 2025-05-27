@@ -39,6 +39,14 @@ namespace Client.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Add a stricter email format check
+                var emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(model.Email, emailPattern))
+                {
+                    ModelState.AddModelError("Email", "Please enter a valid email address (e.g., example@gmail.com)");
+                    return View(model);
+                }
+
                 var json = JsonConvert.SerializeObject(model);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 

@@ -26,7 +26,13 @@
                                 <i class='bx bx-envelope'></i> Email
                             </label>
                             <div class="input-group">
-                                <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                                <input asp-for="Email" 
+                                       class="form-control" 
+                                       placeholder="Enter your email" 
+                                       type="email"
+                                       pattern="[a-z0-9._%+-]+@@[a-z0-9.-]+\.[a-z]{2,}$"
+                                       title="Please enter a valid email address (e.g., example@gmail.com)"
+                                       required />
                             </div>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
