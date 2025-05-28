@@ -190,7 +190,7 @@ namespace Server.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("Server.Models.OTP", b =>
+            modelBuilder.Entity("Server.Models.OTPs", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -277,6 +277,10 @@ namespace Server.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -477,7 +481,7 @@ namespace Server.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Server.Models.OTP", b =>
+            modelBuilder.Entity("Server.Models.OTPs", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
                         .WithMany()

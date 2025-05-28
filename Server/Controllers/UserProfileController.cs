@@ -90,6 +90,7 @@ public class UserProfileController : ControllerBase
             {
                 UserID = userId, // Ensure the ID is set for the update
                 Username = updateProfile.Username,
+                FullName = updateProfile.FullName,
                 Email = updateProfile.Email,
                 Bio = updateProfile.Bio,
                 ProfileImageURL = updateProfile.ProfileImageUrl, // Use the potentially new URL
@@ -103,12 +104,13 @@ public class UserProfileController : ControllerBase
             {
                 UserID = updatedUser.UserID,
                 Username = updatedUser.Username,
+                FullName = updatedUser.FullName,
                 Email = updatedUser.Email,
                 Bio = updatedUser.Bio,
                 ProfileImageURL = updatedUser.ProfileImageURL,
                 RoleID = updatedUser.RoleID,
                 TalentArea = updatedUser.TalentArea,
-                CreatedAt = updatedUser.CreatedAt
+                CreatedAt = updatedUser.CreatedAt,
             };
 
             return Ok(userDto);

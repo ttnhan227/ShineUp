@@ -96,6 +96,7 @@ namespace Client.Controllers
                 var profileViewModel = new ProfileViewModel
                 {
                     Username = userProfile.Username,
+                    FullName = userProfile.FullName,
                     Email = userProfile.Email,
                     Bio = userProfile.Bio,
                     ProfileImageURL = userProfile.ProfileImageURL,
@@ -140,6 +141,7 @@ namespace Client.Controllers
 
             // Add string content
             formData.Add(new StringContent(model.Username ?? string.Empty), "Username");
+            formData.Add(new StringContent(model.FullName ?? string.Empty), "FullName");
             formData.Add(new StringContent(model.Email ?? string.Empty), "Email");
             formData.Add(new StringContent(model.Bio ?? string.Empty), "Bio");
             formData.Add(new StringContent(model.TalentArea ?? string.Empty), "TalentArea");

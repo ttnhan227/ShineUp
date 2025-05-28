@@ -7,6 +7,7 @@ namespace Client.Models
     {
         [Required]
         public string? Username { get; set; }
+        public string? FullName { get; set; }
         [Required]
         [EmailAddress]
         public string? Email { get; set; }

@@ -38,6 +38,7 @@ public class UserProfileRepository : IUserProfileRepository
         {
             UserID = user.UserID,
             Username = user.Username,
+            FullName = user.FullName,
             Email = user.Email,
             Bio = user.Bio,
             ProfileImageURL = user.ProfileImageURL,
@@ -55,11 +56,12 @@ public class UserProfileRepository : IUserProfileRepository
 
     private int CalculateProfileCompletion(User user)
     {
-        var totalFields = 5; // Total number of fields to check
+        var totalFields = 6; // Total number of fields to check
         var completedFields = 0;
 
         // Check each field and increment completedFields if it's filled
         if (!string.IsNullOrWhiteSpace(user.Username)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.FullName)) completedFields++;
         // We'll assume Email is always filled if user exists, but we will check verification status
         // if (!string.IsNullOrWhiteSpace(user.Email)) completedFields++; // Email is a required field, so it's always counted as 'filled'
         if (!string.IsNullOrWhiteSpace(user.Bio)) completedFields++;
@@ -91,6 +93,10 @@ public class UserProfileRepository : IUserProfileRepository
         if (!string.IsNullOrEmpty(userToUpdate.Username))
         {
             existingUser.Username = userToUpdate.Username;
+        }
+        if (!string.IsNullOrEmpty(userToUpdate.FullName))
+        {
+            existingUser.FullName = userToUpdate.FullName;
         }
 
         if (!string.IsNullOrEmpty(userToUpdate.Email))
