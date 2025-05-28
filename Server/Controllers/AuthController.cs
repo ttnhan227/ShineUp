@@ -83,16 +83,26 @@ public class AuthController : ControllerBase
         {
             Username = registerDTO.Username,
             Email = registerDTO.Email,
+            FullName = registerDTO.FullName,
             Bio = "",
             ProfileImageURL = "",
             RoleID = defaultRole.RoleID,
             TalentArea = registerDTO.TalentArea,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsActive = false // Set to false until email is verified
         };
 
         // Register the user
         var registeredUser = await _authRepository.Register(newUser, registerDTO.Password);
-        return Ok(new { Message = "User registered successfully!" });
+
+        // Generate and send verification OTP
+        var otp = await _authRepository.GenerateOTP(registeredUser.Email);
+        await _emailService.SendEmailAsync(
+            registeredUser.Email,
+            "Email Verification",
+            $"<p><strong>Dear {registeredUser.Username},</strong></p>\n<p>Welcome to ShineUp! Please verify your email address using the following One-Time Password (OTP):</p>\n<h2 style='color:#007bff; background: #f0f8ff; display: inline-block; padding: 8px 24px; border-radius: 8px; letter-spacing: 2px;'>{otp}</h2>\n<p style='margin-top:16px;'>This code is valid for 15 minutes. Please verify your email to activate your account.</p>\n<p>Thank you,<br/>ShineUp Support Team</p>");
+
+        return Ok(new { Message = "Registration successful! Please check your email for verification code.", UserId = registeredUser.UserID });
     }
 
     [HttpPost("login")]
@@ -109,7 +119,7 @@ public class AuthController : ControllerBase
 
         if (!existingUser.IsActive)
         {
-            return Unauthorized("Your account is inactive. Please contact support for assistance.");
+            return Unauthorized("Your account is not active. Please verify your email first.");
         }
 
         var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
@@ -195,7 +205,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // Add this new endpoint
     [HttpPost("validate-otp")]
     public async Task<IActionResult> ValidateOTP([FromBody] ValidateOTPDTO model)
     {
@@ -204,7 +213,15 @@ public class AuthController : ControllerBase
             var isValid = await _authRepository.ValidateOTP(model.Email, model.OTP);
             if (isValid)
             {
-                return Ok(new { message = "OTP validated successfully" });
+                // Get the user and activate their account
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+                if (user != null)
+                {
+                    user.IsActive = true;
+                    user.Verified = true;
+                    await _context.SaveChangesAsync();
+                }
+                return Ok(new { message = "Email verified successfully" });
             }
             return BadRequest(new { message = "Invalid or expired code" });
         }
@@ -214,7 +231,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // Modify existing ResetPassword action to not validate OTP again
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
     {
@@ -297,40 +313,20 @@ public class AuthController : ControllerBase
         }
     }
 
-    [Authorize]
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDTO model)
     {
         try
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            {
-                _logger.LogWarning($"Invalid user ID claim. Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
-                return BadRequest(new { message = "Invalid user ID" });
-            }
-
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserID == userId);
-            if (user == null)
-            {
-                _logger.LogWarning($"User not found for ID: {userId}");
-                return NotFound(new { message = "User not found" });
-            }
-
-            if (user.Verified)
-                return BadRequest(new { message = "Email is already verified" });
-
-            // Get the most recent OTP for this user
+            // Get the most recent OTP for this email
             var otpRecord = await _context.OTPs
-                .Where(o => o.UserID == userId && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+                .Where(o => o.Email == model.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync();
 
             if (otpRecord == null)
             {
-                _logger.LogWarning($"No valid OTP found for user ID: {userId}");
+                _logger.LogWarning($"No valid OTP found for email: {model.Email}");
                 return BadRequest(new { message = "Verification code has expired. Please request a new one." });
             }
 
@@ -338,16 +334,33 @@ public class AuthController : ControllerBase
             bool isValid = BCrypt.Net.BCrypt.Verify(model.OTP, otpRecord.OTPCode);
             if (!isValid)
             {
-                _logger.LogWarning($"Invalid OTP for user ID: {userId}");
+                _logger.LogWarning($"Invalid OTP for email: {model.Email}");
                 return BadRequest(new { message = "Invalid verification code" });
+            }
+
+            // Get the user
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == model.Email);
+
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found for email: {model.Email}");
+                return NotFound(new { message = "User not found" });
+            }
+
+            if (user.Verified)
+            {
+                return BadRequest(new { message = "Email is already verified" });
             }
 
             // Mark OTP as used
             otpRecord.IsUsed = true;
             await _context.SaveChangesAsync();
 
-            // Update user verification status
+            // Update user verification status and activate account
             user.Verified = true;
+            user.IsActive = true;
             await _context.SaveChangesAsync();
 
             // Generate new token with updated claims

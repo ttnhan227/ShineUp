@@ -147,6 +147,7 @@ public class AuthRepository : IAuthRepository
         var otpModel = await _context.OTPs
             .Where(o => o.Email == email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(o => o.CreatedAt)
+            .Take(1)
             .FirstOrDefaultAsync();
 
         if (otpModel == null)
@@ -235,6 +236,45 @@ public class AuthRepository : IAuthRepository
         }
 
         _logger.LogWarning($"OTP validation failed for user ID: {userId}");
+        return false;
+    }
+
+    public async Task<bool> VerifyEmail(string email, string otp)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            _logger.LogWarning($"User not found for email: {email}");
+            return false;
+        }
+
+        var otpModel = await _context.OTPs
+            .Where(o => o.Email == email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(o => o.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (otpModel == null)
+        {
+            _logger.LogWarning($"No valid OTP found for email: {email}");
+            return false;
+        }
+
+        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+        
+        if (isValid)
+        {
+            // Mark OTP as used
+            otpModel.IsUsed = true;
+            
+            // Update user's verified status
+            user.Verified = true;
+            
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Email verified successfully for user: {email}");
+            return true;
+        }
+
+        _logger.LogWarning($"Email verification failed for: {email}");
         return false;
     }
 }

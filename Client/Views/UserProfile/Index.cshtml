@@ -93,17 +93,7 @@
                             <div class="d-flex align-items-center mb-3">
                                 <i class="fas fa-envelope me-2"></i>
                                 <span>@Model.Email</span>
-                                @if (Model.Verified)
-                                {
-                                    <span class="badge bg-success ms-2">Verified</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning ms-2">Unverified</span>
-                                    <button type="button" class="btn btn-sm btn-primary ms-2" onclick="sendVerificationOTP()">
-                                        <i class='bx bx-envelope'></i> Verify Email
-                                    </button>
-                                }
+                                <span class="badge bg-success ms-2">Verified</span>
                             </div>
                         </div>
                         <div class="profile-detail-item">
