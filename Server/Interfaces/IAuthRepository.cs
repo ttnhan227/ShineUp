@@ -14,4 +14,5 @@ public interface IAuthRepository
     Task<bool> ResetPassword(string email, string newPassword);
     Task<bool> SaveOTP(int userId, string otp);
     Task<bool> VerifyOTP(int userId, string otp);
+    Task<bool> VerifyEmail(string email, string otp);
 }

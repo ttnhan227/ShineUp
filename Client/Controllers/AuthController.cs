@@ -55,7 +55,10 @@ namespace Client.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Login");
+                    var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    TempData["UserId"] = result.UserId.ToString();
+                    TempData["Email"] = model.Email;
+                    return RedirectToAction("VerifyEmail");
                 }
 
                 try
@@ -78,6 +81,119 @@ namespace Client.Controllers
                 }
             }
             return View(model);
+        }
+
+        [HttpGet("verify-email")]
+        public IActionResult VerifyEmail()
+        {
+            var email = TempData["Email"]?.ToString();
+            var userId = TempData["UserId"]?.ToString();
+            
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Register");
+            }
+            
+            TempData.Keep("Email");
+            TempData.Keep("UserId");
+            
+            return View(new VerifyEmailViewModel { Email = email });
+        }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _logger.LogInformation($"Attempting to verify email: {model.Email}");
+                
+                // First verify the email
+                var verifyResponse = await _httpClient.PostAsJsonAsync("api/Auth/verify-email", new
+                {
+                    Email = model.Email,
+                    OTP = model.OTP
+                });
+
+                var responseContent = await verifyResponse.Content.ReadAsStringAsync();
+                _logger.LogInformation($"Verification response: {responseContent}");
+
+                if (verifyResponse.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    
+                    if (result == null)
+                    {
+                        _logger.LogError("Failed to deserialize verification response");
+                        ModelState.AddModelError("", "Invalid response from server");
+                        return View(model);
+                    }
+
+                    // Create claims from the verification response
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, result.user?.username?.ToString() ?? model.Email),
+                        new Claim(ClaimTypes.Email, result.user?.email?.ToString() ?? model.Email),
+                        new Claim(ClaimTypes.NameIdentifier, result.user?.UserID?.ToString() ?? "0"),
+                        new Claim(ClaimTypes.Role, result.user?.Role?.ToString() ?? "User"),
+                        new Claim("RoleID", result.user?.RoleID?.ToString() ?? "1"),
+                        new Claim("JWT", result.token?.ToString() ?? string.Empty),
+                        new Claim("ProfileImageURL", result.user?.profileImageURL?.ToString() ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
+                        new Claim("Verified", "true")
+                    };
+
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        principal,
+                        new AuthenticationProperties
+                        {
+                            IsPersistent = true,
+                            ExpiresUtc = DateTime.UtcNow.AddHours(24)
+                        });
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var error = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+                ModelState.AddModelError("OTP", error?["message"] ?? "Invalid or expired verification code");
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during email verification");
+                ModelState.AddModelError("", "An error occurred during verification");
+                return View(model);
+            }
+        }
+
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerification([FromBody] ForgotPasswordViewModel model)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/send-verification-otp", new { Email = model.Email });
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true, message = "Verification code has been resent" });
+                }
+
+                return Json(new { success = false, message = result?["message"] ?? "Failed to resend verification code" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resending verification code");
+                return Json(new { success = false, message = "An error occurred" });
+            }
         }
 
         [HttpGet("login")]

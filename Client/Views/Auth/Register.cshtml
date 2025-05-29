@@ -22,6 +22,16 @@
                         </div>
 
                         <div class="form-group mb-4">
+                            <label asp-for="FullName" class="form-label">
+                                <i class='bx bx-user-circle'></i> Full Name
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="FullName" class="form-control" placeholder="Enter your full name" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
                             <label asp-for="Email" class="form-label">
                                 <i class='bx bx-envelope'></i> Email
                             </label>

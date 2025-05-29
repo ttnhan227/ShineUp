@@ -7,17 +7,21 @@
                 <div class="card-body">
                     <div class="text-center mb-4">
                         <h4 class="card-title">Verify Email</h4>
-                        <p class="text-muted">Please enter the verification code sent to your email</p>
+                        <p class="text-muted">Please enter the verification code sent to your email: @Model.Email</p>
                     </div>
 
-                    <form asp-controller="UserProfile" asp-action="VerifyEmail" method="post" class="verify-form">
+                    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+                    <form asp-controller="Auth" asp-action="VerifyEmail" method="post" class="verify-form">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Email" />
+                        
                         <div class="form-group mb-4">
                             <label asp-for="OTP" class="form-label">
                                 <i class='bx bx-key'></i> Verification Code
                             </label>
                             <div class="input-group">
-                                <input asp-for="OTP" class="form-control" placeholder="Enter verification code" required />
+                                <input asp-for="OTP" class="form-control" placeholder="Enter verification code" required maxlength="6" />
                             </div>
                             <span asp-validation-for="OTP" class="text-danger"></span>
                         </div>
@@ -29,8 +33,8 @@
                             <button type="button" id="resendBtn" class="btn btn-outline-primary" onclick="resendCode()">
                                 <i class='bx bx-refresh'></i> Resend Code <span id="timer" class="d-none">(60s)</span>
                             </button>
-                            <a asp-controller="UserProfile" asp-action="Index" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to Profile
+                            <a asp-controller="Auth" asp-action="Login" class="btn btn-secondary">
+                                <i class='bx bx-arrow-back'></i> Back to Login
                             </a>
                         </div>
                     </form>
@@ -50,10 +54,10 @@
             </div>
             <div class="modal-body">
                 <p>Your email has been verified successfully.</p>
-                <p>You will be redirected to your profile page.</p>
+                <p>You will be redirected to the login page.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="redirectToProfile()">
+                <button type="button" class="btn btn-primary" onclick="redirectToLogin()">
                     <i class='bx bx-check'></i> Continue
                 </button>
             </div>
@@ -65,7 +69,7 @@
     <div class="spinner-border text-primary" role="status">
         <span class="sr-only">Loading...</span>
     </div>
-    <p id="loadingMessage" class="mt-2">Verifying email...</p>
+    <p id="loadingMessage" class="mt-2">Verifying...</p>
 </div>
 
 @section Scripts {
@@ -245,22 +249,39 @@
         }
     </style>
     <script>
-        let countdown = 60;
-        let timerId = null;
+        console.log('Debug: Script loaded');
+        console.log('Debug: Email value:', '@Model.Email');
+
+        // Add form submission handler
+        document.querySelector('.verify-form').addEventListener('submit', function(e) {
+            console.log('Debug: Form submitted');
+            console.log('Debug: OTP value:', document.querySelector('input[name="OTP"]').value);
+            console.log('Debug: Email value:', document.querySelector('input[name="Email"]').value);
+            
+            e.preventDefault();
+            showLoading('Verifying email...');
+
+            // Log form data
+            const formData = new FormData(this);
+            console.log('Debug: Form data:', Object.fromEntries(formData));
+
+            // Submit form
+            this.submit();
+        });
 
         function showLoading(message) {
+            console.log('Debug: Showing loading:', message);
             const overlay = document.getElementById('loadingOverlay');
             const messageEl = document.getElementById('loadingMessage');
             messageEl.textContent = message;
             overlay.classList.remove('d-none');
         }
 
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.add('d-none');
-        }
+        let countdown = 60;
+        let timerId = null;
 
         function startTimer() {
+            console.log('Debug: Starting timer');
             const btn = document.getElementById('resendBtn');
             const timerSpan = document.getElementById('timer');
             btn.disabled = true;
@@ -280,87 +301,56 @@
         }
 
         function resendCode() {
+            console.log('Debug: Resending code');
+            console.log('Debug: Email for resend:', '@Model.Email');
+            
             showLoading('Resending verification code...');
-            fetch('/UserProfile/SendVerificationOTP', {
+            
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            console.log('Debug: Anti-forgery token:', token);
+
+            fetch('/Auth/ResendVerification', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                }
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ email: '@Model.Email' })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Debug: Resend response status:', response.status);
+                return response.json();
+            })
             .then(data => {
-                hideLoading();
+                console.log('Debug: Resend response data:', data);
+                document.getElementById('loadingOverlay').classList.add('d-none');
                 if (data.success) {
                     toastr.success('New verification code has been sent to your email');
                     startTimer();
                 } else {
-                    toastr.error(data.message || 'Failed to resend code');
+                    toastr.error(data.message || 'Failed to resend verification code');
                 }
             })
-            .catch(() => {
-                hideLoading();
-                toastr.error('Failed to resend code');
+            .catch(error => {
+                console.error('Debug: Resend error:', error);
+                document.getElementById('loadingOverlay').classList.add('d-none');
+                toastr.error('Failed to resend verification code');
             });
         }
-
-        function redirectToProfile() {
-            window.location.href = '@Url.Action("Index", "UserProfile")';
-        }
-
-        // Show success modal and redirect
-        function showSuccessAndRedirect() {
-            var modal = new bootstrap.Modal(document.getElementById('successModal'));
-            modal.show();
-            setTimeout(function() {
-                window.location.href = '@Url.Action("Index", "UserProfile")';
-            }, 3000); // Redirect after 3 seconds
-        }
-
-        // Handle form submission
-        document.querySelector('.verify-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            showLoading('Verifying email...');
-
-            const formData = new FormData(this);
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify({
-                    OTP: formData.get('OTP')
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showSuccessAndRedirect();
-                } else {
-                    toastr.error(data.message || 'Failed to verify email');
-                }
-            })
-            .catch(() => {
-                hideLoading();
-                toastr.error('An error occurred while verifying your email');
-            });
-        });
 
         // Start timer if coming back from a resend
-        if (@Json.Serialize(TempData["ResendOTP"] ?? false)) {
+        if (@Json.Serialize(TempData["ResendVerification"] ?? false)) {
+            console.log('Debug: Starting timer from TempData');
             startTimer();
         }
 
-        // Check if verification was successful
-        @if (TempData["VerificationSuccess"] != null && (bool)TempData["VerificationSuccess"])
-        {
-            <text>
-            $(document).ready(function() {
-                showSuccessAndRedirect();
-            });
-            </text>
+        // Log any validation errors
+        const validationSummary = document.querySelector('.validation-summary-errors');
+        if (validationSummary) {
+            console.log('Debug: Validation errors:', validationSummary.textContent);
         }
+
+        // Start timer on page load
+        startTimer();
     </script>
 } 
