@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Client.Models;
@@ -11,9 +13,6 @@ public class PostListViewModel
     
     [Display(Name = "Content")]
     public string Content { get; set; }
-    
-    [Display(Name = "Image")]
-    public string? ImageURL { get; set; }
     
     [Display(Name = "Created At")]
     public DateTime CreatedAt { get; set; }
@@ -29,4 +28,13 @@ public class PostListViewModel
     
     [Display(Name = "Comments")]
     public int CommentsCount { get; set; }
+
+    public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
+}
+
+public class MediaFileViewModel
+{
+    public string Url { get; set; }
+    public string Type { get; set; } // "image" or "video"
+    public string PublicId { get; set; }
 } 

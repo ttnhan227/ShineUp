@@ -197,16 +197,18 @@ namespace Client.Controllers
         }
 
         [HttpGet("login")]
-        public IActionResult Login()
+        public IActionResult Login(string returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
+                ViewBag.ReturnUrl = returnUrl;
                 return View(model);
             }
 
@@ -228,6 +230,7 @@ namespace Client.Controllers
                     if (result == null)
                     {
                         ModelState.AddModelError("", "Invalid response from server.");
+                        ViewBag.ReturnUrl = returnUrl;
                         return View(model);
                     }
 
@@ -252,9 +255,13 @@ namespace Client.Controllers
                         new AuthenticationProperties
                         {
                             IsPersistent = true,
-                            ExpiresUtc = DateTime.UtcNow.AddHours(24)
+                            ExpiresUtc = DateTime.UtcNow.AddDays(7) // Match the token expiration
                         });
 
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
                     return RedirectToAction("Index", "Home");
                 }
                 else
@@ -262,7 +269,6 @@ namespace Client.Controllers
                     var errorMessage = content;
                     try
                     {
-                        // Try to parse the error message from the response
                         var error = JsonConvert.DeserializeObject<dynamic>(content);
                         if (error != null && error.message != null)
                         {
@@ -270,18 +276,16 @@ namespace Client.Controllers
                         }
                         else
                         {
-                            // If we can't parse the error message, use the raw content
                             errorMessage = content.Trim('"');
                         }
                     }
                     catch
                     {
-                        // If we can't parse the error message, use the raw content
                         errorMessage = content.Trim('"');
                     }
 
-                    // Add the error message to ModelState
                     ModelState.AddModelError("", errorMessage);
+                    ViewBag.ReturnUrl = returnUrl;
                     return View(model);
                 }
             }
@@ -289,6 +293,7 @@ namespace Client.Controllers
             {
                 _logger.LogError(ex, "Error during login");
                 ModelState.AddModelError("", "An error occurred during login.");
+                ViewBag.ReturnUrl = returnUrl;
                 return View(model);
             }
         }

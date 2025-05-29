@@ -37,20 +37,30 @@ public class PostsController : ControllerBase
                 PostID = p.PostID,
                 Title = p.Title,
                 Content = p.Content,
-                ImageURL = p.ImageURL,
                 CreatedAt = p.CreatedAt,
                 UserID = p.UserID,
                 UserName = p.User.Username,
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
-                CommentsCount = p.Comments?.Count ?? 0
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
             });
 
             return Ok(postDtos);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting all posts");
+            _logger.LogError(ex, "Error getting posts");
             return StatusCode(500, "Internal server error");
         }
     }
@@ -72,7 +82,6 @@ public class PostsController : ControllerBase
                 PostID = post.PostID,
                 Title = post.Title,
                 Content = post.Content,
-                ImageURL = post.ImageURL,
                 CreatedAt = post.CreatedAt,
                 UpdatedAt = post.UpdatedAt,
                 UserID = post.UserID,
@@ -82,7 +91,18 @@ public class PostsController : ControllerBase
                 PrivacyID = post.PrivacyID,
                 PrivacyName = post.Privacy?.Name,
                 LikesCount = post.Likes?.Count ?? 0,
-                CommentsCount = post.Comments?.Count ?? 0
+                CommentsCount = post.Comments?.Count ?? 0,
+                MediaFiles = post.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(post.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
             };
 
             return Ok(postDto);
@@ -102,55 +122,102 @@ public class PostsController : ControllerBase
     {
         try
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = await _postRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
             {
-                return Unauthorized("Invalid user ID");
+                return Unauthorized();
             }
 
-            string? imageUrl = null;
-            if (createPostDto.Image != null)
-            {
-                var uploadResult = await _cloudinaryService.UploadImgAsync(createPostDto.Image);
-                if (uploadResult.Error != null)
-                {
-                    _logger.LogError($"Cloudinary image upload error: {uploadResult.Error.Message}");
-                    return BadRequest(new { message = "Image upload failed: " + uploadResult.Error.Message });
-                }
-                imageUrl = uploadResult.SecureUrl.ToString();
-            }
-            
             var post = new Post
             {
                 Title = createPostDto.Title,
                 Content = createPostDto.Content,
-                ImageURL = imageUrl,
+                UserID = userId,
                 CategoryID = createPostDto.CategoryID,
                 PrivacyID = createPostDto.PrivacyID,
-                UserID = userId,
                 CreatedAt = DateTime.UtcNow
             };
 
-            var createdPost = await _postRepository.CreatePostAsync(post);
-            
-            var postDto = new PostResponseDto
-            {
-                PostID = createdPost.PostID,
-                Title = createdPost.Title,
-                Content = createdPost.Content,
-                ImageURL = createdPost.ImageURL,
-                CreatedAt = createdPost.CreatedAt,
-                UserID = createdPost.UserID,
-                Username = createdPost.User.Username,
-                CategoryID = createdPost.CategoryID,
-                CategoryName = createdPost.Category?.CategoryName,
-                PrivacyID = createdPost.PrivacyID,
-                PrivacyName = createdPost.Privacy?.Name,
-                LikesCount = 0,
-                CommentsCount = 0
-            };
+            await _postRepository.CreatePostAsync(post);
 
-            return CreatedAtAction(nameof(GetPost), new { id = postDto.PostID }, postDto);
+            // Handle media files
+            var formFiles = Request.Form.Files;
+            var mediaTypes = Request.Form["MediaTypes"].ToList();
+
+            for (int i = 0; i < formFiles.Count; i++)
+            {
+                var file = formFiles[i];
+                var mediaType = mediaTypes[i];
+
+                if (file.Length > 0)
+                {
+                    // Upload to Cloudinary
+                    if (mediaType == "image")
+                    {
+                        var uploadResult = await _cloudinaryService.UploadImgAsync(file);
+                        if (uploadResult != null)
+                        {
+                            var image = new Image
+                            {
+                                PostID = post.PostID,
+                                ImageID = uploadResult.PublicId,
+                                UserID = userId,
+                                ImageURL = uploadResult.Url.ToString(),
+                                CloudPublicId = uploadResult.PublicId,
+                                UploadDate = DateTime.UtcNow,
+                                Title = post.Title,
+                                Description = post.Content,
+                                CategoryID = post.CategoryID ?? 1,
+                                PrivacyID = post.PrivacyID ?? 1
+                            };
+                            await _postRepository.AddImageAsync(image);
+                        }
+                    }
+                    else if (mediaType == "video")
+                    {
+                        var uploadResult = await _cloudinaryService.UploadVideoAsync(file);
+                        if (uploadResult != null)
+                        {
+                            var video = new Video
+                            {
+                                PostID = post.PostID,
+                                VideoID = uploadResult.PublicId,
+                                UserID = userId,
+                                VideoURL = uploadResult.Url.ToString(),
+                                CloudPublicId = uploadResult.PublicId,
+                                UploadDate = DateTime.UtcNow,
+                                Title = post.Title,
+                                Description = post.Content,
+                                CategoryID = post.CategoryID ?? 1,
+                                PrivacyID = post.PrivacyID ?? 1,
+                                ViewCount = 0,
+                                SkillLevel = "Beginner",
+                                Location = "Unknown"
+                            };
+                            await _postRepository.AddVideoAsync(video);
+                        }
+                    }
+                }
+            }
+
+            return CreatedAtAction(nameof(GetPost), new { id = post.PostID }, new PostResponseDto
+            {
+                PostID = post.PostID,
+                Title = post.Title,
+                Content = post.Content,
+                CreatedAt = post.CreatedAt,
+                UserID = post.UserID,
+                Username = user.Username,
+                CategoryID = post.CategoryID,
+                CategoryName = post.Category?.CategoryName,
+                PrivacyID = post.PrivacyID,
+                PrivacyName = post.Privacy?.Name,
+                LikesCount = 0,
+                CommentsCount = 0,
+                MediaFiles = new List<MediaFileDTO>() // We'll populate this in the GetPost action
+            });
         }
         catch (Exception ex)
         {
@@ -173,41 +240,58 @@ public class PostsController : ControllerBase
                 return NotFound();
             }
 
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return Unauthorized("Invalid user ID");
-            }
-
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             if (post.UserID != userId)
             {
                 return Forbid();
             }
 
-            // Update only the fields that are provided
-            if (updatePostDto.Title != null)
+            // Update basic post information
+            if (!string.IsNullOrEmpty(updatePostDto.Title))
                 post.Title = updatePostDto.Title;
-            if (updatePostDto.Content != null)
+            if (!string.IsNullOrEmpty(updatePostDto.Content))
                 post.Content = updatePostDto.Content;
             if (updatePostDto.CategoryID.HasValue)
                 post.CategoryID = updatePostDto.CategoryID;
             if (updatePostDto.PrivacyID.HasValue)
                 post.PrivacyID = updatePostDto.PrivacyID;
 
-            // Handle image upload if present
-            if (updatePostDto.Image != null)
+            // Handle media files
+            if (updatePostDto.MediaFiles != null && updatePostDto.MediaFiles.Any())
             {
-                var uploadResult = await _cloudinaryService.UploadImgAsync(updatePostDto.Image);
-                if (uploadResult.Error != null)
+                // Remove existing media files
+                await _postRepository.RemoveAllMediaFromPostAsync(post.PostID);
+
+                // Add new media files
+                foreach (var mediaFile in updatePostDto.MediaFiles)
                 {
-                    _logger.LogError($"Cloudinary image upload error: {uploadResult.Error.Message}");
-                    return BadRequest(new { message = "Image upload failed: " + uploadResult.Error.Message });
+                    if (mediaFile.Type == "image")
+                    {
+                        var image = new Image
+                        {
+                            PostID = post.PostID,
+                            ImageID = mediaFile.PublicId,
+                            UserID = userId,
+                            ImageURL = mediaFile.Url,
+                            CloudPublicId = mediaFile.PublicId,
+                            UploadDate = DateTime.UtcNow
+                        };
+                        await _postRepository.AddImageAsync(image);
+                    }
+                    else if (mediaFile.Type == "video")
+                    {
+                        var video = new Video
+                        {
+                            PostID = post.PostID,
+                            VideoID = mediaFile.PublicId,
+                            UserID = userId,
+                            VideoURL = mediaFile.Url,
+                            CloudPublicId = mediaFile.PublicId,
+                            UploadDate = DateTime.UtcNow
+                        };
+                        await _postRepository.AddVideoAsync(video);
+                    }
                 }
-                post.ImageURL = uploadResult.SecureUrl.ToString();
-            }
-            else if (updatePostDto.ImageURL != null)
-            {
-                post.ImageURL = updatePostDto.ImageURL;
             }
 
             await _postRepository.UpdatePostAsync(post);
@@ -233,18 +317,23 @@ public class PostsController : ControllerBase
                 return NotFound();
             }
 
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return Unauthorized("Invalid user ID");
-            }
-
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             if (post.UserID != userId)
             {
                 return Forbid();
             }
 
-            await _postRepository.DeletePostAsync(id);
+            // Delete media files from Cloudinary
+            foreach (var image in post.Images)
+            {
+                await _cloudinaryService.DeleteMediaAsync(image.CloudPublicId);
+            }
+            foreach (var video in post.Videos)
+            {
+                await _cloudinaryService.DeleteMediaAsync(video.CloudPublicId);
+            }
+
+            await _postRepository.DeletePostAsync(post);
             return NoContent();
         }
         catch (Exception ex)
@@ -266,13 +355,23 @@ public class PostsController : ControllerBase
                 PostID = p.PostID,
                 Title = p.Title,
                 Content = p.Content,
-                ImageURL = p.ImageURL,
                 CreatedAt = p.CreatedAt,
                 UserID = p.UserID,
                 UserName = p.User.Username,
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
-                CommentsCount = p.Comments?.Count ?? 0
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
             });
 
             return Ok(postDtos);
@@ -296,13 +395,23 @@ public class PostsController : ControllerBase
                 PostID = p.PostID,
                 Title = p.Title,
                 Content = p.Content,
-                ImageURL = p.ImageURL,
                 CreatedAt = p.CreatedAt,
                 UserID = p.UserID,
                 UserName = p.User.Username,
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
-                CommentsCount = p.Comments?.Count ?? 0
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
             });
 
             return Ok(postDtos);
@@ -326,13 +435,23 @@ public class PostsController : ControllerBase
                 PostID = p.PostID,
                 Title = p.Title,
                 Content = p.Content,
-                ImageURL = p.ImageURL,
                 CreatedAt = p.CreatedAt,
                 UserID = p.UserID,
                 UserName = p.User.Username,
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
-                CommentsCount = p.Comments?.Count ?? 0
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
             });
 
             return Ok(postDtos);

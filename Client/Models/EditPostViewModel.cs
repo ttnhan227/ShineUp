@@ -15,8 +15,13 @@ public class EditPostViewModel
     
     [Display(Name = "Image")]
     public IFormFile? Image { get; set; }
+
+    [Display(Name = "Video")]
+    public IFormFile? Video { get; set; }
     
     public string? CurrentImageURL { get; set; }
+    public string? CurrentVideoURL { get; set; }
+    public string? MediaType { get; set; }
     
     [Display(Name = "Category")]
     public int? CategoryID { get; set; }

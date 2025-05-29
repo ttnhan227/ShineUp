@@ -4,6 +4,7 @@ using Client.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Net;
 
 namespace Client.Controllers;
 
@@ -98,6 +99,7 @@ public class PostsController : Controller
         try
         {
             var client = _clientFactory.CreateClient("API");
+            var viewModel = new CreatePostViewModel();
             
             // Get categories
             var categoriesResponse = await client.GetAsync("api/categories");
@@ -108,7 +110,7 @@ public class PostsController : Controller
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
+                viewModel.Categories = new SelectList(categories, "CategoryID", "CategoryName");
             }
 
             // Get privacy options
@@ -120,10 +122,10 @@ public class PostsController : Controller
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                ViewBag.PrivacyOptions = new SelectList(privacyOptions, "PrivacyID", "Name");
+                viewModel.PrivacyOptions = new SelectList(privacyOptions, "PrivacyID", "Name");
             }
 
-            return View();
+            return View(viewModel);
         }
         catch (Exception ex)
         {
@@ -136,46 +138,61 @@ public class PostsController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreatePostViewModel model)
+    public async Task<IActionResult> Create([FromForm] CreatePostViewModel model)
     {
         if (!ModelState.IsValid)
         {
-            await LoadDropdowns();
+            ViewBag.Categories = await GetCategoriesAsync();
+            ViewBag.PrivacyOptions = await GetPrivacyOptionsAsync();
             return View(model);
         }
 
         try
         {
-            var client = _clientFactory.CreateClient("API");
-            
-            // Get the JWT token from claims
-            var token = User.FindFirst("JWT")?.Value;
-            if (string.IsNullOrEmpty(token))
+            var jwtToken = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(jwtToken))
             {
-                ModelState.AddModelError("", "Authentication token is missing");
-                await LoadDropdowns();
-                return View(model);
+                _logger.LogError("JWT token is missing");
+                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Create", "Posts") });
             }
 
-            // Add the authorization header
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            
-            // Create multipart form data
+            var client = _clientFactory.CreateClient("API");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
             var formData = new MultipartFormDataContent();
             formData.Add(new StringContent(model.Title), "Title");
             formData.Add(new StringContent(model.Content), "Content");
-            
-            if (model.CategoryID.HasValue)
-                formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
-            if (model.PrivacyID.HasValue)
-                formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
+            formData.Add(new StringContent(model.CategoryID.ToString()), "CategoryID");
+            formData.Add(new StringContent(model.PrivacyID.ToString()), "PrivacyID");
 
-            // Handle image upload if present
-            if (model.Image != null)
+            // Handle image uploads
+            if (model.Images != null && model.Images.Any())
             {
-                var imageContent = new StreamContent(model.Image.OpenReadStream());
-                imageContent.Headers.ContentType = new MediaTypeHeaderValue(model.Image.ContentType);
-                formData.Add(imageContent, "Image", model.Image.FileName);
+                foreach (var image in model.Images)
+                {
+                    if (image != null && image.Length > 0)
+                    {
+                        var imageContent = new StreamContent(image.OpenReadStream());
+                        imageContent.Headers.ContentType = new MediaTypeHeaderValue(image.ContentType);
+                        formData.Add(imageContent, "MediaFiles", image.FileName);
+                        formData.Add(new StringContent("image"), "MediaTypes");
+                    }
+                }
+            }
+
+            // Handle video uploads
+            if (model.Videos != null && model.Videos.Any())
+            {
+                foreach (var video in model.Videos)
+                {
+                    if (video != null && video.Length > 0)
+                    {
+                        var videoContent = new StreamContent(video.OpenReadStream());
+                        videoContent.Headers.ContentType = new MediaTypeHeaderValue(video.ContentType);
+                        formData.Add(videoContent, "MediaFiles", video.FileName);
+                        formData.Add(new StringContent("video"), "MediaTypes");
+                    }
+                }
             }
 
             _logger.LogInformation($"Sending POST request to api/posts with Title: {model.Title}, Content: {model.Content}, CategoryID: {model.CategoryID}, PrivacyID: {model.PrivacyID}");
@@ -187,6 +204,12 @@ public class PostsController : Controller
             {
                 _logger.LogInformation("Post created successfully");
                 return RedirectToAction(nameof(Index));
+            }
+            
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                _logger.LogWarning("Token expired or invalid, redirecting to login");
+                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Create", "Posts") });
             }
             
             _logger.LogError($"Failed to create post. Status: {response.StatusCode}, Content: {responseContent}");
@@ -294,7 +317,8 @@ public class PostsController : Controller
 
         if (!ModelState.IsValid)
         {
-            await LoadDropdowns();
+            ViewBag.Categories = await GetCategoriesAsync();
+            ViewBag.PrivacyOptions = await GetPrivacyOptionsAsync();
             return View(model);
         }
 
@@ -319,11 +343,17 @@ public class PostsController : Controller
             
             // Create multipart form data
             var formData = new MultipartFormDataContent();
-            formData.Add(new StringContent(model.Title ?? ""), "Title");
-            formData.Add(new StringContent(model.Content ?? ""), "Content");
+            formData.Add(new StringContent(model.PostID.ToString()), "PostID");
+            
+            if (!string.IsNullOrEmpty(model.Title))
+                formData.Add(new StringContent(model.Title), "Title");
+            
+            if (!string.IsNullOrEmpty(model.Content))
+                formData.Add(new StringContent(model.Content), "Content");
             
             if (model.CategoryID.HasValue)
                 formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
+            
             if (model.PrivacyID.HasValue)
                 formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
 
@@ -337,6 +367,21 @@ public class PostsController : Controller
             else if (!string.IsNullOrEmpty(model.CurrentImageURL))
             {
                 formData.Add(new StringContent(model.CurrentImageURL), "ImageURL");
+            }
+
+            if (model.Video != null)
+            {
+                var videoContent = new StreamContent(model.Video.OpenReadStream());
+                formData.Add(videoContent, "Video", model.Video.FileName);
+            }
+            else if (!string.IsNullOrEmpty(model.CurrentVideoURL))
+            {
+                formData.Add(new StringContent(model.CurrentVideoURL), "VideoURL");
+            }
+
+            if (!string.IsNullOrEmpty(model.MediaType))
+            {
+                formData.Add(new StringContent(model.MediaType), "MediaType");
             }
 
             _logger.LogInformation($"Sending PUT request to api/posts/{id} with Title: {model.Title}, Content: {model.Content}, CategoryID: {model.CategoryID}, PrivacyID: {model.PrivacyID}");
@@ -466,6 +511,54 @@ public class PostsController : Controller
         {
             _logger.LogError(ex, "Error getting posts for category {CategoryId}", categoryId);
             return View("Error");
+        }
+    }
+
+    private async Task<SelectList> GetCategoriesAsync()
+    {
+        try
+        {
+            var client = _clientFactory.CreateClient("API");
+            var response = await client.GetAsync("api/categories");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return new SelectList(categories, "CategoryID", "CategoryName");
+            }
+            return new SelectList(new List<CategoryViewModel>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting categories");
+            return new SelectList(new List<CategoryViewModel>());
+        }
+    }
+
+    private async Task<SelectList> GetPrivacyOptionsAsync()
+    {
+        try
+        {
+            var client = _clientFactory.CreateClient("API");
+            var response = await client.GetAsync("api/privacy");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var privacyOptions = JsonSerializer.Deserialize<List<PrivacyViewModel>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return new SelectList(privacyOptions, "PrivacyID", "Name");
+            }
+            return new SelectList(new List<PrivacyViewModel>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting privacy options");
+            return new SelectList(new List<PrivacyViewModel>());
         }
     }
 } 

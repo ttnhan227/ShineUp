@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Client.Models;
 
@@ -16,9 +18,18 @@ public class CreatePostViewModel
     [Display(Name = "Image")]
     public IFormFile? Image { get; set; }
     
+    [Display(Name = "Video")]
+    public IFormFile? Video { get; set; }
+    
     [Display(Name = "Category")]
     public int? CategoryID { get; set; }
     
     [Display(Name = "Privacy")]
     public int? PrivacyID { get; set; }
+
+    public List<IFormFile>? Images { get; set; }
+    public List<IFormFile>? Videos { get; set; }
+
+    public IEnumerable<SelectListItem>? Categories { get; set; }
+    public IEnumerable<SelectListItem>? PrivacyOptions { get; set; }
 } 

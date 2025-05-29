@@ -20,61 +20,57 @@ public class PostRepository : IPostRepository
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
 
-    public async Task<Post?> GetPostByIdAsync(int postId)
+    public async Task<Post> GetPostByIdAsync(int id)
     {
         return await _context.Posts
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
-            .Include(p => p.Comments)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
             .Include(p => p.Likes)
-            .FirstOrDefaultAsync(p => p.PostID == postId);
+            .Include(p => p.Comments)
+            .FirstOrDefaultAsync(p => p.PostID == id);
     }
 
     public async Task<Post> CreatePostAsync(Post post)
     {
-        await _context.Posts.AddAsync(post);
+        _context.Posts.Add(post);
         await _context.SaveChangesAsync();
-        
-        // Reload the post with related entities
-        return await _context.Posts
-            .Include(p => p.User)
-            .Include(p => p.Category)
-            .Include(p => p.Privacy)
-            .FirstOrDefaultAsync(p => p.PostID == post.PostID) ?? post;
+        return post;
     }
 
-    public async Task<Post?> UpdatePostAsync(Post post)
+    public async Task<Post> UpdatePostAsync(Post post)
     {
-        var existingPost = await _context.Posts.FindAsync(post.PostID);
-        if (existingPost == null) return null;
-
-        _context.Entry(existingPost).CurrentValues.SetValues(post);
-        existingPost.UpdatedAt = DateTime.UtcNow;
-        
+        _context.Entry(post).State = EntityState.Modified;
         await _context.SaveChangesAsync();
-        return existingPost;
+        return post;
     }
 
-    public async Task<bool> DeletePostAsync(int postId)
+    public async Task DeletePostAsync(Post post)
     {
-        var post = await _context.Posts.FindAsync(postId);
-        if (post == null) return false;
-
         _context.Posts.Remove(post);
         await _context.SaveChangesAsync();
-        return true;
     }
 
     public async Task<IEnumerable<Post>> GetPostsByUserIdAsync(int userId)
     {
         return await _context.Posts
+            .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
             .Where(p => p.UserID == userId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -84,7 +80,12 @@ public class PostRepository : IPostRepository
     {
         return await _context.Posts
             .Include(p => p.User)
+            .Include(p => p.Category)
             .Include(p => p.Privacy)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
             .Where(p => p.CategoryID == categoryId)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -96,6 +97,10 @@ public class PostRepository : IPostRepository
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
             .OrderByDescending(p => p.CreatedAt)
             .Take(count)
             .ToListAsync();
@@ -116,5 +121,39 @@ public class PostRepository : IPostRepository
     {
         return await _context.Comments
             .CountAsync(c => c.PostID == postId);
+    }
+
+    public async Task<User> GetUserByIdAsync(int userId)
+    {
+        return await _context.Users.FindAsync(userId);
+    }
+
+    public async Task<Image> AddImageAsync(Image image)
+    {
+        _context.Images.Add(image);
+        await _context.SaveChangesAsync();
+        return image;
+    }
+
+    public async Task<Video> AddVideoAsync(Video video)
+    {
+        _context.Videos.Add(video);
+        await _context.SaveChangesAsync();
+        return video;
+    }
+
+    public async Task RemoveAllMediaFromPostAsync(int postId)
+    {
+        var post = await _context.Posts
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .FirstOrDefaultAsync(p => p.PostID == postId);
+
+        if (post != null)
+        {
+            _context.Images.RemoveRange(post.Images);
+            _context.Videos.RemoveRange(post.Videos);
+            await _context.SaveChangesAsync();
+        }
     }
 } 

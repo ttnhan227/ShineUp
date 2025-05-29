@@ -6,10 +6,10 @@ public interface IPostRepository
 {
     // Basic CRUD
     Task<IEnumerable<Post>> GetAllPostsAsync();
-    Task<Post?> GetPostByIdAsync(int postId);
+    Task<Post> GetPostByIdAsync(int id);
     Task<Post> CreatePostAsync(Post post);
-    Task<Post?> UpdatePostAsync(Post post);
-    Task<bool> DeletePostAsync(int postId);
+    Task<Post> UpdatePostAsync(Post post);
+    Task DeletePostAsync(Post post);
 
     // Additional methods
     Task<IEnumerable<Post>> GetPostsByUserIdAsync(int userId);
@@ -20,4 +20,10 @@ public interface IPostRepository
     // Social features
     Task<int> GetPostLikesCountAsync(int postId);
     Task<int> GetPostCommentsCountAsync(int postId);
+
+    // Media handling
+    Task<User> GetUserByIdAsync(int userId);
+    Task<Image> AddImageAsync(Image image);
+    Task<Video> AddVideoAsync(Video video);
+    Task RemoveAllMediaFromPostAsync(int postId);
 } 

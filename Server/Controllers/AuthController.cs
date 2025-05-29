@@ -416,33 +416,28 @@ public class AuthController : ControllerBase
 
     private string GenerateToken(User user)
     {
-        // Tạo khóa bảo mật từ chuỗi ký tự được lưu trong cấu hình (appsettings.json)
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
-        // Tạo thông tin ký (credentials) sử dụng thuật toán HMAC-SHA256
         var credentials = new SigningCredentials(
             securityKey, SecurityAlgorithms.HmacSha256);
 
-        // Tạo danh sách các claim (thông tin người dùng) để đưa vào token
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()), // Add UserID as NameIdentifier
-            new Claim("Username", user.Username), // Thêm claim chứa tên người dùng
-            new Claim("Email", user.Email), // Thêm claim chứa email người dùng
-            new Claim(ClaimTypes.Role, user.Role.Name), // Thêm claim chứa vai trò người dùng
-            new Claim("RoleID", user.RoleID.ToString()) // Add RoleID claim
+            new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+            new Claim("Username", user.Username),
+            new Claim("Email", user.Email),
+            new Claim(ClaimTypes.Role, user.Role.Name),
+            new Claim("RoleID", user.RoleID.ToString())
         };
 
-        // Tạo token JWT với các thông tin như issuer, audience, claims, thời gian hết hạn và thông tin ký
         var token = new JwtSecurityToken(
-            _configuration["Jwt:Issuer"], // Định danh của server phát hành token
-            _configuration["Jwt:Audience"], // Định danh của client nhận token
-            claims, // Danh sách các claim
-            expires: DateTime.Now.AddMinutes(30), // Thời gian hết hạn của token (30 phút)
-            signingCredentials: credentials); // Thông tin ký token
+            _configuration["Jwt:Issuer"],
+            _configuration["Jwt:Audience"],
+            claims,
+            expires: DateTime.Now.AddDays(7), // Changed from 30 minutes to 7 days
+            signingCredentials: credentials);
 
-        // Trả về chuỗi token đã được mã hóa
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 

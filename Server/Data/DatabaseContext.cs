@@ -22,6 +22,7 @@ public class DatabaseContext : DbContext
     public DbSet<Message> Messages { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Post> Posts { get; set; }
+    public DbSet<Image> Images { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -178,6 +179,69 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<OTPs>()
             .HasIndex(f => f.Email);
+
+        // Configure User-Image relationship
+        modelBuilder.Entity<Image>()
+            .HasOne(i => i.User)
+            .WithMany(u => u.Images)
+            .HasForeignKey(i => i.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Privacy-Image relationship
+        modelBuilder.Entity<Image>()
+            .HasOne(i => i.Privacy)
+            .WithMany(p => p.Images)
+            .HasForeignKey(i => i.PrivacyID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Category-Image relationship
+        modelBuilder.Entity<Image>()
+            .HasOne(i => i.Category)
+            .WithMany(c => c.Images)
+            .HasForeignKey(i => i.CategoryID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Privacy-Video relationship
+        modelBuilder.Entity<Video>()
+            .HasOne(v => v.Privacy)
+            .WithMany(p => p.Videos)
+            .HasForeignKey(v => v.PrivacyID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Category-Video relationship
+        modelBuilder.Entity<Video>()
+            .HasOne(v => v.Category)
+            .WithMany(c => c.Videos)
+            .HasForeignKey(v => v.CategoryID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Privacy-Post relationship
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Privacy)
+            .WithMany(pr => pr.Posts)
+            .HasForeignKey(p => p.PrivacyID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Category-Post relationship
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Category)
+            .WithMany(c => c.Posts)
+            .HasForeignKey(p => p.CategoryID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Post-Image relationship
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Images)
+            .WithOne(i => i.Post)
+            .HasForeignKey(i => i.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Post-Video relationship
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Videos)
+            .WithOne(v => v.Post)
+            .HasForeignKey(v => v.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Seed Categories
         modelBuilder.Entity<Category>().HasData(

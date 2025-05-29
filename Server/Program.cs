@@ -8,6 +8,7 @@ using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Interfaces.Admin;
+using Server.Models;
 using Server.Repositories;
 using Server.Repositories.Admin;
 using Server.Services;
@@ -76,9 +77,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddScoped<IVideoRepository, VideoRepository>();
-
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-builder.Services.Configure<CloundinarySettingsDTO>(builder.Configuration.GetSection("CloudinarySettings"));
 
 // Add Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -169,6 +167,9 @@ builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+
+// Add Cloudinary Service
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Admin Repositories
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();

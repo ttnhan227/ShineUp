@@ -4,72 +4,60 @@
     ViewData["Title"] = "Create Post";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card create-post-card">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Create New Post</h3>
+                </div>
                 <div class="card-body">
-                    <h2 class="card-title mb-4">Create New Post</h2>
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                    <form asp-action="Create" enctype="multipart/form-data" method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-                        <div class="form-group mb-4">
-                            <label asp-for="Title" class="form-label">
-                                <i class='bx bx-pencil'></i> Title
-                            </label>
-                            <input asp-for="Title" class="form-control" placeholder="Enter post title" />
+                        <div class="form-group mb-3">
+                            <label asp-for="Title" class="control-label"></label>
+                            <input asp-for="Title" class="form-control" />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-4">
-                            <label asp-for="Content" class="form-label">
-                                <i class='bx bx-text'></i> Content
-                            </label>
-                            <textarea asp-for="Content" class="form-control" rows="6" placeholder="Write your post content here..."></textarea>
+                        <div class="form-group mb-3">
+                            <label asp-for="Content" class="control-label"></label>
+                            <textarea asp-for="Content" class="form-control" rows="5"></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-4">
-                            <label asp-for="Image" class="form-label">
-                                <i class='bx bx-image'></i> Image
-                            </label>
-                            <input asp-for="Image" type="file" class="form-control" accept="image/*" />
-                            <span asp-validation-for="Image" class="text-danger"></span>
+                        <div class="form-group mb-3">
+                            <label asp-for="CategoryID" class="control-label">Category</label>
+                            <select asp-for="CategoryID" class="form-select" asp-items="Model.Categories">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="CategoryID" class="text-danger"></span>
                         </div>
 
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="CategoryID" class="form-label">
-                                        <i class='bx bx-category'></i> Category
-                                    </label>
-                                    <select asp-for="CategoryID" asp-items="ViewBag.Categories" class="form-select">
-                                        <option value="">-- Select Category --</option>
-                                    </select>
-                                    <span asp-validation-for="CategoryID" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="PrivacyID" class="form-label">
-                                        <i class='bx bx-lock-alt'></i> Privacy
-                                    </label>
-                                    <select asp-for="PrivacyID" asp-items="ViewBag.PrivacyOptions" class="form-select">
-                                        <option value="">-- Select Privacy --</option>
-                                    </select>
-                                    <span asp-validation-for="PrivacyID" class="text-danger"></span>
-                                </div>
-                            </div>
+                        <div class="form-group mb-3">
+                            <label asp-for="PrivacyID" class="control-label">Privacy</label>
+                            <select asp-for="PrivacyID" class="form-select" asp-items="Model.PrivacyOptions">
+                                <option value="">-- Select Privacy --</option>
+                            </select>
+                            <span asp-validation-for="PrivacyID" class="text-danger"></span>
                         </div>
 
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-save'></i> Create Post
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to List
-                            </a>
+                        <div class="form-group mb-3">
+                            <label class="control-label">Images</label>
+                            <input type="file" name="Images" class="form-control" multiple accept="image/*" />
+                            <small class="text-muted">You can select multiple images</small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="control-label">Videos</label>
+                            <input type="file" name="Videos" class="form-control" multiple accept="video/*" />
+                            <small class="text-muted">You can select multiple videos</small>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">Create Post</button>
+                            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
                         </div>
                     </form>
                 </div>
@@ -79,79 +67,66 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <style>
-        .create-post-card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-        }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Preview selected images
+        document.querySelector('input[name="Images"]').addEventListener('change', function(e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row mt-2';
+            
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 mb-2';
+                        col.innerHTML = `
+                            <div class="card">
+                                <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                            </div>
+                        `;
+                        previewContainer.appendChild(col);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
 
-        .card-title {
-            color: #32325d;
-            font-weight: 600;
-        }
+            const existingPreview = document.querySelector('.image-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            previewContainer.classList.add('image-preview');
+            e.target.parentNode.appendChild(previewContainer);
+        });
 
-        .form-label {
-            color: #525f7f;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
+        // Preview selected videos
+        document.querySelector('input[name="Videos"]').addEventListener('change', function(e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row mt-2';
+            
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('video/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6 mb-2';
+                        col.innerHTML = `
+                            <div class="card">
+                                <video src="${e.target.result}" class="card-img-top" style="height: 200px; object-fit: cover;" controls></video>
+                            </div>
+                        `;
+                        previewContainer.appendChild(col);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
 
-        .form-label i {
-            margin-right: 0.5rem;
-            color: #5e72e4;
-        }
-
-        .form-control, .form-select {
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #5e72e4;
-            box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
-        }
-
-        textarea.form-control {
-            min-height: 150px;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn-primary {
-            background-color: #5e72e4;
-            border-color: #5e72e4;
-            padding: 0.75rem 1.5rem;
-        }
-
-        .btn-primary:hover {
-            background-color: #4a5cd1;
-            border-color: #4a5cd1;
-        }
-
-        .btn-secondary {
-            background-color: #8898aa;
-            border-color: #8898aa;
-            padding: 0.75rem 1.5rem;
-        }
-
-        .btn-secondary:hover {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .alert-danger {
-            background-color: #fff5f5;
-            border-color: #feb2b2;
-            color: #c53030;
-        }
-    </style>
+            const existingPreview = document.querySelector('.video-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            previewContainer.classList.add('video-preview');
+            e.target.parentNode.appendChild(previewContainer);
+        });
+    </script>
 } 

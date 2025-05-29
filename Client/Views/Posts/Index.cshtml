@@ -46,9 +46,64 @@
                 {
                     <div class="col-md-6 mb-4">
                         <div class="card h-100 post-card">
-                            @if (!string.IsNullOrEmpty(item.ImageURL))
+                            @if (item.MediaFiles != null && item.MediaFiles.Any())
                             {
-                                <img src="@item.ImageURL" class="card-img-top post-image" alt="@item.Title">
+                                <div class="media-grid">
+                                    @if (item.MediaFiles.Count == 1)
+                                    {
+                                        var media = item.MediaFiles[0];
+                                        <div class="media-item single">
+                                            @if (media.Type == "image")
+                                            {
+                                                <img src="@media.Url" class="card-img-top post-image" alt="@item.Title">
+                                            }
+                                            else if (media.Type == "video")
+                                            {
+                                                <div class="video-container">
+                                                    <video controls preload="metadata">
+                                                        <source src="@media.Url" type="video/mp4">
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                    <div class="video-overlay">
+                                                        <i class='bx bx-play-circle'></i>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="media-grid-container @(GetGridClass(item.MediaFiles.Count))">
+                                            @foreach (var media in item.MediaFiles.Take(4))
+                                            {
+                                                <div class="media-item @(item.MediaFiles.Count > 4 && media == item.MediaFiles[3] ? "overlay" : "")">
+                                                    @if (media.Type == "image")
+                                                    {
+                                                        <img src="@media.Url" alt="@item.Title">
+                                                    }
+                                                    else if (media.Type == "video")
+                                                    {
+                                                        <div class="video-container">
+                                                            <video controls preload="metadata">
+                                                                <source src="@media.Url" type="video/mp4">
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                            <div class="video-overlay">
+                                                                <i class='bx bx-play-circle'></i>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (item.MediaFiles.Count > 4)
+                                            {
+                                                <div class="media-count-overlay">
+                                                    +@(item.MediaFiles.Count - 4)
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
                             }
                             <div class="card-body">
                                 <h5 class="card-title">@item.Title</h5>
@@ -147,8 +202,149 @@
             transform: translateY(-5px);
         }
 
-        .post-image {
-            height: 200px;
+        .media-grid {
+            width: 100%;
+            background: #f8f9fa;
+        }
+
+        .media-item {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            overflow: hidden;
+        }
+
+        .media-item img,
+        .media-item video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-grid-container {
+            display: grid;
+            gap: 2px;
+            background: #f8f9fa;
+        }
+
+        /* Grid layouts for different numbers of media items */
+        .media-grid-container.grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(1, 1fr);
+        }
+
+        .media-grid-container.grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-3 .media-item:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .media-grid-container.grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container .media-item {
+            padding-bottom: 100%; /* 1:1 aspect ratio for grid items */
+        }
+
+        .media-item.overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .media-count-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 3rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .video-container:hover .video-overlay {
+            opacity: 1;
+        }
+
+        /* Add styles for single video display */
+        .media-item.single .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .media-item.single .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Grid video styles */
+        .media-grid-container .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .media-grid-container .video-container video {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
 
@@ -180,4 +376,17 @@
             border-color: #4a5cd1;
         }
     </style>
+}
+
+@functions {
+    private string GetGridClass(int mediaCount)
+    {
+        return mediaCount switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            4 => "grid-4",
+            _ => "grid-4"
+        };
+    }
 } 

@@ -8,6 +8,10 @@ public class Video
     [Key] public string VideoID { get; set; }
     public string? CloudPublicId { get; set; }
 
+    [ForeignKey("Post")]
+    public int PostID { get; set; }
+    public Post Post { get; set; }
+
     [ForeignKey("User")]
     public int UserID { get; set; }
 
