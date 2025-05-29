@@ -28,6 +28,8 @@ public class UpdatePostDto
 
     public string? Content { get; set; }
 
+    public IFormFile? Image { get; set; }
+
     public string? ImageURL { get; set; }
 
     public int? CategoryID { get; set; }

@@ -56,7 +56,7 @@
                     </div>
 
                     <div class="post-actions mt-4">
-                        @if (User.Identity.IsAuthenticated && User.FindFirst("id")?.Value == Model.UserID.ToString())
+                        @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
                         {
                             <a asp-action="Edit" asp-route-id="@Model.PostID" class="btn btn-primary me-2">
                                 <i class='bx bx-edit'></i> Edit

@@ -162,7 +162,8 @@ public class PostsController : ControllerBase
     // PUT: api/posts/5
     [Authorize]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePost(int id, UpdatePostDto updatePostDto)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdatePost(int id, [FromForm] UpdatePostDto updatePostDto)
     {
         try
         {
@@ -188,12 +189,26 @@ public class PostsController : ControllerBase
                 post.Title = updatePostDto.Title;
             if (updatePostDto.Content != null)
                 post.Content = updatePostDto.Content;
-            if (updatePostDto.ImageURL != null)
-                post.ImageURL = updatePostDto.ImageURL;
             if (updatePostDto.CategoryID.HasValue)
                 post.CategoryID = updatePostDto.CategoryID;
             if (updatePostDto.PrivacyID.HasValue)
                 post.PrivacyID = updatePostDto.PrivacyID;
+
+            // Handle image upload if present
+            if (updatePostDto.Image != null)
+            {
+                var uploadResult = await _cloudinaryService.UploadImgAsync(updatePostDto.Image);
+                if (uploadResult.Error != null)
+                {
+                    _logger.LogError($"Cloudinary image upload error: {uploadResult.Error.Message}");
+                    return BadRequest(new { message = "Image upload failed: " + uploadResult.Error.Message });
+                }
+                post.ImageURL = uploadResult.SecureUrl.ToString();
+            }
+            else if (updatePostDto.ImageURL != null)
+            {
+                post.ImageURL = updatePostDto.ImageURL;
+            }
 
             await _postRepository.UpdatePostAsync(post);
             return NoContent();

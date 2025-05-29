@@ -112,7 +112,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
-            NameClaimType = ClaimTypes.NameIdentifier, // Changed to NameIdentifier
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = ClaimTypes.NameIdentifier,
             RoleClaimType = ClaimTypes.Role
         };
         
@@ -120,15 +121,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnTokenValidated = context =>
             {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 var userId = context.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
+                    logger.LogError("UserID claim is missing from token");
                     context.Fail("UserID claim is missing from token");
                 }
+                else
+                {
+                    logger.LogInformation($"Token validated successfully for user {userId}");
+                }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError($"Authentication failed: {context.Exception.Message}");
                 return Task.CompletedTask;
             },
             OnMessageReceived = context => 
             {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation($"Received token: {context.Token?.Substring(0, Math.Min(20, context.Token?.Length ?? 0))}...");
                 return Task.CompletedTask;
             }
         };

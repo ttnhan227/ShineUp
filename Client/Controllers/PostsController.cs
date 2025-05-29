@@ -29,19 +29,33 @@ public class PostsController : Controller
         try
         {
             var client = _clientFactory.CreateClient("API");
-            var response = await client.GetAsync("api/posts");
             
-            if (response.IsSuccessStatusCode)
+            // Get posts
+            var response = await client.GetAsync("api/posts");
+            if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+                return View("Error");
+            }
+            
+            var content = await response.Content.ReadAsStringAsync();
+            var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            // Get categories
+            var categoriesResponse = await client.GetAsync("api/categories");
+            if (categoriesResponse.IsSuccessStatusCode)
+            {
+                var categoriesContent = await categoriesResponse.Content.ReadAsStringAsync();
+                var categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(categoriesContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                return View(posts);
+                ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
             }
-            
-            return View("Error");
+
+            return View(posts);
         }
         catch (Exception ex)
         {
@@ -253,6 +267,8 @@ public class PostsController : Controller
                     PrivacyID = post.PrivacyID
                 };
 
+                // Load dropdowns before showing the form
+                await LoadDropdowns();
                 return View(editModel);
             }
             
@@ -290,48 +306,52 @@ public class PostsController : Controller
             var token = User.FindFirst("JWT")?.Value;
             if (string.IsNullOrEmpty(token))
             {
+                _logger.LogError("JWT token is missing from claims");
                 ModelState.AddModelError("", "Authentication token is missing");
                 await LoadDropdowns();
                 return View(model);
             }
 
+            _logger.LogInformation($"JWT token found: {token.Substring(0, 20)}..."); // Log first 20 chars of token
+
             // Add the authorization header
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             
+            // Create multipart form data
+            var formData = new MultipartFormDataContent();
+            formData.Add(new StringContent(model.Title ?? ""), "Title");
+            formData.Add(new StringContent(model.Content ?? ""), "Content");
+            
+            if (model.CategoryID.HasValue)
+                formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
+            if (model.PrivacyID.HasValue)
+                formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
+
             // Handle image upload if present
             if (model.Image != null)
             {
-                var formData = new MultipartFormDataContent();
-                if (model.Title != null)
-                    formData.Add(new StringContent(model.Title), "Title");
-                if (model.Content != null)
-                    formData.Add(new StringContent(model.Content), "Content");
-                if (model.CategoryID.HasValue)
-                    formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
-                if (model.PrivacyID.HasValue)
-                    formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
-
                 var imageContent = new StreamContent(model.Image.OpenReadStream());
                 imageContent.Headers.ContentType = new MediaTypeHeaderValue(model.Image.ContentType);
                 formData.Add(imageContent, "Image", model.Image.FileName);
-
-                var response = await client.PutAsync($"api/posts/{id}", formData);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
             }
-            else
+            else if (!string.IsNullOrEmpty(model.CurrentImageURL))
             {
-                // No image upload
-                var response = await client.PutAsJsonAsync($"api/posts/{id}", model);
-                if (response.IsSuccessStatusCode)
-                {
-                    return RedirectToAction(nameof(Index));
-                }
+                formData.Add(new StringContent(model.CurrentImageURL), "ImageURL");
             }
 
-            ModelState.AddModelError("", "Failed to update post");
+            _logger.LogInformation($"Sending PUT request to api/posts/{id} with Title: {model.Title}, Content: {model.Content}, CategoryID: {model.CategoryID}, PrivacyID: {model.PrivacyID}");
+            
+            var response = await client.PutAsync($"api/posts/{id}", formData);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Post updated successfully");
+                return RedirectToAction(nameof(Index));
+            }
+            
+            _logger.LogError($"Failed to update post. Status: {response.StatusCode}, Content: {responseContent}");
+            ModelState.AddModelError("", $"Failed to update post: {responseContent}");
             await LoadDropdowns();
             return View(model);
         }
@@ -413,19 +433,34 @@ public class PostsController : Controller
         try
         {
             var client = _clientFactory.CreateClient("API");
-            var response = await client.GetAsync($"api/posts/category/{categoryId}");
             
-            if (response.IsSuccessStatusCode)
+            // Get posts for category
+            var response = await client.GetAsync($"api/posts/category/{categoryId}");
+            if (!response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+                return View("Error");
+            }
+            
+            var content = await response.Content.ReadAsStringAsync();
+            var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            // Get categories
+            var categoriesResponse = await client.GetAsync("api/categories");
+            if (categoriesResponse.IsSuccessStatusCode)
+            {
+                var categoriesContent = await categoriesResponse.Content.ReadAsStringAsync();
+                var categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(categoriesContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                return View("Index", posts);
+                ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
+                ViewBag.SelectedCategory = categoryId;
             }
-            
-            return View("Error");
+
+            return View("Index", posts);
         }
         catch (Exception ex)
         {
