@@ -7,20 +7,27 @@ public class User
 {
     [Key] public int UserID { get; set; }
 
+    [Required]
     public string Username { get; set; }
     
-    public string FullName { get; set; }
+    public string? FullName { get; set; }
+
+    [Required]
+    [EmailAddress]
     public string Email { get; set; }
+    
     public string? GoogleId { get; set; }
     public string? PasswordHash { get; set; }
-    public string Bio { get; set; }
-    public string ProfileImageURL { get; set; }
+    
+    public string? Bio { get; set; }
+    public string? ProfileImageURL { get; set; }
 
-    [ForeignKey("Role")] public int RoleID { get; set; }
+    [ForeignKey("Role")] 
+    public int RoleID { get; set; }
 
     public Role Role { get; set; }
 
-    public string TalentArea { get; set; }
+    public string? TalentArea { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // New properties for user status
@@ -38,4 +45,5 @@ public class User
     public ICollection<ContestEntry> ContestEntries { get; set; }
     public ICollection<Message> SentMessages { get; set; }
     public ICollection<Message> ReceivedMessages { get; set; }
+    public ICollection<Post> Posts { get; set; }
 }

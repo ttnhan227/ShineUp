@@ -1,0 +1,35 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Client.Models;
+
+public class PostViewModel
+{
+    public int PostID { get; set; }
+    
+    [Required(ErrorMessage = "Title is required")]
+    [StringLength(100, ErrorMessage = "Title cannot be longer than 100 characters")]
+    public string Title { get; set; }
+    
+    [Required(ErrorMessage = "Content is required")]
+    public string Content { get; set; }
+    
+    public string? ImageURL { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    
+    // User info
+    public int UserID { get; set; }
+    public string Username { get; set; }
+    
+    // Category info
+    public int? CategoryID { get; set; }
+    public string? CategoryName { get; set; }
+    
+    // Privacy info
+    public int? PrivacyID { get; set; }
+    public string? PrivacyName { get; set; }
+    
+    // Social features
+    public int LikesCount { get; set; }
+    public int CommentsCount { get; set; }
+} 

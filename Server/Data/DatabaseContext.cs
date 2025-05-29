@@ -20,7 +20,8 @@ public class DatabaseContext : DbContext
     public DbSet<Contest> Contests { get; set; }
     public DbSet<ContestEntry> ContestEntries { get; set; }
     public DbSet<Message> Messages { get; set; }
-    public DbSet<Vote> Votes { get; set; } //anh
+    public DbSet<Vote> Votes { get; set; }
+    public DbSet<Post> Posts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,13 +74,13 @@ public class DatabaseContext : DbContext
             .HasMany(u => u.SentMessages)
             .WithOne(m => m.Sender)
             .HasForeignKey(m => m.SenderID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for sender
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<User>()
             .HasMany(u => u.ReceivedMessages)
             .WithOne(m => m.Receiver)
             .HasForeignKey(m => m.ReceiverID)
-            .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete for receiver
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Category>()
             .HasMany(c => c.Videos)
@@ -106,11 +107,40 @@ public class DatabaseContext : DbContext
             .WithMany(v => v.ContestEntries)
             .HasForeignKey(ce => ce.VideoID);
 
-        // Many-to-many relationship between User and Video via Likes is handled by the Likes entity
+        // Configure Post relationships
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.User)
+            .WithMany(u => u.Posts)
+            .HasForeignKey(p => p.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure the many-to-many relationship between User and Video through the Like entity
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Category)
+            .WithMany(c => c.Posts)
+            .HasForeignKey(p => p.CategoryID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Privacy)
+            .WithMany(pr => pr.Posts)
+            .HasForeignKey(p => p.PrivacyID)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Comments)
+            .WithOne(c => c.Post)
+            .HasForeignKey(c => c.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Likes)
+            .WithOne(l => l.Post)
+            .HasForeignKey(l => l.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure the many-to-many relationship between User and Video via Likes
         modelBuilder.Entity<Like>()
-            .HasKey(l => l.LikeID); // Assuming LikeID is the primary key
+            .HasKey(l => l.LikeID);
 
         modelBuilder.Entity<Like>()
             .HasOne(l => l.User)
@@ -129,7 +159,7 @@ public class DatabaseContext : DbContext
             .WithOne(v => v.Privacy)
             .HasForeignKey(v => v.PrivacyID);
 
-        modelBuilder.Entity<Vote>() //anh
+        modelBuilder.Entity<Vote>()
             .HasOne(v => v.ContestEntry)
             .WithMany()
             .HasForeignKey(v => v.EntryID);
@@ -147,6 +177,67 @@ public class DatabaseContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<OTPs>()
-            .HasIndex(f => f.Email);  // Index for faster email lookups
+            .HasIndex(f => f.Email);
+
+        // Seed Categories
+        modelBuilder.Entity<Category>().HasData(
+            new Category
+            {
+                CategoryID = 1, CategoryName = "Dance",
+                Description = "Posts about dance performances, tutorials, and events"
+            },
+            new Category
+            {
+                CategoryID = 2, CategoryName = "Music",
+                Description = "Posts about music performances, covers, and events"
+            },
+            new Category
+            {
+                CategoryID = 3, CategoryName = "Art",
+                Description = "Posts about visual arts, exhibitions, and creative works"
+            },
+            new Category
+            {
+                CategoryID = 4, CategoryName = "Photography",
+                Description = "Posts about photography, photo shoots, and visual stories"
+            },
+            new Category
+            {
+                CategoryID = 5, CategoryName = "Fashion",
+                Description = "Posts about fashion shows, style tips, and trends"
+            },
+            new Category
+            {
+                CategoryID = 6, CategoryName = "Theater",
+                Description = "Posts about theater performances, acting, and drama"
+            },
+            new Category
+            {
+                CategoryID = 7, CategoryName = "Comedy", Description = "Posts about comedy shows, stand-up, and humor"
+            },
+            new Category
+            {
+                CategoryID = 8, CategoryName = "Poetry",
+                Description = "Posts about poetry readings, spoken word, and literary works"
+            },
+            new Category
+            {
+                CategoryID = 9, CategoryName = "Film", Description = "Posts about filmmaking, short films, and cinema"
+            },
+            new Category
+                { CategoryID = 10, CategoryName = "Other", Description = "Other creative content and performances" }
+        );
+
+        // Seed Privacy Settings
+        modelBuilder.Entity<Privacy>().HasData(
+            new Privacy { PrivacyID = 1, Name = "Public" },
+            new Privacy { PrivacyID = 2, Name = "Friends Only" },
+            new Privacy { PrivacyID = 3, Name = "Private" }
+        );
+
+        modelBuilder.Entity<Role>().HasData(
+            new Role { RoleID = 1, Name = "User" },
+            new Role { RoleID = 2, Name = "Admin" }
+        );
     }
 }

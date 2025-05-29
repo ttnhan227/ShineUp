@@ -22,6 +22,10 @@ public class Video
     public string Description { get; set; }
     public string VideoURL { get; set; }
 
+    // New simple fields for talent discovery
+    public int ViewCount { get; set; } = 0;
+    public string SkillLevel { get; set; } = "Beginner"; // Beginner, Intermediate, Advanced
+    public string? Location { get; set; }  // Optional location
 
     [ForeignKey("Privacy")] public int? PrivacyID { get; set; }
 

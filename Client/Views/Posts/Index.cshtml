@@ -1,0 +1,183 @@
+@model IEnumerable<Client.Models.PostListViewModel>
+
+@{
+    ViewData["Title"] = "Posts";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="card newsfeed-user-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class='bx bx-category'></i> Categories
+                    </h5>
+                    <div class="category-list">
+                        <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
+                            <i class='bx bx-grid-alt'></i> All Posts
+                        </a>
+                        @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
+                        {
+                            <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })" 
+                               class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
+                                <i class='bx bx-category'></i> @category.Text
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Posts</h2>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class='bx bx-plus'></i> Create New Post
+                    </a>
+                }
+            </div>
+
+            <div class="row">
+                @foreach (var item in Model)
+                {
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 post-card">
+                            @if (!string.IsNullOrEmpty(item.ImageURL))
+                            {
+                                <img src="@item.ImageURL" class="card-img-top post-image" alt="@item.Title">
+                            }
+                            <div class="card-body">
+                                <h5 class="card-title">@item.Title</h5>
+                                <p class="card-text">@(item.Content.Length > 150 ? item.Content.Substring(0, 150) + "..." : item.Content)</p>
+                                
+                                <div class="post-meta">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class='bx bx-user'></i>
+                                        <span class="ms-2">@item.UserName</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class='bx bx-time'></i>
+                                        <span class="ms-2">@item.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(item.CategoryName))
+                                    {
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class='bx bx-category'></i>
+                                            <span class="ms-2">@item.CategoryName</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="post-stats">
+                                    <span class="me-3">
+                                        <i class='bx bx-heart'></i> @item.LikesCount
+                                    </span>
+                                    <span>
+                                        <i class='bx bx-comment'></i> @item.CommentsCount
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a asp-action="Details" asp-route-id="@item.PostID" class="btn btn-primary btn-sm">
+                                    <i class='bx bx-show'></i> Read More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .newsfeed-user-card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #525f7f;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover {
+            background-color: #f8f9fa;
+            color: #5e72e4;
+        }
+
+        .category-item.active {
+            background-color: #5e72e4;
+            color: white;
+        }
+
+        .category-item i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .post-card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .post-image {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .post-meta {
+            margin: 1rem 0;
+            color: #8898aa;
+            font-size: 0.9rem;
+        }
+
+        .post-stats {
+            color: #8898aa;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .card-footer {
+            background-color: #fff;
+            border-top: 1px solid #e9ecef;
+            padding: 1rem;
+        }
+
+        .btn-primary {
+            background-color: #5e72e4;
+            border-color: #5e72e4;
+        }
+
+        .btn-primary:hover {
+            background-color: #4a5cd1;
+            border-color: #4a5cd1;
+        }
+    </style>
+} 

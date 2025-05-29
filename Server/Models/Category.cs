@@ -9,6 +9,7 @@ public class Category
     public string CategoryName { get; set; }
     public string Description { get; set; }
 
-    // Navigation property
+    // Navigation properties
     public ICollection<Video> Videos { get; set; }
+    public ICollection<Post> Posts { get; set; }
 }
