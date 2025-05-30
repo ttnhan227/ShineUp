@@ -35,21 +35,24 @@ public class DatabaseContext : DbContext
             .Property(u => u.Verified)
             .HasDefaultValue(false);
 
-        // Configure relationships
+        // Configure User relationships
         modelBuilder.Entity<User>()
             .HasMany(u => u.Videos)
             .WithOne(v => v.User)
-            .HasForeignKey(v => v.UserID);
+            .HasForeignKey(v => v.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<User>()
             .HasMany(u => u.Comments)
             .WithOne(c => c.User)
-            .HasForeignKey(c => c.UserID);
+            .HasForeignKey(c => c.UserID)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<User>()
             .HasMany(u => u.Likes)
             .WithOne(l => l.User)
-            .HasForeignKey(l => l.UserID);
+            .HasForeignKey(l => l.UserID)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Video>()
             .HasMany(v => v.Likes)
@@ -108,7 +111,18 @@ public class DatabaseContext : DbContext
             .WithMany(v => v.ContestEntries)
             .HasForeignKey(ce => ce.VideoID);
 
-        // Configure Post relationships
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.Post)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(c => c.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Post)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(l => l.PostID)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Post>()
             .HasOne(p => p.User)
             .WithMany(u => u.Posts)
@@ -139,7 +153,6 @@ public class DatabaseContext : DbContext
             .HasForeignKey(l => l.PostID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure the many-to-many relationship between User and Video via Likes
         modelBuilder.Entity<Like>()
             .HasKey(l => l.LikeID);
 
@@ -148,7 +161,31 @@ public class DatabaseContext : DbContext
             .WithMany(u => u.Likes)
             .HasForeignKey(l => l.UserID);
 
-        // Configure the one-to-many relationship between Role and User
+        modelBuilder.Entity<Comment>()
+            .HasIndex(c => c.CreatedAt);
+
+        modelBuilder.Entity<Comment>()
+            .HasIndex(c => c.PostID);
+
+        modelBuilder.Entity<Comment>()
+            .HasIndex(c => c.VideoID);
+
+        modelBuilder.Entity<Like>()
+            .HasIndex(l => l.CreatedAt);
+
+        modelBuilder.Entity<Like>()
+            .HasIndex(l => l.PostID);
+
+        modelBuilder.Entity<Like>()
+            .HasIndex(l => l.VideoID);
+
+        // Create a unique constraint for likes to prevent duplicates
+        // PostgreSQL uses a different syntax for filtered indexes
+        modelBuilder.Entity<Like>()
+            .HasIndex(l => new { l.UserID, l.PostID, l.VideoID })
+            .IsUnique()
+            .HasFilter("\"PostID\" IS NOT NULL OR \"VideoID\" IS NOT NULL");
+
         modelBuilder.Entity<Role>()
             .HasMany(r => r.Users)
             .WithOne(u => u.Role)

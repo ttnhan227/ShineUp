@@ -83,6 +83,7 @@ namespace Client.Models
         // Social features
         public int LikesCount { get; set; }
         public int CommentsCount { get; set; }
+        public bool HasLiked { get; set; }
     }
     public class EditPostViewModel
     {
