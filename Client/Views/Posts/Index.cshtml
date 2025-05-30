@@ -50,11 +50,15 @@
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             border-radius: 15px;
             overflow: hidden;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform: translateY(0);
+            will-change: transform;
+            backface-visibility: hidden;
         }
 
         .post-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
         }
 
         .media-grid {
@@ -203,6 +207,105 @@
             object-fit: cover;
         }
 
+        /* Replace your existing dropdown styles with these fixed versions */
+        .dropdown-toggle::after {
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+            z-index: 1070 !important;
+            min-width: 150px;
+            background-color: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
+        /* Force dropdown to stay on top when shown */
+        .dropdown-menu.show {
+            position: absolute !important;
+            z-index: 1070 !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Ensure dropdown items are properly styled */
+        .dropdown-item {
+            color: #212529 !important;
+            background-color: transparent !important;
+            padding: 0.5rem 1rem;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa !important;
+            color: #5e72e4 !important;
+        }
+
+        /* Ensure the dropdown container doesn't interfere */
+        .dropdown.d-inline-block {
+            position: relative;
+            z-index: 1050;
+        }
+
+        /* Fix the post creation card to not interfere with dropdowns */
+        .post-creation-card {
+            overflow: visible !important;
+            transform: none !important;
+            transition: box-shadow 0.3s ease !important;
+            position: relative;
+            z-index: 1040;
+        }
+
+        .post-creation-card:hover {
+            transform: none !important;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* When a dropdown is open, reduce z-index of other elements */
+        .dropdown-open .post-card:not(.post-creation-card) {
+            z-index: 1030 !important;
+            transform: none !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Ensure form elements don't interfere */
+        .post-creation-card .form-control,
+        .post-creation-card .btn {
+            position: relative;
+            z-index: 1041;
+        }
+
+        /* Additional fixes for dropdown positioning */
+        .dropdown-menu[data-bs-popper] {
+            position: absolute !important;
+            top: 100% !important;
+            left: auto !important;
+            right: 0 !important;
+            margin-top: 0.5rem !important;
+            transform: none !important;
+            will-change: transform;
+        }
+        
+        /* Ensure dropdown is positioned relative to its container */
+        .dropdown {
+            position: relative;
+        }
+        
+        /* Adjust dropdown menu positioning for RTL support */
+        .dropdown-menu-end[data-bs-popper] {
+            left: auto !important;
+            right: 0 !important;
+        }
+        
+        /* Ensure proper spacing for dropdown toggle */
+        .dropdown-toggle {
+            white-space: nowrap;
+        }
+
         .post-meta {
             margin: 1rem 0;
             color: #8898aa;
@@ -248,6 +351,95 @@
             background-color: #4a5cd1;
             border-color: #4a5cd1;
         }
+
+        .dropdown-toggle::after {
+            display: inline-block; /* Restore Bootstrap's default caret */
+        }
+
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1060 !important; /* Increased z-index to be above other elements */
+            min-width: 150px;
+            background-color: white !important; /* Ensure solid background to prevent blending */
+            opacity: 1 !important;
+        }
+
+        /* Dropdown menu styles */
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            min-width: 160px;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1.5rem;
+            color: #333;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+
+        .dropdown-divider {
+            margin: 0.3rem 0;
+            border-top: 1px solid #eee;
+        }
+
+        /* Ensure dropdowns appear above other content */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            position: absolute;
+            inset: auto auto 0px 0px;
+            margin: 0px;
+            transform: translate(0px, 34px);
+        }
+
+        /* Fix for dropdown positioning in post cards */
+        .post-card {
+            position: relative;
+        }
+
+        .post-card .dropdown-menu {
+            position: absolute;
+            right: 0;
+            left: auto;
+            top: 100%;
+            margin-top: 0.5rem;
+        }
+
+        /* Ensure the dropdown container doesn't interfere */
+        .dropdown.d-inline-block {
+            position: relative;
+        }
+
+        /* Ensure the post creation card doesn't clip the dropdown */
+        .post-creation-card {
+            overflow: visible;
+            transform: none !important;
+            transition: none !important;
+        }
+
+        .post-creation-card:hover {
+            transform: none !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* When a dropdown is open, disable pointer events and hover on post cards */
+        .dropdown-open .posts-feed .post-card {
+            pointer-events: none;
+            transform: none !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important; /* Keep default shadow */
+        }
     </style>
 }
 
@@ -279,18 +471,18 @@
         </div>
 
         <!-- Main Content (Posts Feed) -->
-        <div class="col-md-6"> @* Adjusted to col-md-6 and removed offset for better centering *@
+        <div class="col-md-6">
             <div class="p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom"> @* Added padding and border-bottom *@
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom">
                     @if (User.Identity.IsAuthenticated)
                     {
-                        @* Removed the create post button from here *@
+                        <!-- Removed the create post button from here -->
                     }
                 </div>
 
                 @if (User.Identity.IsAuthenticated)
                 {
-                     <div class="card post-card mb-4">
+                    <div class="card post-card post-creation-card mb-4">
                         <div class="card-body">
                             <h5 class="card-title mb-3 text-muted">What's happening?</h5>
                             <form id="createPostForm" asp-action="Create" method="post" enctype="multipart/form-data">
@@ -306,26 +498,23 @@
                                     <span validation-for="Content" class="text-danger"></span>
                                 </div>
 
-                                 @* Placeholder for media previews *@
                                 <div id="mediaPreview" class="row mt-2"></div>
 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <div>
                                         <label for="imagesInput" class="btn btn-outline-primary btn-sm rounded-circle me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add photos">
-                                            <i class='bx bx-image-add'></i>
+                                            <i class='bx bx-image-add' style="font-size: 1.2rem; line-height: 1.2;"></i>
                                             <input type="file" id="imagesInput" name="Images" class="d-none" multiple accept="image/*" />
                                         </label>
                                         <label for="videosInput" class="btn btn-outline-success btn-sm rounded-circle" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add videos">
                                             <i class='bx bx-video-plus'></i>
                                             <input type="file" id="videosInput" name="Videos" class="d-none" multiple accept="video/*" />
                                         </label>
-                                         @* Add dropdowns for Category and Privacy *@
-                                         <div class="dropdown d-inline-block">
+                                        <div class="dropdown d-inline-block">
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle ms-2" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Category
+                                                Select Category
                                             </button>
                                             <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
-                                                 <li><a class="dropdown-item" href="#" data-value="">-- Select Category --</a></li>
                                                 @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                                                 {
                                                     <li><a class="dropdown-item" href="#" data-value="@category.Value">@category.Text</a></li>
@@ -333,8 +522,7 @@
                                             </ul>
                                             <input type="hidden" name="CategoryID" id="selectedCategoryID" value="" />
                                         </div>
-
-                                         <div class="dropdown d-inline-block">
+                                        <div class="dropdown d-inline-block">
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle ms-2" type="button" id="privacyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Privacy
                                             </button>
@@ -344,24 +532,22 @@
                                                     <li><a class="dropdown-item" href="#" data-value="@privacy.Value">@privacy.Text</a></li>
                                                 }
                                             </ul>
-                                             <input type="hidden" name="PrivacyID" id="selectedPrivacyID" value="1" /> @* Default to Public (1) *@
+                                            <input type="hidden" name="PrivacyID" id="selectedPrivacyID" value="1" />
                                         </div>
                                     </div>
                                     <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold">Post</button>
                                 </div>
-
-                                 @* Hidden fields for other post properties if needed, or handle via JS/ViewModel *@
-                             </form>
-                         </div>
-                     </div>
+                            </form>
+                        </div>
+                    </div>
                 }
 
-                <div class="posts-feed"> @* New container for posts to apply consistent styling *@
+                <div class="posts-feed">
                     @foreach (var item in Model)
                     {
-                        <div class="post-card border-bottom py-3 px-3"> @* Removed col-12 mb-3, added border-bottom, padding *@
-                            <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="post-link text-decoration-none text-dark"> @* Changed class to post-link, removed card-link, added text styles *@
-                                <div class="d-flex align-items-start"> @* Use flexbox for avatar and content *@
+                        <div class="post-card border-bottom py-3 px-3">
+                            <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="post-link text-decoration-none text-dark">
+                                <div class="d-flex align-items-start">
                                     <div class="post-avatar me-3">
                                         @if (!string.IsNullOrEmpty(item.ProfileImageURL))
                                         {
@@ -375,14 +561,14 @@
                                         }
                                     </div>
                                     <div class="post-content flex-grow-1">
-                                        <div class="post-meta d-flex align-items-center mb-1"> @* Adjusted margin-bottom *@
-                                            <span class="fw-bold me-1">@item.UserName</span> @* User Name *@
-                                            <span class="text-muted me-1">@@@item.UserName.ToLower().Replace(" ", "")</span> @* User Handle (simplified) *@
-                                            <span class="text-muted">&middot;</span>
+                                        <div class="post-meta d-flex align-items-center mb-1">
+                                            <span class="fw-bold me-1">@item.FullName</span>
+                                            <span class="text-muted me-1">@@@item.UserName.ToLower().Replace(" ", "")</span>
+                                            <span class="text-muted">·</span>
                                             <span class="text-muted ms-1">@item.CreatedAt.ToString("MMM dd")</span>
                                             @if (!string.IsNullOrEmpty(item.CategoryName))
                                             {
-                                                <span class="text-muted ms-1">&middot;</span>
+                                                <span class="text-muted ms-1">·</span>
                                                 <span class="text-muted ms-1">@item.CategoryName</span>
                                             }
                                         </div>
@@ -499,13 +685,12 @@
 @functions {
     private string GetGridClass(int mediaCount)
     {
-        // Grid classes based on number of items (up to 4 for layout purposes)
-        return (mediaCount > 4 ? 4 : mediaCount) switch // Use min of mediaCount and 4
+        return (mediaCount > 4 ? 4 : mediaCount) switch
         {
             2 => "grid-2",
             3 => "grid-3",
             4 => "grid-4",
-            _ => "grid-4" // Default to grid-4 for any other case with multiple items
+            _ => "grid-4"
         };
     }
 }
@@ -513,38 +698,45 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-         // Tooltip initialization
-         $(function () {
-             $('[data-bs-toggle="tooltip"]').tooltip();
-         })
+        // Tooltip initialization
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
 
-         // Handle dropdown selection for Category
-         $('#categoryDropdown + .dropdown-menu a').on('click', function(e) {
-             e.preventDefault();
-             var selectedValue = $(this).data('value');
-             var selectedText = $(this).text();
-             $('#selectedCategoryID').val(selectedValue);
-             $('#categoryDropdown').text('Category: ' + selectedText);
-         });
+        // Handle dropdown selection for Category
+        $('#categoryDropdown + .dropdown-menu a').on('click', function (e) {
+            e.preventDefault();
+            var selectedValue = $(this).data('value');
+            var selectedText = $(this).text();
+            $('#selectedCategoryID').val(selectedValue);
+            $('#categoryDropdown').text(selectedText);
+        });
 
-         // Handle dropdown selection for Privacy
-         $('#privacyDropdown + .dropdown-menu a').on('click', function(e) {
-             e.preventDefault();
-             var selectedValue = $(this).data('value');
-             var selectedText = $(this).text();
-             $('#selectedPrivacyID').val(selectedValue);
-             $('#privacyDropdown').text('Privacy: ' + selectedText);
-         });
+        // Handle dropdown selection for Privacy
+        $('#privacyDropdown + .dropdown-menu a').on('click', function (e) {
+            e.preventDefault();
+            var selectedValue = $(this).data('value');
+            var selectedText = $(this).text();
+            $('#selectedPrivacyID').val(selectedValue);
+            $('#privacyDropdown').text(selectedText);
+        });
+
+        // Close dropdown on scroll
+        $(window).on('scroll', function () {
+            if ($('.dropdown-menu.show').length) {
+                $('#categoryDropdown, #privacyDropdown').dropdown('hide');
+            }
+        });
 
         // Preview selected images
-        document.querySelector('input[name="Images"]').addEventListener('change', function(e) {
+        document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
             const previewContainer = document.createElement('div');
             previewContainer.className = 'row mt-2';
-            
+
             Array.from(e.target.files).forEach(file => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         const col = document.createElement('div');
                         col.className = 'col-md-3 mb-2';
                         col.innerHTML = `
@@ -553,27 +745,27 @@
                             </div>
                         `;
                         previewContainer.appendChild(col);
-                    }
+                    };
                     reader.readAsDataURL(file);
                 }
             });
 
             const existingPreview = document.querySelector('#mediaPreview');
             if (existingPreview) {
-                existingPreview.innerHTML = ''; // Clear previous previews
+                existingPreview.innerHTML = '';
                 existingPreview.appendChild(previewContainer);
             }
         });
 
         // Preview selected videos
-        document.querySelector('input[name="Videos"]').addEventListener('change', function(e) {
+        document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
             const previewContainer = document.createElement('div');
             previewContainer.className = 'row mt-2';
-            
+
             Array.from(e.target.files).forEach(file => {
                 if (file.type.startsWith('video/')) {
                     const reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         const col = document.createElement('div');
                         col.className = 'col-md-6 mb-2';
                         col.innerHTML = `
@@ -582,16 +774,25 @@
                             </div>
                         `;
                         previewContainer.appendChild(col);
-                    }
+                    };
                     reader.readAsDataURL(file);
                 }
             });
 
             const existingPreview = document.querySelector('#mediaPreview');
             if (existingPreview) {
-                 existingPreview.innerHTML = ''; // Clear previous previews
-                 existingPreview.appendChild(previewContainer);
+                existingPreview.innerHTML = '';
+                existingPreview.appendChild(previewContainer);
             }
+        });
+
+        // Add/remove dropdown-open class on main content container
+        $('#categoryDropdown, #privacyDropdown').on('shown.bs.dropdown', function () {
+            $('.main-content-container').addClass('dropdown-open');
+        });
+
+        $('#categoryDropdown, #privacyDropdown').on('hidden.bs.dropdown', function () {
+            $('.main-content-container').removeClass('dropdown-open');
         });
     </script>
 }

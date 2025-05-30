@@ -81,17 +81,19 @@ namespace Client.Controllers
                     CreatedAt = (DateTime?)p.createdAt ?? DateTime.UtcNow,
                     UserID = Convert.ToInt32(p.userID ?? 0),
                     Username = (string?)p.userName ?? string.Empty,
+                    FullName = (string?)p.fullName ?? string.Empty,
                     CategoryName = (string?)p.categoryName,
+                    CategoryID = Convert.ToInt32(p.categoryID ?? 1),
+                    PrivacyID = Convert.ToInt32(p.privacyID ?? 1),
                     LikesCount = Convert.ToInt32(p.likesCount ?? 0),
                     CommentsCount = Convert.ToInt32(p.commentsCount ?? 0),
-                    ImageURL = p.mediaFiles != null ? 
-                        ((dynamic[])p.mediaFiles)
-                            .FirstOrDefault(m => (string?)m.type == "image")?.url as string 
-                        : null,
-                    VideoURL = p.mediaFiles != null ? 
-                        ((dynamic[])p.mediaFiles)
-                            .FirstOrDefault(m => (string?)m.type == "video")?.url as string 
-                        : null
+                    MediaFiles = p.mediaFiles != null ? 
+                        ((dynamic[])p.mediaFiles).Select(m => new MediaFileViewModel
+                        {
+                            Type = (string?)m.type,
+                            Url = (string?)m.url
+                        }).ToList()
+                        : new List<MediaFileViewModel>()
                 }).ToList() ?? new List<PostViewModel>();
             }
 

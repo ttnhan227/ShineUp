@@ -49,6 +49,8 @@ public class PostResponseDto
     // User info
     public int UserID { get; set; }
     public string Username { get; set; }
+    
+    public string FullName { get; set; }
 
     // Category info
     public int? CategoryID { get; set; }
@@ -76,6 +78,7 @@ public class PostListResponseDto
     // User info
     public int UserID { get; set; }
     public string UserName { get; set; }
+    public string FullName { get; set; }
 
     // Category info
     public string? CategoryName { get; set; }

@@ -64,7 +64,6 @@
             font-size: 1rem;
             padding: 1rem;
             border-top: 1px solid #e9ecef;
-            /* border-bottom: 1px solid #e9ecef; */
         }
 
         .post-actions {
@@ -158,6 +157,57 @@
          .dropdown-item {
              padding: 0.5rem 1rem;
          }
+
+        /* Grid layouts for different numbers of media items */
+        .media-grid-container {
+            display: grid;
+            gap: 2px;
+            background: #f8f9fa;
+        }
+
+        .media-grid-container.grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(1, 1fr);
+        }
+
+        .media-grid-container.grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-3 .media-item:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .media-grid-container.grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container .media-item {
+            padding-bottom: 100%; /* 1:1 aspect ratio for grid items */
+        }
+
+        .media-item.overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .media-count-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 2;
+        }
     </style>
 }
 
@@ -182,7 +232,7 @@
                     <div class="post-content flex-grow-1">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="post-meta">
-                                <span class="fw-bold">@Model.Username</span>
+                                <span class="fw-bold">@Model.FullName</span>
                                 <span class="text-muted">@@@Model.Username.ToLower().Replace(" ", "")</span>
                                 <span class="text-muted">&middot;</span>
                                 <span class="text-muted">@Model.CreatedAt.ToString("MMM dd")</span>
@@ -219,25 +269,56 @@
                         <h5 class="post-title mb-2 fw-bold">@Model.Title</h5>
                         <p class="post-text mb-2">@Model.Content</p>
 
-                        @if (!string.IsNullOrEmpty(Model.ImageURL) || !string.IsNullOrEmpty(Model.VideoURL))
+                        @if (Model.MediaFiles != null && Model.MediaFiles.Any())
                         {
-                            <div class="media-grid mt-2 mb-2 rounded-3 overflow-hidden">
-                                @if (!string.IsNullOrEmpty(Model.ImageURL))
+                            <div class="media-grid mt-2 mb-2">
+                                @if (Model.MediaFiles.Count == 1)
                                 {
-                                    <div class="media-item single">
-                                         <img src="@Model.ImageURL" class="img-fluid" alt="@Model.Title">
+                                    var media = Model.MediaFiles[0];
+                                    <div class="media-item single rounded-3 overflow-hidden">
+                                        @if (media.Type == "image")
+                                        {
+                                            <img src="@media.Url" class="img-fluid" alt="@Model.Title">
+                                        }
+                                        else if (media.Type == "video")
+                                        {
+                                            <div class="video-container">
+                                                <video controls preload="metadata" class="w-100 h-100">
+                                                    <source src="@media.Url" type="video/mp4">
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            </div>
+                                        }
                                     </div>
                                 }
-                                @if (!string.IsNullOrEmpty(Model.VideoURL))
+                                else
                                 {
-                                     <div class="media-item single">
-                                         <div class="video-container">
-                                             <video controls preload="metadata" class="w-100 h-100">
-                                                 <source src="@Model.VideoURL" type="video/mp4">
-                                                 Your browser does not support the video tag.
-                                             </video>
-                                         </div>
-                                     </div>
+                                    <div class="media-grid-container @(GetGridClass(Model.MediaFiles.Count)) rounded-3 overflow-hidden">
+                                        @foreach (var media in Model.MediaFiles.Take(4))
+                                        {
+                                            <div class="media-item @(Model.MediaFiles.Count > 4 && media == Model.MediaFiles.Skip(3).First() ? "overlay" : "")">
+                                                @if (media.Type == "image")
+                                                {
+                                                    <img src="@media.Url" class="img-fluid" alt="@Model.Title">
+                                                }
+                                                else if (media.Type == "video")
+                                                {
+                                                    <div class="video-container">
+                                                        <video controls preload="metadata" class="w-100 h-100">
+                                                            <source src="@media.Url" type="video/mp4">
+                                                            Your browser does not support the video tag.
+                                                        </video>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                @if (Model.MediaFiles.Count > 4)
+                                {
+                                    <div class="media-count-overlay d-flex align-items-center justify-content-center rounded-3">
+                                        +@(Model.MediaFiles.Count - 4)
+                                    </div>
                                 }
                             </div>
                         }
@@ -288,4 +369,17 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+@functions {
+    private string GetGridClass(int mediaCount)
+    {
+        return (mediaCount > 4 ? 4 : mediaCount) switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            4 => "grid-4",
+            _ => "grid-4"
+        };
+    }
+} 

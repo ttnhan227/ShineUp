@@ -20,6 +20,9 @@ public class PostListViewModel
     [Display(Name = "Author")]
     public string UserName { get; set; }
     
+    [Display(Name = "Full Name")]
+    public string FullName { get; set; }
+    
     [Display(Name = "User ID")]
     public int UserID { get; set; }
     

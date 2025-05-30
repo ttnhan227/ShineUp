@@ -333,9 +333,9 @@ public class PostsController : Controller
                     PostID = post.PostID,
                     Title = post.Title,
                     Content = post.Content,
-                    CurrentImageURL = post.ImageURL,
-                    CategoryID = post.CategoryID,
-                    PrivacyID = post.PrivacyID
+                    CategoryID = post.CategoryID ?? 1,
+                    PrivacyID = post.PrivacyID ?? 1,
+                    CurrentMediaFiles = post.MediaFiles
                 };
 
                 // Load dropdowns before showing the form
@@ -353,106 +353,76 @@ public class PostsController : Controller
     }
 
     // POST: Posts/Edit/5
-    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EditPostViewModel model)
+    [Authorize]
+    public async Task<IActionResult> Edit(int id, EditPostViewModel model, List<IFormFile> Images, List<IFormFile> Videos)
     {
-        if (id != model.PostID)
-        {
-            return NotFound();
-        }
-
-        if (!ModelState.IsValid)
-        {
-            ViewBag.Categories = await GetCategoriesAsync();
-            ViewBag.PrivacyOptions = await GetPrivacyOptionsAsync();
-            return View(model);
-        }
-
         try
         {
-            var client = _clientFactory.CreateClient("API");
-            
-            // Get the JWT token from claims
-            var token = User.FindFirst("JWT")?.Value;
-            if (string.IsNullOrEmpty(token))
+            if (id != model.PostID)
             {
-                _logger.LogError("JWT token is missing from claims");
-                ModelState.AddModelError("", "Authentication token is missing");
-                await LoadDropdowns();
-                return View(model);
+                return NotFound();
             }
 
-            // Add the authorization header
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            
-            // Create multipart form data
-            var formData = new MultipartFormDataContent();
-            formData.Add(new StringContent(model.PostID.ToString()), "PostID");
-            
-            if (!string.IsNullOrEmpty(model.Title))
-                formData.Add(new StringContent(model.Title), "Title");
-            
-            if (!string.IsNullOrEmpty(model.Content))
-                formData.Add(new StringContent(model.Content), "Content");
-            
-            if (model.CategoryID.HasValue)
-                formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
-            
-            if (model.PrivacyID.HasValue)
-                formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
-
-            // Handle image uploads
-            if (model.Images != null && model.Images.Any())
+            if (ModelState.IsValid)
             {
-                foreach (var image in model.Images)
+                var client = _clientFactory.CreateClient("API");
+                var content = new MultipartFormDataContent();
+
+                // Add basic post data
+                content.Add(new StringContent(model.Title), "Title");
+                content.Add(new StringContent(model.Content), "Content");
+                content.Add(new StringContent(model.CategoryID.ToString()), "CategoryID");
+                content.Add(new StringContent(model.PrivacyID.ToString()), "PrivacyID");
+
+                // Add new images
+                if (Images != null)
                 {
-                    if (image != null && image.Length > 0)
+                    foreach (var image in Images)
                     {
-                        var imageContent = new StreamContent(image.OpenReadStream());
-                        imageContent.Headers.ContentType = new MediaTypeHeaderValue(image.ContentType);
-                        formData.Add(imageContent, "MediaFiles", image.FileName);
-                        formData.Add(new StringContent("image"), "MediaTypes");
+                        if (image.Length > 0)
+                        {
+                            var imageContent = new StreamContent(image.OpenReadStream());
+                            content.Add(imageContent, "Images", image.FileName);
+                        }
                     }
+                }
+
+                // Add new videos
+                if (Videos != null)
+                {
+                    foreach (var video in Videos)
+                    {
+                        if (video.Length > 0)
+                        {
+                            var videoContent = new StreamContent(video.OpenReadStream());
+                            content.Add(videoContent, "Videos", video.FileName);
+                        }
+                    }
+                }
+
+                var response = await client.PutAsync($"api/posts/{id}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", error);
                 }
             }
 
-            // Handle video uploads
-            if (model.Videos != null && model.Videos.Any())
-            {
-                foreach (var video in model.Videos)
-                {
-                    if (video != null && video.Length > 0)
-                    {
-                        var videoContent = new StreamContent(video.OpenReadStream());
-                        videoContent.Headers.ContentType = new MediaTypeHeaderValue(video.ContentType);
-                        formData.Add(videoContent, "MediaFiles", video.FileName);
-                        formData.Add(new StringContent("video"), "MediaTypes");
-                    }
-                }
-            }
-
-            _logger.LogInformation($"Sending PUT request to api/posts/{id} with Title: {model.Title}, Content: {model.Content}, CategoryID: {model.CategoryID}, PrivacyID: {model.PrivacyID}");
-            
-            var response = await client.PutAsync($"api/posts/{id}", formData);
-            var responseContent = await response.Content.ReadAsStringAsync();
-            
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Post updated successfully");
-                return RedirectToAction(nameof(Index));
-            }
-            
-            _logger.LogError($"Failed to update post. Status: {response.StatusCode}, Content: {responseContent}");
-            ModelState.AddModelError("", $"Failed to update post: {responseContent}");
+            // If we got this far, something failed, redisplay form
             await LoadDropdowns();
             return View(model);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating post {PostId}", id);
-            ModelState.AddModelError("", "An error occurred while updating the post");
+            _logger.LogError(ex, "Error editing post {PostId}", id);
+            ModelState.AddModelError("", "An error occurred while editing the post.");
             await LoadDropdowns();
             return View(model);
         }

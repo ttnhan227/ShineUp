@@ -77,6 +77,54 @@
             border-color: #5e72e4;
             box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
         }
+
+        .media-grid-container {
+            display: grid;
+            gap: 2px;
+            background: #f8f9fa;
+        }
+
+        .media-grid-container.grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-item.overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .media-count-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
     </style>
 }
 
@@ -130,26 +178,61 @@
                             <span asp-validation-for="PrivacyID" class="text-danger"></span>
                         </div>
 
-                        @if (!string.IsNullOrEmpty(Model.CurrentImageURL))
+                        @if (Model.CurrentMediaFiles != null && Model.CurrentMediaFiles.Any())
                         {
                             <div class="form-group mb-3">
                                 <label class="control-label">
-                                    <i class='bx bx-image me-1'></i>Current Image
+                                    <i class='bx bx-image me-1'></i>Current Media
                                 </label>
-                                <div class="current-media">
-                                    <img src="@Model.CurrentImageURL" class="img-fluid rounded" style="max-height: 200px;" />
-                                </div>
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(Model.CurrentVideoURL))
-                        {
-                            <div class="form-group mb-3">
-                                <label class="control-label">
-                                    <i class='bx bx-video me-1'></i>Current Video
-                                </label>
-                                <div class="current-media">
-                                    <video src="@Model.CurrentVideoURL" class="img-fluid rounded" style="max-height: 200px;" controls></video>
+                                <div class="media-grid mt-2 mb-2">
+                                    @if (Model.CurrentMediaFiles.Count == 1)
+                                    {
+                                        var media = Model.CurrentMediaFiles[0];
+                                        <div class="media-item single rounded-3 overflow-hidden">
+                                            @if (media.Type == "image")
+                                            {
+                                                <img src="@media.Url" class="img-fluid" alt="Media">
+                                            }
+                                            else if (media.Type == "video")
+                                            {
+                                                <div class="video-container">
+                                                    <video controls preload="metadata" class="w-100 h-100">
+                                                        <source src="@media.Url" type="video/mp4">
+                                                        Your browser does not support the video tag.
+                                                    </video>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="media-grid-container @(GetGridClass(Model.CurrentMediaFiles.Count)) rounded-3 overflow-hidden">
+                                            @foreach (var media in Model.CurrentMediaFiles.Take(4))
+                                            {
+                                                <div class="media-item @(Model.CurrentMediaFiles.Count > 4 && media == Model.CurrentMediaFiles.Skip(3).First() ? "overlay" : "")">
+                                                    @if (media.Type == "image")
+                                                    {
+                                                        <img src="@media.Url" class="img-fluid" alt="Media">
+                                                    }
+                                                    else if (media.Type == "video")
+                                                    {
+                                                        <div class="video-container">
+                                                            <video controls preload="metadata" class="w-100 h-100">
+                                                                <source src="@media.Url" type="video/mp4">
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    @if (Model.CurrentMediaFiles.Count > 4)
+                                    {
+                                        <div class="media-count-overlay d-flex align-items-center justify-content-center rounded-3">
+                                            +@(Model.CurrentMediaFiles.Count - 4)
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         }
@@ -248,4 +331,16 @@
             e.target.parentNode.appendChild(previewContainer);
         });
     </script>
+}
+
+@functions {
+    string GetGridClass(int count)
+    {
+        return count switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            _ => "grid-4"
+        };
+    }
 } 

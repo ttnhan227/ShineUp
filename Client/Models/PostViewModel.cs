@@ -13,13 +13,13 @@ public class PostViewModel
     [Required(ErrorMessage = "Content is required")]
     public string Content { get; set; }
     
-    public string? ImageURL { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
     // User info
     public int UserID { get; set; }
     public string Username { get; set; }
+    public string FullName { get; set; }
     public string? ProfileImageURL { get; set; }
     
     // Category info
@@ -30,8 +30,8 @@ public class PostViewModel
     public int? PrivacyID { get; set; }
     public string? PrivacyName { get; set; }
     
-    // Media info
-    public string? VideoURL { get; set; }
+    // Media files
+    public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
     
     // Social features
     public int LikesCount { get; set; }

@@ -165,15 +165,19 @@
                                             </div>
                                         </div>
                                     </div>
-                                    @if (!string.IsNullOrEmpty(post.ImageURL))
+                                    @if (post.MediaFiles != null && post.MediaFiles.Any())
                                     {
-                                        <img src="@post.ImageURL" class="card-img-top" alt="Post image">
-                                    }
-                                    else if (!string.IsNullOrEmpty(post.VideoURL))
-                                    {
-                                        <video class="card-img-top" controls>
-                                            <source src="@post.VideoURL" type="video/mp4">
-                                        </video>
+                                        var media = post.MediaFiles[0]; // Show first media file
+                                        if (media.Type == "image")
+                                        {
+                                            <img src="@media.Url" class="card-img-top" alt="Post image">
+                                        }
+                                        else if (media.Type == "video")
+                                        {
+                                            <video class="card-img-top" controls>
+                                                <source src="@media.Url" type="video/mp4">
+                                            </video>
+                                        }
                                     }
                                     <div class="card-body">
                                         <h5 class="card-title">@post.Title</h5>
