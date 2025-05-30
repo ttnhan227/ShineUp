@@ -1,99 +1,399 @@
 @model IEnumerable<Client.Models.PostViewModel>
 
 @{
-    ViewData["Title"] = "Posts";
+    ViewData["Title"] = "Talent Showcase";
 }
 
 @section Styles {
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        .newsfeed-user-card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
+        :root {
+            --primary-color: #7c3aed;
+            --primary-hover: #6d28d9;
+            --secondary-color: #f3f4f6;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #f9fafb;
+            color: var(--text-primary);
+        }
+
+        .main-content-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Category Sidebar Styles */
+        .category-sidebar {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
             overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
         }
 
         .category-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+            padding: 1rem;
         }
 
         .category-item {
             display: flex;
             align-items: center;
             padding: 0.75rem 1rem;
-            color: #525f7f;
+            color: var(--text-secondary);
             text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+            transition: var(--transition);
+            margin-bottom: 0.5rem;
         }
 
         .category-item:hover {
-            background-color: #f8f9fa;
-            color: #5e72e4;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            transform: translateX(5px);
         }
 
         .category-item.active {
-            background-color: #5e72e4;
+            background-color: var(--primary-color);
             color: white;
         }
 
         .category-item i {
-            margin-right: 0.5rem;
-            font-size: 1.2rem;
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
         }
 
-        .post-card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
+        /* Post Creation Card */
+        .post-creation-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            transform: translateY(0);
-            will-change: transform;
-            backface-visibility: hidden;
+            transition: var(--transition);
+            position: relative;
+            z-index: 1040;
+        }
+
+        .post-creation-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+        }
+
+        .post-creation-body {
+            padding: 1.5rem;
+        }
+
+        .post-input {
+            border: 2px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: var(--transition);
+        }
+
+        .post-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        /* Select Box Styles */
+        .select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .select-wrapper::after {
+            content: '\ea4a';
+            font-family: 'boxicons';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .select-wrapper:hover::after {
+            color: var(--primary-color);
+        }
+
+        .custom-select {
+            appearance: none;
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 150px;
+        }
+
+        .custom-select:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .custom-select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .custom-select option {
+            background: white;
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+
+        /* Update media upload buttons to match select style */
+        .media-upload-btn {
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .media-upload-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .media-upload-btn i {
+            font-size: 1.25rem;
+            /* Ensure icon is displayed correctly */
+            display: inline-block;
+            color: var(--text-secondary); /* Explicitly set color */
+        }
+
+        /* Specific style to ensure image icon visibility */
+        label[for="imagesInput"] i {
+             display: inline-block !important;
+             color: var(--text-secondary) !important;
+        }
+
+        /* Post Card Styles */
+        .post-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+            z-index: 1030;
         }
 
         .post-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        .media-grid {
-            width: 100%;
-            background: #f8f9fa;
+        .post-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .media-item {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        .post-avatar {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
             overflow: hidden;
+            border: 2px solid var(--primary-color);
         }
 
-        .media-item img,
-        .media-item video {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .post-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .media-grid-container {
-            display: grid;
-            gap: 2px;
-            background: #f8f9fa;
+        .post-meta {
+            flex: 1;
         }
 
-        /* Grid layouts for different numbers of media items */
+        .post-author {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .post-info {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .post-content {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .post-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .post-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        /* Media Grid Styles */
+        .media-grid {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .media-grid-container {
+            display: grid;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+        }
+
+        .media-item {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .media-item:hover .media-overlay {
+            opacity: 1;
+        }
+
+        /* Post Actions */
+        .post-actions {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .post-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .post-action:hover {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .post-action i {
+            font-size: 1.25rem;
+        }
+
+        /* Right Sidebar */
+        .trending-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .trending-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+        }
+
+        .trending-list {
+            padding: 1rem;
+        }
+
+        .trending-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .trending-item:last-child {
+            border-bottom: none;
+        }
+
+        .trending-item:hover {
+            background: var(--secondary-color);
+        }
+
+        .trending-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .trending-stats {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Grid Layouts */
         .media-grid-container.grid-2 {
             grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(1, 1fr);
         }
 
         .media-grid-container.grid-3 {
@@ -110,432 +410,205 @@
             grid-template-rows: repeat(2, 1fr);
         }
 
-        .media-grid-container .media-item {
-            padding-bottom: 100%; /* 1:1 aspect ratio for grid items */
-        }
-
-        .media-item.overlay::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .media-count-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        /* Talent-specific styles */
+        .talent-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-            z-index: 2;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
         }
 
-        .video-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: #000;
+        .performance-rating {
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.25rem;
+            color: #f59e0b;
         }
 
-        .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: #000;
-            position: absolute;
-            top: 0;
-            left: 0;
+        .performance-rating i {
+            font-size: 1rem;
         }
 
-        .video-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            font-size: 3rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .video-container:hover .video-overlay {
-            opacity: 1;
-        }
-
-        /* Add styles for single video display */
-        .media-item.single .video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .media-item.single .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Grid video styles */
-        .media-grid-container .video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .media-grid-container .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Replace your existing dropdown styles with these fixed versions */
-        .dropdown-toggle::after {
-            display: inline-block;
-        }
-
-        .dropdown-menu {
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-            z-index: 1070 !important;
-            min-width: 150px;
-            background-color: #ffffff !important;
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            opacity: 1 !important;
-            transform: none !important;
-        }
-
-        /* Force dropdown to stay on top when shown */
-        .dropdown-menu.show {
-            position: absolute !important;
-            z-index: 1070 !important;
-            background-color: #ffffff !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-        }
-
-        /* Ensure dropdown items are properly styled */
-        .dropdown-item {
-            color: #212529 !important;
-            background-color: transparent !important;
-            padding: 0.5rem 1rem;
-            transition: background-color 0.15s ease-in-out;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa !important;
-            color: #5e72e4 !important;
-        }
-
-        /* Ensure the dropdown container doesn't interfere */
-        .dropdown.d-inline-block {
+        /* Dropdown Styles */
+        .dropdown {
             position: relative;
             z-index: 1050;
         }
 
-        /* Fix the post creation card to not interfere with dropdowns */
-        .post-creation-card {
-            overflow: visible !important;
-            transform: none !important;
-            transition: box-shadow 0.3s ease !important;
-            position: relative;
-            z-index: 1040;
-        }
-
-        .post-creation-card:hover {
-            transform: none !important;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        /* When a dropdown is open, reduce z-index of other elements */
-        .dropdown-open .post-card:not(.post-creation-card) {
-            z-index: 1030 !important;
-            transform: none !important;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        /* Ensure form elements don't interfere */
-        .post-creation-card .form-control,
-        .post-creation-card .btn {
-            position: relative;
-            z-index: 1041;
-        }
-
-        /* Additional fixes for dropdown positioning */
-        .dropdown-menu[data-bs-popper] {
-            position: absolute !important;
-            top: 100% !important;
-            left: auto !important;
-            right: 0 !important;
-            margin-top: 0.5rem !important;
-            transform: none !important;
-            will-change: transform;
-        }
-        
-        /* Ensure dropdown is positioned relative to its container */
-        .dropdown {
-            position: relative;
-        }
-        
-        /* Adjust dropdown menu positioning for RTL support */
-        .dropdown-menu-end[data-bs-popper] {
-            left: auto !important;
-            right: 0 !important;
-        }
-        
-        /* Ensure proper spacing for dropdown toggle */
-        .dropdown-toggle {
-            white-space: nowrap;
-        }
-
-        .post-meta {
-            margin: 1rem 0;
-            color: #8898aa;
-            font-size: 0.9rem;
-        }
-
-        .post-title {
-            color: #2d3748;
-            font-size: 1.25rem;
-            line-height: 1.4;
-            margin-top: 0.5rem;
-            transition: color 0.2s ease;
-        }
-
-        .post-title:hover {
-            color: #5e72e4;
-        }
-
-        .post-text {
-            color: #4a5568;
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-
-        .post-stats {
-            color: #8898aa;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-        }
-
-        .card-footer {
-            background-color: #fff;
-            border-top: 1px solid #e9ecef;
-            padding: 1rem;
-        }
-
-        .btn-primary {
-            background-color: #5e72e4;
-            border-color: #5e72e4;
-        }
-
-        .btn-primary:hover {
-            background-color: #4a5cd1;
-            border-color: #4a5cd1;
-        }
-
-        .dropdown-toggle::after {
-            display: inline-block; /* Restore Bootstrap's default caret */
-        }
-
         .dropdown-menu {
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            z-index: 1060 !important; /* Increased z-index to be above other elements */
-            min-width: 150px;
-            background-color: white !important; /* Ensure solid background to prevent blending */
-            opacity: 1 !important;
-        }
-
-        /* Dropdown menu styles */
-        .dropdown-menu {
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            position: absolute;
+            z-index: 1060;
+            min-width: 200px;
             padding: 0.5rem 0;
-            min-width: 160px;
-        }
-
-        .dropdown-item {
-            padding: 0.5rem 1.5rem;
-            color: #333;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: #0d6efd;
-        }
-
-        .dropdown-divider {
-            margin: 0.3rem 0;
-            border-top: 1px solid #eee;
-        }
-
-        /* Ensure dropdowns appear above other content */
-        .dropdown {
-            position: relative;
+            margin: 0.5rem 0;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
         }
 
         .dropdown-menu.show {
-            display: block;
-            position: absolute;
-            inset: auto auto 0px 0px;
-            margin: 0px;
-            transform: translate(0px, 34px);
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
 
-        /* Fix for dropdown positioning in post cards */
-        .post-card {
-            position: relative;
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .post-card .dropdown-menu {
-            position: absolute;
-            right: 0;
-            left: auto;
-            top: 100%;
-            margin-top: 0.5rem;
+        .dropdown-item:hover {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
         }
 
-        /* Ensure the dropdown container doesn't interfere */
-        .dropdown.d-inline-block {
-            position: relative;
+        .dropdown-item i {
+            font-size: 1.25rem;
         }
 
-        /* Ensure the post creation card doesn't clip the dropdown */
-        .post-creation-card {
-            overflow: visible;
-            transform: none !important;
-            transition: none !important;
+        /* Fix for dropdown positioning */
+        .dropdown-menu[data-bs-popper] {
+            top: 100% !important;
+            left: 0 !important;
+            margin-top: 0.5rem !important;
+        }
+        
+        /* Ensure dropdowns are above other content */
+        .dropdown-menu.show {
+            z-index: 1060 !important;
+        }
+        
+        /* Fix for mobile responsiveness */
+        @@media (max-width: 768px) {
+            .main-content-container {
+            padding: 1rem;
         }
 
-        .post-creation-card:hover {
-            transform: none !important;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
+            .category-sidebar {
+                position: static;
+                margin-bottom: 2rem;
         }
 
-        /* When a dropdown is open, disable pointer events and hover on post cards */
-        .dropdown-open .posts-feed .post-card {
-            pointer-events: none;
-            transform: none !important;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important; /* Keep default shadow */
+            .media-grid-container {
+                gap: 0.25rem;
+        }
+
+        .dropdown-menu {
+                position: fixed !important;
+                top: auto !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: 90% !important;
+                max-width: 300px;
+        }
+
+        .dropdown-menu.show {
+                transform: translateX(-50%) translateY(0) !important;
+        }
         }
     </style>
 }
 
 <div class="main-content-container">
-    <div class="row">
+    <div class="row g-4">
         <!-- Left Sidebar (Categories) -->
-        <div class="col-md-3">
-            <div class="p-3">
-                <div class="card newsfeed-user-card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4 fw-bold">
-                            <i class='bx bx-category me-2'></i> Categories
+        <div class="col-lg-3">
+            <div class="category-sidebar">
+                <div class="category-card">
+                    <div class="category-header">
+                        <h5 class="mb-0">
+                            <i class='bx bx-category me-2'></i> Talent Categories
                         </h5>
+                    </div>
                         <div class="category-list">
                             <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
-                                <i class='bx bx-grid-alt me-2'></i> All Posts
+                            <i class='bx bx-grid-alt'></i> All Performances
                             </a>
                             @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                             {
                                 <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
                                    class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
-                                    <i class='bx bx-category me-2'></i> @category.Text
+                                <i class='bx bx-category'></i> @category.Text
                                 </a>
                             }
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content (Posts Feed) -->
-        <div class="col-md-6">
-            <div class="p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom">
+        <div class="col-lg-6">
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <!-- Removed the create post button from here -->
-                    }
+                <div class="post-creation-card">
+                    <div class="post-creation-header">
+                        <h5 class="mb-0">Share Your Talent</h5>
                 </div>
-
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <div class="card post-card post-creation-card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title mb-3 text-muted">What's happening?</h5>
+                    <div class="post-creation-body">
                             <form id="createPostForm" asp-action="Create" method="post" enctype="multipart/form-data">
                                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                                 <div class="form-group mb-3">
-                                    <input type="text" id="titleInput" name="Title" class="form-control" placeholder="Title" required />
+                                <input type="text" id="titleInput" name="Title" class="form-control post-input" 
+                                       placeholder="Performance Title" required />
                                     <span validation-for="Title" class="text-danger"></span>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <textarea id="contentInput" name="Content" class="form-control" rows="3" placeholder="What's on your mind?"></textarea>
+                                <textarea id="contentInput" name="Content" class="form-control post-input" 
+                                          rows="3" placeholder="Share your talent story..."></textarea>
                                     <span validation-for="Content" class="text-danger"></span>
                                 </div>
 
-                                <div id="mediaPreview" class="row mt-2"></div>
+                            <div id="mediaPreview" class="row g-2 mt-2"></div>
 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <div>
-                                        <label for="imagesInput" class="btn btn-outline-primary btn-sm rounded-circle me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add photos">
-                                            <i class='bx bx-image-add' style="font-size: 1.2rem; line-height: 1.2;"></i>
-                                            <input type="file" id="imagesInput" name="Images" class="d-none" multiple accept="image/*" />
+                                <div class="d-flex gap-2">
+                                    <label for="imagesInput" class="media-upload-btn" data-bs-toggle="tooltip" 
+                                           data-bs-placement="bottom" title="Add photos">
+                                        <i class='bx bx-image-add'></i>
+                                        <input type="file" id="imagesInput" name="Images" class="d-none" 
+                                               multiple accept="image/*" />
                                         </label>
-                                        <label for="videosInput" class="btn btn-outline-success btn-sm rounded-circle" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add videos">
+                                    <label for="videosInput" class="media-upload-btn" data-bs-toggle="tooltip" 
+                                           data-bs-placement="bottom" title="Add videos">
                                             <i class='bx bx-video-plus'></i>
-                                            <input type="file" id="videosInput" name="Videos" class="d-none" multiple accept="video/*" />
+                                        <input type="file" id="videosInput" name="Videos" class="d-none" 
+                                               multiple accept="video/*" />
                                         </label>
-                                        <div class="dropdown d-inline-block">
-                                            <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle ms-2" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Select Category
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                                    <div class="select-wrapper">
+                                        <select class="custom-select" id="categorySelect" name="CategoryID">
+                                            <option value="">Select Category</option>
                                                 @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                                                 {
-                                                    <li><a class="dropdown-item" href="#" data-value="@category.Value">@category.Text</a></li>
+                                                <option value="@category.Value">@category.Text</option>
                                                 }
-                                            </ul>
-                                            <input type="hidden" name="CategoryID" id="selectedCategoryID" value="" />
+                                        </select>
                                         </div>
-                                        <div class="dropdown d-inline-block">
-                                            <button class="btn btn-outline-secondary btn-sm rounded-pill dropdown-toggle ms-2" type="button" id="privacyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Privacy
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="privacyDropdown">
+                                    <div class="select-wrapper">
+                                        <select class="custom-select" id="privacySelect" name="PrivacyID">
                                                 @foreach (var privacy in ViewBag.PrivacyOptions ?? new List<SelectListItem>())
                                                 {
-                                                    <li><a class="dropdown-item" href="#" data-value="@privacy.Value">@privacy.Text</a></li>
+                                                <option value="@privacy.Value">@privacy.Text</option>
                                                 }
-                                            </ul>
-                                            <input type="hidden" name="PrivacyID" id="selectedPrivacyID" value="1" />
-                                        </div>
+                                        </select>
                                     </div>
-                                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold">Post</button>
+                                </div>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                    <i class='bx bx-send me-2'></i>Share
+                                </button>
                                 </div>
                             </form>
                         </div>
@@ -545,136 +618,135 @@
                 <div class="posts-feed">
                     @foreach (var item in Model)
                     {
-                        <div class="post-card border-bottom py-3 px-3">
-                            <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="post-link text-decoration-none text-dark">
-                                <div class="d-flex align-items-start">
-                                    <div class="post-avatar me-3">
+                    <div class="post-card">
+                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" 
+                           class="text-decoration-none">
+                            <div class="post-header">
+                                <div class="post-avatar">
                                         @if (!string.IsNullOrEmpty(item.ProfileImageURL))
                                         {
-                                            <img src="@item.ProfileImageURL" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;" alt="Profile Image">
+                                        <img src="@item.ProfileImageURL" alt="@item.FullName">
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                            <i class='bx bx-user text-primary'></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="post-meta">
+                                    <div class="post-author">
+                                        @item.FullName
+                                        @if (!string.IsNullOrEmpty(item.CategoryName))
+                                        {
+                                            <span class="talent-badge">@item.CategoryName</span>
+                                        }
+                                    </div>
+                                    <div class="post-info">
+                                        <span>@@@item.UserName.ToLower().Replace(" ", "")</span>
+                                        <span class="mx-1">·</span>
+                                        <span>@item.CreatedAt.ToString("MMM dd")</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="post-content">
+                                <h5 class="post-title">@item.Title</h5>
+                                <p class="post-text">@item.Content</p>
+
+                                @if (item.MediaFiles != null && item.MediaFiles.Any())
+                                {
+                                    <div class="media-grid">
+                                        @if (item.MediaFiles.Count == 1)
+                                        {
+                                            var media = item.MediaFiles[0];
+                                            <div class="media-item">
+                                                @if (media.Type == "image")
+                                                {
+                                                    <img src="@media.Url" alt="@item.Title">
+                                                }
+                                                else if (media.Type == "video")
+                                                {
+                                                    <video controls preload="metadata">
+                                                        <source src="@media.Url" type="video/mp4">
+                                                    </video>
+                                                }
+                                            </div>
                                         }
                                         else
                                         {
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #f8f9fa;">
-                                                <i class='bx bx-user' style="font-size: 2rem; color: #5e72e4;"></i>
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="post-content flex-grow-1">
-                                        <div class="post-meta d-flex align-items-center mb-1">
-                                            <span class="fw-bold me-1">@item.FullName</span>
-                                            <span class="text-muted me-1">@@@item.UserName.ToLower().Replace(" ", "")</span>
-                                            <span class="text-muted">·</span>
-                                            <span class="text-muted ms-1">@item.CreatedAt.ToString("MMM dd")</span>
-                                            @if (!string.IsNullOrEmpty(item.CategoryName))
-                                            {
-                                                <span class="text-muted ms-1">·</span>
-                                                <span class="text-muted ms-1">@item.CategoryName</span>
-                                            }
-                                        </div>
-
-                                        <h5 class="post-title mb-2 fw-bold">@item.Title</h5>
-                                        <p class="post-text mb-2">@item.Content</p>
-
-                                        @if (item.MediaFiles != null && item.MediaFiles.Any())
+                                            <div class="media-grid-container @(GetGridClass(item.MediaFiles.Count))">
+                                                @foreach (var media in item.MediaFiles.Take(4))
                                         {
-                                            <div class="media-grid mt-2 mb-2">
-                                                @if (item.MediaFiles.Count == 1)
-                                                {
-                                                    var media = item.MediaFiles[0];
-                                                    <div class="media-item single rounded-3 overflow-hidden">
+                                                    <div class="media-item">
                                                         @if (media.Type == "image")
                                                         {
-                                                            <img src="@media.Url" class="img-fluid" alt="@item.Title">
+                                                            <img src="@media.Url" alt="@item.Title">
                                                         }
                                                         else if (media.Type == "video")
                                                         {
-                                                            <div class="video-container">
-                                                                <video controls preload="metadata" class="w-100 h-100">
+                                                            <video controls preload="metadata">
                                                                     <source src="@media.Url" type="video/mp4">
-                                                                    Your browser does not support the video tag.
                                                                 </video>
+                                                        }
+                                                        @if (item.MediaFiles.Count > 4 && media == item.MediaFiles.Skip(3).First())
+                                                                {
+                                                            <div class="media-overlay">
+                                                                +@(item.MediaFiles.Count - 4)
                                                             </div>
                                                         }
                                                     </div>
                                                 }
-                                                else
-                                                {
-                                                    <div class="media-grid-container @(GetGridClass(item.MediaFiles.Count)) rounded-3 overflow-hidden">
-                                                        @foreach (var media in item.MediaFiles.Take(4))
-                                                        {
-                                                            <div class="media-item @(item.MediaFiles.Count > 4 && media == item.MediaFiles.Skip(3).First() ? "overlay" : "")">
-                                                                @if (media.Type == "image")
-                                                                {
-                                                                    <img src="@media.Url" class="img-fluid" alt="@item.Title">
-                                                                }
-                                                                else if (media.Type == "video")
-                                                                {
-                                                                    <div class="video-container">
-                                                                        <video controls preload="metadata" class="w-100 h-100">
-                                                                            <source src="@media.Url" type="video/mp4">
-                                                                            Your browser does not support the video tag.
-                                                                        </video>
-                                                                    </div>
-                                                                }
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                }
-                                                @if (item.MediaFiles.Count > 4)
-                                                {
-                                                    <div class="media-count-overlay d-flex align-items-center justify-content-center rounded-3">
-                                                        +@(item.MediaFiles.Count - 4)
                                                     </div>
                                                 }
                                             </div>
                                         }
 
-                                        <div class="post-stats d-flex justify-content-around mt-2">
-                                            <span class="d-flex align-items-center">
-                                                <i class='bx bx-comment me-1'></i> @item.CommentsCount
-                                            </span>
-                                            <span class="d-flex align-items-center">
-                                                <i class='bx bx-repost me-1'></i>
-                                            </span>
-                                            <span class="d-flex align-items-center">
-                                                <i class='bx bx-heart me-1'></i> @item.LikesCount
-                                            </span>
-                                            <span class="d-flex align-items-center">
-                                                <i class='bx bx-bar-chart me-1'></i>
-                                            </span>
-                                            <span class="d-flex align-items-center">
-                                                <i class='bx bx-upload me-1'></i>
-                                            </span>
+                                <div class="post-actions">
+                                    <div class="post-action">
+                                        <i class='bx bx-comment'></i>
+                                        <span>@item.CommentsCount</span>
+                                    </div>
+                                    <div class="post-action">
+                                        <i class='bx bx-repost'></i>
+                                        <span>Share</span>
+                                    </div>
+                                    <div class="post-action">
+                                        <i class='bx bx-heart'></i>
+                                        <span>@item.LikesCount</span>
+                                    </div>
+                                    <div class="post-action">
+                                        <i class='bx bx-bar-chart'></i>
+                                        <span>Stats</span>
                                         </div>
                                     </div>
                                 </div>
                             </a>
                         </div>
                     }
-                </div>
             </div>
         </div>
 
-        <!-- Right Sidebar (Placeholder) -->
-        <div class="col-md-3">
-            <div class="p-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4 fw-bold">
-                            <i class='bx bx-search me-2'></i> Search
+        <!-- Right Sidebar -->
+        <div class="col-lg-3">
+            <div class="trending-card">
+                <div class="trending-header">
+                    <h5 class="mb-0">
+                        <i class='bx bx-trending-up me-2'></i> Trending Talents
                         </h5>
-                        <div class="mb-3">
-                            <input type="text" class="form-control rounded-pill" placeholder="Search Twitter">
+                </div>
+                <div class="trending-list">
+                    <div class="trending-item">
+                        <div class="trending-title">#DanceChallenge</div>
+                        <div class="trending-stats">1.2K performances</div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-title">#VocalShowcase</div>
+                        <div class="trending-stats">856 performances</div>
                         </div>
-                        <h5 class="card-title mb-4 fw-bold mt-4">
-                            <i class='bx bx-trending-up me-2'></i> Trends for you
-                        </h5>
-                        <ul class="list-unstyled">
-                            <li class="mb-2">#TrendingTopic1 <span class="text-muted d-block">100K Posts</span></li>
-                            <li class="mb-2">#TrendingTopic2 <span class="text-muted d-block">50K Posts</span></li>
-                            <li class="mb-2">#TrendingTopic3 <span class="text-muted d-block">20K Posts</span></li>
-                        </ul>
+                    <div class="trending-item">
+                        <div class="trending-title">#MagicMasters</div>
+                        <div class="trending-stats">432 performances</div>
                     </div>
                 </div>
             </div>
@@ -703,42 +775,17 @@
             $('[data-bs-toggle="tooltip"]').tooltip();
         });
 
-        // Handle dropdown selection for Category
-        $('#categoryDropdown + .dropdown-menu a').on('click', function (e) {
-            e.preventDefault();
-            var selectedValue = $(this).data('value');
-            var selectedText = $(this).text();
-            $('#selectedCategoryID').val(selectedValue);
-            $('#categoryDropdown').text(selectedText);
-        });
-
-        // Handle dropdown selection for Privacy
-        $('#privacyDropdown + .dropdown-menu a').on('click', function (e) {
-            e.preventDefault();
-            var selectedValue = $(this).data('value');
-            var selectedText = $(this).text();
-            $('#selectedPrivacyID').val(selectedValue);
-            $('#privacyDropdown').text(selectedText);
-        });
-
-        // Close dropdown on scroll
-        $(window).on('scroll', function () {
-            if ($('.dropdown-menu.show').length) {
-                $('#categoryDropdown, #privacyDropdown').dropdown('hide');
-            }
-        });
-
         // Preview selected images
         document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
             const previewContainer = document.createElement('div');
-            previewContainer.className = 'row mt-2';
+            previewContainer.className = 'row g-2';
 
             Array.from(e.target.files).forEach(file => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function (e) {
                         const col = document.createElement('div');
-                        col.className = 'col-md-3 mb-2';
+                        col.className = 'col-md-3';
                         col.innerHTML = `
                             <div class="card">
                                 <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
@@ -760,14 +807,14 @@
         // Preview selected videos
         document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
             const previewContainer = document.createElement('div');
-            previewContainer.className = 'row mt-2';
+            previewContainer.className = 'row g-2';
 
             Array.from(e.target.files).forEach(file => {
                 if (file.type.startsWith('video/')) {
                     const reader = new FileReader();
                     reader.onload = function (e) {
                         const col = document.createElement('div');
-                        col.className = 'col-md-6 mb-2';
+                        col.className = 'col-md-6';
                         col.innerHTML = `
                             <div class="card">
                                 <video src="${e.target.result}" class="card-img-top" style="height: 200px; object-fit: cover;" controls></video>
@@ -784,15 +831,6 @@
                 existingPreview.innerHTML = '';
                 existingPreview.appendChild(previewContainer);
             }
-        });
-
-        // Add/remove dropdown-open class on main content container
-        $('#categoryDropdown, #privacyDropdown').on('shown.bs.dropdown', function () {
-            $('.main-content-container').addClass('dropdown-open');
-        });
-
-        $('#categoryDropdown, #privacyDropdown').on('hidden.bs.dropdown', function () {
-            $('.main-content-container').removeClass('dropdown-open');
         });
     </script>
 }
