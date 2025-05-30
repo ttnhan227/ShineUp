@@ -446,6 +446,9 @@ public class PostsController : Controller
     }
 
     // GET: Posts/User/5
+    // This method is intended for returning a view, not for AJAX calls.
+    // It conflicts with the AJAX UserPosts method below.
+    /*
     public async Task<IActionResult> UserPosts(int userId)
     {
         try
@@ -471,6 +474,7 @@ public class PostsController : Controller
             return View("Error");
         }
     }
+    */
 
     // GET: Posts/Category/5
     public async Task<IActionResult> CategoryPosts(int categoryId)
@@ -559,6 +563,74 @@ public class PostsController : Controller
         {
             _logger.LogError(ex, "Error getting privacy options");
             return new SelectList(new List<PrivacyViewModel>());
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UserPosts(int userId)
+    {
+        try
+        {
+            var token = HttpContext.Session.GetString("JWTToken");
+            var client = _clientFactory.CreateClient("API");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+           
+            var response = await client.GetAsync($"api/posts/user/{userId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var posts = await response.Content.ReadFromJsonAsync<List<PostListViewModel>>(new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return Json(posts);
+            }
+            
+             _logger.LogError($"Failed to fetch user posts for user {{UserId}}. Status Code: {{StatusCode}}", userId, response.StatusCode);
+            return Json(new List<PostListViewModel>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching user posts for user {UserId}", userId);
+            return Json(new List<PostListViewModel>());
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UserPostsPartial(int userId)
+    {
+        try
+        {
+            var token = HttpContext.Session.GetString("JWTToken");
+            var client = _clientFactory.CreateClient("API");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+           
+            var response = await client.GetAsync($"api/posts/user/{userId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var posts = await response.Content.ReadFromJsonAsync<List<PostListViewModel>>(new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return PartialView("_UserPosts", posts);
+            }
+            
+            _logger.LogError($"Failed to fetch user posts for user {{UserId}}. Status Code: {{StatusCode}}", userId, response.StatusCode);
+            return PartialView("_UserPosts", new List<PostListViewModel>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching user posts for user {UserId}", userId);
+            return PartialView("_UserPosts", new List<PostListViewModel>());
         }
     }
 } 

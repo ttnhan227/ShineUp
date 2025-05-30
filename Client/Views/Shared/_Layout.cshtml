@@ -10,48 +10,147 @@
     <link rel="stylesheet" href="~/Client.styles.css" asp-append-version="true"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    @RenderSection("Styles", required: false)
     <style>
+        body {
+            background-color: #f0f2f5; /* Light gray background for the whole page */
+        }
+
+        /* Header and Navbar Styling */
+        header {
+            background-color: #fff;
+            border-bottom: 1px solid #eff3f4; /* Subtle border at the bottom of the header */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Very subtle shadow */
+        }
+
+        .navbar {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .navbar-brand {
+            color: #1d9bf0 !important; /* Twitter blue for brand */
+            font-size: 1.75rem !important; /* Larger font size */
+        }
+
+        .navbar-nav .nav-item .nav-link {
+            color: #0f1419 !important; /* Darker text for links */
+            font-weight: 700; /* Bolder font */
+            padding: 0.75rem 1rem; /* Adjusted padding */
+            border-radius: 9999px; /* Pill shape for hover/active */
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .navbar-nav .nav-item .nav-link:hover {
+            background-color: rgba(29, 155, 240, 0.1); /* Light Twitter blue hover */
+            color: #1d9bf0 !important;
+        }
+
+        .navbar-nav .nav-item .nav-link.active {
+            color: #1d9bf0 !important;
+        }
+
+        /* Profile Image Placeholder */
         .profile-image-placeholder-sm {
-            width: 30px;
-            height: 30px;
+            width: 36px; /* Match HTML size */
+            height: 36px; /* Match HTML size */
             border-radius: 50%;
-            background: #f8f9fa;
+            background: #e1e8ed; /* Lighter background */
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #5e72e4; /* Adjusted border size */
+            border: none; /* Remove border */
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .profile-image-placeholder-sm i {
-            font-size: 1rem; /* Adjusted icon size */
-            color: #5e72e4;
+            font-size: 1.5rem; /* Match HTML icon size */
+            color: #657786; /* Twitter gray */
+        }
+
+        /* User Dropdown */
+        .navbar-nav .dropdown-toggle {
+            padding-right: 0.75rem !important; /* Adjust padding */
+        }
+
+        .navbar-nav .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .navbar-nav .dropdown-item {
+            font-weight: 500;
+        }
+
+        .navbar-nav .dropdown-item:hover {
+            background-color: #f0f2f5;
+            color: #0f1419;
+        }
+
+        /* Login Button */
+        .navbar-nav .btn-primary {
+            background-color: #1d9bf0; /* Twitter blue */
+            border-color: #1d9bf0;
+            font-weight: 700;
+            transition: background-color 0.2s ease;
+        }
+
+        .navbar-nav .btn-primary:hover {
+            background-color: #1a8cd8; /* Darker blue on hover */
+            border-color: #1a8cd8;
+        }
+
+        /* Main Content Container */
+        .main-content-container { /* Renamed for clarity */
+            max-width: 1200px; /* Limit overall width of the main content area */
+            padding-left: 15px;
+            padding-right: 15px;
+            margin-left: auto; /* Center the container */
+            margin-right: auto; /* Center the container */
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #fff;
+            border-top: 1px solid #eff3f4;
+            padding: 1rem 0;
+            font-size: 0.85rem;
+            color: #657786 !important;
+        }
+        .footer a {
+            color: #1d9bf0;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-<header>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-        <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Client</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+<header class="sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-2">
+        <div class="container-fluid px-4"> @* Reverted to container-fluid for full width *@
+            <a class="navbar-brand fw-bold fs-4" asp-area="" asp-controller="Home" asp-action="Index">ShineUp</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Posts" asp-action="Index">Posts</a>
+                        <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Posts" asp-action="Index">Posts</a>
                     </li>
                     @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
+                            <a class="nav-link text-dark fw-bold" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
                         </li>
                     }
                 </ul>
@@ -68,15 +167,15 @@
                                     <img src="@profileImageUrl"
                                          alt="Profile"
                                          class="rounded-circle me-2"
-                                         style="width: 30px; height: 30px; object-fit: cover;" />
+                                         style="width: 36px; height: 36px; object-fit: cover;" />
                                 }
                                 else
                                 {
-                                    <div class="profile-image-placeholder-sm me-2">
-                                        <i class='bx bx-user'></i>
+                                    <div class="profile-image-placeholder-sm me-2" style="width: 36px; height: 36px;">
+                                        <i class='bx bx-user' style="font-size: 1.5rem;"></i>
                                     </div>
                                 }
-                                <span>Welcome @userEmail!</span>
+                                <span class="fw-bold">Welcome @userEmail!</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile" asp-action="Index">Profile</a></li>
@@ -92,7 +191,7 @@
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Login</a>
+                            <a class="nav-link btn btn-primary rounded-pill px-3 text-white fw-bold" asp-controller="Auth" asp-action="Login">Login</a>
                         </li>
                     }
                 </ul>
@@ -100,14 +199,13 @@
         </div>
     </nav>
 </header>
-<div class="container">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-</div>
+
+<main role="main" class="pb-3 mt-3 container-fluid" style="background-color: #e9ecef;"> @* Temporary background to visualize width *@
+    @RenderBody()
+</main>
 
 <footer class="border-top footer text-muted">
-    <div class="container">
+    <div class="container-fluid px-4"> @* Changed to container-fluid px-4 for full width and consistent padding *@
         &copy; 2025 - Client - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
     </div>
 </footer>

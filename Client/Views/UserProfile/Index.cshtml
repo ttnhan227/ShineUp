@@ -136,6 +136,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Posts Section -->
+            <div class="profile-posts mt-4">
+                <h3>Posts</h3>
+                @if (Model.Posts.Any())
+                {
+                    <div class="row">
+                        @foreach (var post in Model.Posts)
+                        {
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    @if (!string.IsNullOrEmpty(post.ImageURL))
+                                    {
+                                        <img src="@post.ImageURL" class="card-img-top" alt="Post image">
+                                    }
+                                    else if (!string.IsNullOrEmpty(post.VideoURL))
+                                    {
+                                        <video class="card-img-top" controls>
+                                            <source src="@post.VideoURL" type="video/mp4">
+                                        </video>
+                                    }
+                                    <div class="card-body">
+                                        <h5 class="card-title">@post.Title</h5>
+                                        <p class="card-text">@post.Content</p>
+                                        <small class="text-muted">Posted on @post.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p>No posts yet.</p>
+                }
+            </div>
         </div>
     </div>
 </div>

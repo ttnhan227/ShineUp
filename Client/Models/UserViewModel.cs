@@ -19,5 +19,6 @@ namespace Client.Models
         public int ProfilePrivacy { get; set; }
         public int ProfileCompletionPercentage { get; set; }
         public bool IsGoogleAccount { get; set; }
+        public List<PostViewModel> Posts { get; set; } = new List<PostViewModel>();
     }
 }

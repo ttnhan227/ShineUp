@@ -29,7 +29,10 @@ public class PostViewModel
     public int? PrivacyID { get; set; }
     public string? PrivacyName { get; set; }
     
+    // Media info
+    public string? VideoURL { get; set; }
+    
     // Social features
     public int LikesCount { get; set; }
     public int CommentsCount { get; set; }
-} 
+}

@@ -31,7 +31,13 @@ public class PostsController : ControllerBase
     {
         try
         {
-            var posts = await _postRepository.GetAllPostsAsync();
+            int? userId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            }
+
+            var posts = await _postRepository.GetVisiblePostsAsync(userId);
             var postDtos = posts.Select(p => new PostListResponseDto
             {
                 PostID = p.PostID,
@@ -75,6 +81,19 @@ public class PostsController : ControllerBase
             if (post == null)
             {
                 return NotFound();
+            }
+
+            // Check if user is authenticated
+            int? currentUserId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            }
+
+            // Check privacy settings
+            if (post.Privacy.Name != "Public" && post.UserID != currentUserId)
+            {
+                return Forbid();
             }
 
             var postDto = new PostResponseDto
@@ -350,6 +369,7 @@ public class PostsController : ControllerBase
         try
         {
             var posts = await _postRepository.GetPostsByUserIdAsync(userId);
+            
             var postDtos = posts.Select(p => new PostListResponseDto
             {
                 PostID = p.PostID,

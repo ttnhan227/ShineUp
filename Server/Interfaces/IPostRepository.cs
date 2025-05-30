@@ -6,6 +6,7 @@ public interface IPostRepository
 {
     // Basic CRUD
     Task<IEnumerable<Post>> GetAllPostsAsync();
+    Task<IEnumerable<Post>> GetVisiblePostsAsync(int? userId = null);
     Task<Post> GetPostByIdAsync(int id);
     Task<Post> CreatePostAsync(Post post);
     Task<Post> UpdatePostAsync(Post post);

@@ -28,6 +28,41 @@ public class PostRepository : IPostRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Post>> GetVisiblePostsAsync(int? userId = null)
+    {
+        var query = _context.Posts.AsQueryable();
+
+        // Apply privacy filter first
+        if (userId == null)
+        {
+            // For non-authenticated users, only show public posts
+            query = query.Where(p => p.Privacy.Name == "Public");
+        }
+        else
+        {
+            // For authenticated users, show:
+            // 1. All public posts
+            // 2. Their own posts (regardless of privacy setting)
+            query = query.Where(p => 
+                p.Privacy.Name == "Public" || 
+                p.UserID == userId.Value
+            );
+        }
+
+        // Then include related entities
+        query = query
+            .Include(p => p.User)
+            .Include(p => p.Category)
+            .Include(p => p.Privacy)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
+            .OrderByDescending(p => p.CreatedAt);
+
+        return await query.ToListAsync();
+    }
+
     public async Task<Post> GetPostByIdAsync(int id)
     {
         return await _context.Posts
@@ -63,7 +98,14 @@ public class PostRepository : IPostRepository
 
     public async Task<IEnumerable<Post>> GetPostsByUserIdAsync(int userId)
     {
-        return await _context.Posts
+        var query = _context.Posts.AsQueryable();
+
+        // For user profile pages, show all posts of that user
+        // The privacy check will be handled in the controller
+        query = query.Where(p => p.UserID == userId);
+
+        // Then include related entities
+        query = query
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
@@ -71,14 +113,20 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
-            .Where(p => p.UserID == userId)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
+            .OrderByDescending(p => p.CreatedAt);
+
+        return await query.ToListAsync();
     }
 
     public async Task<IEnumerable<Post>> GetPostsByCategoryAsync(int categoryId)
     {
-        return await _context.Posts
+        var query = _context.Posts.AsQueryable();
+
+        // Apply filters first
+        query = query.Where(p => p.CategoryID == categoryId && p.Privacy.Name == "Public");
+
+        // Then include related entities
+        query = query
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
@@ -86,14 +134,20 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
-            .Where(p => p.CategoryID == categoryId)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
+            .OrderByDescending(p => p.CreatedAt);
+
+        return await query.ToListAsync();
     }
 
     public async Task<IEnumerable<Post>> GetRecentPostsAsync(int count)
     {
-        return await _context.Posts
+        var query = _context.Posts.AsQueryable();
+
+        // Apply privacy filter first
+        query = query.Where(p => p.Privacy.Name == "Public");
+
+        // Then include related entities
+        query = query
             .Include(p => p.User)
             .Include(p => p.Category)
             .Include(p => p.Privacy)
@@ -102,8 +156,9 @@ public class PostRepository : IPostRepository
             .Include(p => p.Likes)
             .Include(p => p.Comments)
             .OrderByDescending(p => p.CreatedAt)
-            .Take(count)
-            .ToListAsync();
+            .Take(count);
+
+        return await query.ToListAsync();
     }
 
     public async Task<bool> PostExistsAsync(int postId)

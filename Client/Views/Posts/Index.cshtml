@@ -4,152 +4,7 @@
     ViewData["Title"] = "Posts";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <div class="card newsfeed-user-card h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
-                        <i class='bx bx-category'></i> Categories
-                    </h5>
-                    <div class="category-list">
-                        <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
-                            <i class='bx bx-grid-alt'></i> All Posts
-                        </a>
-                        @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
-                        {
-                            <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })" 
-                               class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
-                                <i class='bx bx-category'></i> @category.Text
-                            </a>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="col-md-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Posts</h2>
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <a asp-action="Create" class="btn btn-primary">
-                        <i class='bx bx-plus'></i> Create New Post
-                    </a>
-                }
-            </div>
-
-            <div class="row">
-                @foreach (var item in Model)
-                {
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 post-card">
-                            @if (item.MediaFiles != null && item.MediaFiles.Any())
-                            {
-                                <div class="media-grid">
-                                    @if (item.MediaFiles.Count == 1)
-                                    {
-                                        var media = item.MediaFiles[0];
-                                        <div class="media-item single">
-                                            @if (media.Type == "image")
-                                            {
-                                                <img src="@media.Url" class="card-img-top post-image" alt="@item.Title">
-                                            }
-                                            else if (media.Type == "video")
-                                            {
-                                                <div class="video-container">
-                                                    <video controls preload="metadata">
-                                                        <source src="@media.Url" type="video/mp4">
-                                                        Your browser does not support the video tag.
-                                                    </video>
-                                                    <div class="video-overlay">
-                                                        <i class='bx bx-play-circle'></i>
-                                                    </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="media-grid-container @(GetGridClass(item.MediaFiles.Count))">
-                                            @foreach (var media in item.MediaFiles.Take(4))
-                                            {
-                                                <div class="media-item @(item.MediaFiles.Count > 4 && media == item.MediaFiles[3] ? "overlay" : "")">
-                                                    @if (media.Type == "image")
-                                                    {
-                                                        <img src="@media.Url" alt="@item.Title">
-                                                    }
-                                                    else if (media.Type == "video")
-                                                    {
-                                                        <div class="video-container">
-                                                            <video controls preload="metadata">
-                                                                <source src="@media.Url" type="video/mp4">
-                                                                Your browser does not support the video tag.
-                                                            </video>
-                                                            <div class="video-overlay">
-                                                                <i class='bx bx-play-circle'></i>
-                                                            </div>
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                            @if (item.MediaFiles.Count > 4)
-                                            {
-                                                <div class="media-count-overlay">
-                                                    +@(item.MediaFiles.Count - 4)
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            }
-                            <div class="card-body">
-                                <h5 class="card-title">@item.Title</h5>
-                                <p class="card-text">@(item.Content.Length > 150 ? item.Content.Substring(0, 150) + "..." : item.Content)</p>
-                                
-                                <div class="post-meta">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class='bx bx-user'></i>
-                                        <span class="ms-2">@item.UserName</span>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class='bx bx-time'></i>
-                                        <span class="ms-2">@item.CreatedAt.ToString("MMM dd, yyyy")</span>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(item.CategoryName))
-                                    {
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class='bx bx-category'></i>
-                                            <span class="ms-2">@item.CategoryName</span>
-                                        </div>
-                                    }
-                                </div>
-
-                                <div class="post-stats">
-                                    <span class="me-3">
-                                        <i class='bx bx-heart'></i> @item.LikesCount
-                                    </span>
-                                    <span>
-                                        <i class='bx bx-comment'></i> @item.CommentsCount
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="card-footer">
-                                <a asp-action="Details" asp-route-id="@item.PostID" class="btn btn-primary btn-sm">
-                                    <i class='bx bx-show'></i> Read More
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
+@section Styles {
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
     <style>
         .newsfeed-user-card {
@@ -378,15 +233,181 @@
     </style>
 }
 
+<div class="main-content-container">
+    <div class="row">
+        <!-- Left Sidebar (Categories) -->
+        <div class="col-md-3">
+            <div class="card newsfeed-user-card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 fw-bold">
+                        <i class='bx bx-category me-2'></i> Categories
+                    </h5>
+                    <div class="category-list">
+                        <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
+                            <i class='bx bx-grid-alt me-2'></i> All Posts
+                        </a>
+                        @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
+                        {
+                            <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
+                               class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
+                                <i class='bx bx-category me-2'></i> @category.Text
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (Posts Feed) -->
+        <div class="col-md-6"> @* Adjusted to col-md-6 and removed offset for better centering *@
+            <div class="d-flex justify-content-between align-items-center mb-3 p-3 border-bottom"> @* Added padding and border-bottom *@
+                <h2 class="mb-0 fw-bold">Posts</h2> @* Removed margin-bottom and added font-weight *@
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a asp-action="Create" class="btn btn-primary rounded-pill px-4 py-2 fw-bold"> @* Added rounded-pill, padding, and font-weight *@
+                        <i class='bx bx-plus me-2'></i> Create New Post
+                    </a>
+                }
+            </div>
+
+            <div class="posts-feed"> @* New container for posts to apply consistent styling *@
+                @foreach (var item in Model)
+                {
+                    <div class="post-card border-bottom py-3 px-3"> @* Removed col-12 mb-3, added border-bottom, padding *@
+                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="post-link text-decoration-none text-dark"> @* Changed class to post-link, removed card-link, added text styles *@
+                            <div class="d-flex align-items-start"> @* Use flexbox for avatar and content *@
+                                @* User Avatar Placeholder *@
+                                <div class="post-avatar me-3">
+                                    <i class='bx bx-user-circle' style="font-size: 2.5rem; color: #657786;"></i> @* Larger, Twitter-like avatar icon *@
+                                </div>
+                                <div class="post-content flex-grow-1">
+                                    <div class="post-meta d-flex align-items-center mb-1"> @* Adjusted margin-bottom *@
+                                        <span class="fw-bold me-1">@item.UserName</span> @* User Name *@
+                                        <span class="text-muted me-1">@@@item.UserName.ToLower().Replace(" ", "")</span> @* User Handle (simplified) *@
+                                        <span class="text-muted">&middot;</span>
+                                        <span class="text-muted ms-1">@item.CreatedAt.ToString("MMM dd")</span>
+                                        @if (!string.IsNullOrEmpty(item.CategoryName))
+                                        {
+                                            <span class="text-muted ms-1">&middot;</span>
+                                            <span class="text-muted ms-1">@item.CategoryName</span>
+                                        }
+                                    </div>
+
+                                    <p class="post-text mb-2">@item.Content</p>
+
+                                    @if (item.MediaFiles != null && item.MediaFiles.Any())
+                                    {
+                                        <div class="media-grid mt-2 mb-2">
+                                            @if (item.MediaFiles.Count == 1)
+                                            {
+                                                var media = item.MediaFiles[0];
+                                                <div class="media-item single rounded-3 overflow-hidden">
+                                                    @if (media.Type == "image")
+                                                    {
+                                                        <img src="@media.Url" class="img-fluid" alt="@item.Title">
+                                                    }
+                                                    else if (media.Type == "video")
+                                                    {
+                                                        <div class="video-container">
+                                                            <video controls preload="metadata" class="w-100 h-100">
+                                                                <source src="@media.Url" type="video/mp4">
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="media-grid-container @(GetGridClass(item.MediaFiles.Count)) rounded-3 overflow-hidden">
+                                                    @foreach (var media in item.MediaFiles.Take(4))
+                                                    {
+                                                        <div class="media-item @(item.MediaFiles.Count > 4 && media == item.MediaFiles.Skip(3).First() ? "overlay" : "")">
+                                                            @if (media.Type == "image")
+                                                            {
+                                                                <img src="@media.Url" class="img-fluid" alt="@item.Title">
+                                                            }
+                                                            else if (media.Type == "video")
+                                                            {
+                                                                <div class="video-container">
+                                                                    <video controls preload="metadata" class="w-100 h-100">
+                                                                        <source src="@media.Url" type="video/mp4">
+                                                                        Your browser does not support the video tag.
+                                                                    </video>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (item.MediaFiles.Count > 4)
+                                            {
+                                                <div class="media-count-overlay d-flex align-items-center justify-content-center rounded-3">
+                                                    +@(item.MediaFiles.Count - 4)
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <div class="post-stats d-flex justify-content-around mt-2">
+                                        <span class="d-flex align-items-center">
+                                            <i class='bx bx-comment me-1'></i> @item.CommentsCount
+                                        </span>
+                                        <span class="d-flex align-items-center">
+                                            <i class='bx bx-repost me-1'></i>
+                                        </span>
+                                        <span class="d-flex align-items-center">
+                                            <i class='bx bx-heart me-1'></i> @item.LikesCount
+                                        </span>
+                                        <span class="d-flex align-items-center">
+                                            <i class='bx bx-bar-chart me-1'></i>
+                                        </span>
+                                        <span class="d-flex align-items-center">
+                                            <i class='bx bx-upload me-1'></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Placeholder) -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 fw-bold">
+                        <i class='bx bx-search me-2'></i> Search
+                    </h5>
+                    <div class="mb-3">
+                        <input type="text" class="form-control rounded-pill" placeholder="Search Twitter">
+                    </div>
+                    <h5 class="card-title mb-4 fw-bold mt-4">
+                        <i class='bx bx-trending-up me-2'></i> Trends for you
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">#TrendingTopic1 <span class="text-muted d-block">100K Posts</span></li>
+                        <li class="mb-2">#TrendingTopic2 <span class="text-muted d-block">50K Posts</span></li>
+                        <li class="mb-2">#TrendingTopic3 <span class="text-muted d-block">20K Posts</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @functions {
     private string GetGridClass(int mediaCount)
     {
-        return mediaCount switch
+        // Grid classes based on number of items (up to 4 for layout purposes)
+        return (mediaCount > 4 ? 4 : mediaCount) switch // Use min of mediaCount and 4
         {
             2 => "grid-2",
             3 => "grid-3",
             4 => "grid-4",
-            _ => "grid-4"
+            _ => "grid-4" // Default to grid-4 for any other case with multiple items
         };
     }
-} 
+}

@@ -5,7 +5,9 @@ using Server.DTOs;
 using Server.Interfaces;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
-using System; // Added for Exception
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Server.Controllers;
 
@@ -18,12 +20,14 @@ public class UserProfileController : ControllerBase
     private readonly IUserProfileRepository _userProfileRepository;
     private readonly ICloudinaryService _cloudinaryService; // Injected Cloudinary Service
     private readonly ILogger<UserProfileController> _logger;
+    private readonly IPostRepository _postRepository; // Injected Post Repository
 
-    public UserProfileController(IUserProfileRepository userProfileRepository, ICloudinaryService cloudinaryService, ILogger<UserProfileController> logger)
+    public UserProfileController(IUserProfileRepository userProfileRepository, ICloudinaryService cloudinaryService, ILogger<UserProfileController> logger, IPostRepository postRepository)
     {
         _userProfileRepository = userProfileRepository;
         _cloudinaryService = cloudinaryService; // Assigned
         _logger = logger;
+        _postRepository = postRepository; // Assigned
     }
 
     [HttpGet("{userId}")]
@@ -160,6 +164,44 @@ public class UserProfileController : ControllerBase
         {
             _logger.LogError($"Error changing password: {ex.Message}");
             return StatusCode(500, new { message = "Internal server error." });
+        }
+    }    [HttpGet("{id}/posts")]
+    [AllowAnonymous] // Temporarily allow anonymous access for testing
+    public async Task<ActionResult<IEnumerable<PostListResponseDto>>> GetUserPosts(int id)
+    {
+        try
+        {
+            var posts = await _postRepository.GetPostsByUserIdAsync(id);
+            var postDtos = posts.Select(p => new PostListResponseDto
+            {
+                PostID = p.PostID,
+                Title = p.Title,
+                Content = p.Content,
+                CreatedAt = p.CreatedAt,
+                UserID = p.UserID,
+                UserName = p.User.Username,
+                CategoryName = p.Category?.CategoryName,
+                LikesCount = p.Likes?.Count ?? 0,
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
+            });
+
+            return Ok(postDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error getting user posts: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error" });
         }
     }
 }
