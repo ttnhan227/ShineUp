@@ -44,6 +44,21 @@ public class PostsController : Controller
                 PropertyNameCaseInsensitive = true
             });
 
+            // Get user profile images for posts
+            foreach (var post in posts)
+            {
+                var userResponse = await client.GetAsync($"api/UserProfile/{post.UserID}");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userContent = await userResponse.Content.ReadAsStringAsync();
+                    var user = JsonSerializer.Deserialize<UserViewModel>(userContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    post.ProfileImageURL = user?.ProfileImageURL;
+                }
+            }
+
             // Get categories
             var categoriesResponse = await client.GetAsync("api/categories");
             if (categoriesResponse.IsSuccessStatusCode)
@@ -92,6 +107,19 @@ public class PostsController : Controller
                 {
                     PropertyNameCaseInsensitive = true
                 });
+
+                // Get user profile image
+                var userResponse = await client.GetAsync($"api/UserProfile/{post.UserID}");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userContent = await userResponse.Content.ReadAsStringAsync();
+                    var user = JsonSerializer.Deserialize<UserViewModel>(userContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    post.ProfileImageURL = user?.ProfileImageURL;
+                }
+
                 return View(post);
             }
             
@@ -516,6 +544,21 @@ public class PostsController : Controller
             {
                 PropertyNameCaseInsensitive = true
             });
+
+            // Get user profile images for posts
+            foreach (var post in posts)
+            {
+                var userResponse = await client.GetAsync($"api/UserProfile/{post.UserID}");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userContent = await userResponse.Content.ReadAsStringAsync();
+                    var user = JsonSerializer.Deserialize<UserViewModel>(userContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    post.ProfileImageURL = user?.ProfileImageURL;
+                }
+            }
 
             // Get categories
             var categoriesResponse = await client.GetAsync("api/categories");

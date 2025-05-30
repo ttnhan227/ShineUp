@@ -20,6 +20,7 @@ public class PostViewModel
     // User info
     public int UserID { get; set; }
     public string Username { get; set; }
+    public string? ProfileImageURL { get; set; }
     
     // Category info
     public int? CategoryID { get; set; }

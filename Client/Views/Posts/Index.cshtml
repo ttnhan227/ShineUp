@@ -362,9 +362,17 @@
                         <div class="post-card border-bottom py-3 px-3"> @* Removed col-12 mb-3, added border-bottom, padding *@
                             <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="post-link text-decoration-none text-dark"> @* Changed class to post-link, removed card-link, added text styles *@
                                 <div class="d-flex align-items-start"> @* Use flexbox for avatar and content *@
-                                    @* User Avatar Placeholder *@
                                     <div class="post-avatar me-3">
-                                        <i class='bx bx-user-circle' style="font-size: 2.5rem; color: #657786;"></i> @* Larger, Twitter-like avatar icon *@
+                                        @if (!string.IsNullOrEmpty(item.ProfileImageURL))
+                                        {
+                                            <img src="@item.ProfileImageURL" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;" alt="Profile Image">
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #f8f9fa;">
+                                                <i class='bx bx-user' style="font-size: 2rem; color: #5e72e4;"></i>
+                                            </div>
+                                        }
                                     </div>
                                     <div class="post-content flex-grow-1">
                                         <div class="post-meta d-flex align-items-center mb-1"> @* Adjusted margin-bottom *@

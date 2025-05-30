@@ -147,6 +147,24 @@
                         {
                             <div class="col-md-4 mb-3">
                                 <div class="card">
+                                    <div class="card-header bg-transparent border-0">
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
+                                            {
+                                                <img src="@Model.ProfileImageURL" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" alt="Profile Image">
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #f8f9fa;">
+                                                    <i class='bx bx-user' style="font-size: 1.5rem; color: #5e72e4;"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <h6 class="mb-0">@Model.Username</h6>
+                                                <small class="text-muted">@post.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                            </div>
+                                        </div>
+                                    </div>
                                     @if (!string.IsNullOrEmpty(post.ImageURL))
                                     {
                                         <img src="@post.ImageURL" class="card-img-top" alt="Post image">
@@ -160,7 +178,6 @@
                                     <div class="card-body">
                                         <h5 class="card-title">@post.Title</h5>
                                         <p class="card-text">@post.Content</p>
-                                        <small class="text-muted">Posted on @post.CreatedAt.ToString("MMM dd, yyyy")</small>
                                     </div>
                                 </div>
                             </div>

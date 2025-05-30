@@ -20,6 +20,12 @@ public class PostListViewModel
     [Display(Name = "Author")]
     public string UserName { get; set; }
     
+    [Display(Name = "User ID")]
+    public int UserID { get; set; }
+    
+    [Display(Name = "Profile Image")]
+    public string? ProfileImageURL { get; set; }
+    
     [Display(Name = "Category")]
     public string? CategoryName { get; set; }
     
