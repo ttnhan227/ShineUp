@@ -95,7 +95,7 @@
             overflow: hidden;
             transition: var(--transition);
             position: relative;
-            z-index: 1040;
+            z-index: 100;
         }
 
         .post-creation-header {
@@ -213,7 +213,7 @@
             overflow: hidden;
             transition: var(--transition);
             position: relative;
-            z-index: 1030;
+            z-index: 100;
         }
 
         .post-card:hover {
@@ -353,6 +353,8 @@
             border-radius: 1rem;
             box-shadow: var(--card-shadow);
             overflow: hidden;
+            position: sticky;
+            top: 2rem;
         }
 
         .trending-header {
@@ -549,7 +551,7 @@
         </div>
 
         <!-- Main Content (Posts Feed) -->
-        <div class="col-lg-6">
+        <div class="col-lg-6" style="position: relative; z-index: 1;">
                     @if (User.Identity.IsAuthenticated)
                     {
                 <div class="post-creation-card">

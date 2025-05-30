@@ -21,6 +21,7 @@
             background-color: #fff;
             border-bottom: 1px solid #eff3f4; /* Subtle border at the bottom of the header */
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Very subtle shadow */
+            z-index: 1070; /* Ensure header is above other content */
         }
 
         .navbar {
@@ -108,6 +109,7 @@
             padding-right: 15px;
             margin-left: auto; /* Center the container */
             margin-right: auto; /* Center the container */
+            position: relative; /* Establish a stacking context */
         }
 
         /* Footer */
