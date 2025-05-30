@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Client.Models;
@@ -6,34 +8,42 @@ public class PostViewModel
 {
     public int PostID { get; set; }
     
-    [Required(ErrorMessage = "Title is required")]
-    [StringLength(100, ErrorMessage = "Title cannot be longer than 100 characters")]
+    [Display(Name = "Title")]
     public string Title { get; set; }
     
-    [Required(ErrorMessage = "Content is required")]
+    [Display(Name = "Content")]
     public string Content { get; set; }
     
+    [Display(Name = "Created At")]
     public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
     
-    // User info
-    public int UserID { get; set; }
-    public string Username { get; set; }
+    [Display(Name = "Author")]
+    public string UserName { get; set; }
+    
+    [Display(Name = "Full Name")]
     public string FullName { get; set; }
+    
+    [Display(Name = "User ID")]
+    public int UserID { get; set; }
+    
+    [Display(Name = "Profile Image")]
     public string? ProfileImageURL { get; set; }
     
-    // Category info
-    public int? CategoryID { get; set; }
+    [Display(Name = "Category")]
     public string? CategoryName { get; set; }
     
-    // Privacy info
-    public int? PrivacyID { get; set; }
-    public string? PrivacyName { get; set; }
-    
-    // Media files
-    public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
-    
-    // Social features
+    [Display(Name = "Likes")]
     public int LikesCount { get; set; }
+    
+    [Display(Name = "Comments")]
     public int CommentsCount { get; set; }
+
+    public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
 }
+
+public class MediaFileViewModel
+{
+    public string Url { get; set; }
+    public string Type { get; set; } // "image" or "video"
+    public string PublicId { get; set; }
+} 

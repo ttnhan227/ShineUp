@@ -67,13 +67,13 @@ namespace Client.Controllers
             
             // Get user posts
             var postsResponse = await client.GetAsync($"api/UserProfile/{id}/posts");
-            List<PostViewModel> posts = new List<PostViewModel>();
+            List<PostDetailsViewModel> posts = new List<PostDetailsViewModel>();
             if (postsResponse.IsSuccessStatusCode)
             {
                 var postsJson = await postsResponse.Content.ReadAsStringAsync();
                 var jsonObject = JsonConvert.DeserializeObject<List<dynamic>>(postsJson);
                 
-                posts = jsonObject?.Select(p => new PostViewModel
+                posts = jsonObject?.Select(p => new PostDetailsViewModel
                 {
                     PostID = Convert.ToInt32(p.postID ?? 0),
                     Title = (string?)p.title ?? string.Empty,
@@ -94,7 +94,7 @@ namespace Client.Controllers
                             Url = (string?)m.url
                         }).ToList()
                         : new List<MediaFileViewModel>()
-                }).ToList() ?? new List<PostViewModel>();
+                }).ToList() ?? new List<PostDetailsViewModel>();
             }
 
             user.Posts = posts;

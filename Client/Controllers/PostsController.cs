@@ -39,7 +39,7 @@ public class PostsController : Controller
             }
             
             var content = await response.Content.ReadAsStringAsync();
-            var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+            var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -103,7 +103,7 @@ public class PostsController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var post = JsonSerializer.Deserialize<PostViewModel>(content, new JsonSerializerOptions
+                var post = JsonSerializer.Deserialize<PostDetailsViewModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -323,7 +323,7 @@ public class PostsController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var post = JsonSerializer.Deserialize<PostViewModel>(content, new JsonSerializerOptions
+                var post = JsonSerializer.Deserialize<PostDetailsViewModel>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -478,7 +478,7 @@ public class PostsController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+                var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -510,7 +510,7 @@ public class PostsController : Controller
             }
             
             var content = await response.Content.ReadAsStringAsync();
-            var posts = JsonSerializer.Deserialize<List<PostListViewModel>>(content, new JsonSerializerOptions
+            var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -617,7 +617,7 @@ public class PostsController : Controller
             
             if (response.IsSuccessStatusCode)
             {
-                var posts = await response.Content.ReadFromJsonAsync<List<PostListViewModel>>(new JsonSerializerOptions
+                var posts = await response.Content.ReadFromJsonAsync<List<PostViewModel>>(new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -625,12 +625,12 @@ public class PostsController : Controller
             }
             
              _logger.LogError($"Failed to fetch user posts for user {{UserId}}. Status Code: {{StatusCode}}", userId, response.StatusCode);
-            return Json(new List<PostListViewModel>());
+            return Json(new List<PostViewModel>());
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching user posts for user {UserId}", userId);
-            return Json(new List<PostListViewModel>());
+            return Json(new List<PostViewModel>());
         }
     }
 
@@ -651,7 +651,7 @@ public class PostsController : Controller
             
             if (response.IsSuccessStatusCode)
             {
-                var posts = await response.Content.ReadFromJsonAsync<List<PostListViewModel>>(new JsonSerializerOptions
+                var posts = await response.Content.ReadFromJsonAsync<List<PostViewModel>>(new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -659,12 +659,12 @@ public class PostsController : Controller
             }
             
             _logger.LogError($"Failed to fetch user posts for user {{UserId}}. Status Code: {{StatusCode}}", userId, response.StatusCode);
-            return PartialView("_UserPosts", new List<PostListViewModel>());
+            return PartialView("_UserPosts", new List<PostViewModel>());
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching user posts for user {UserId}", userId);
-            return PartialView("_UserPosts", new List<PostListViewModel>());
+            return PartialView("_UserPosts", new List<PostViewModel>());
         }
     }
 } 
