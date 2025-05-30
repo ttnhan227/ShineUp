@@ -24,6 +24,7 @@ public class CommentsController : ControllerBase
 
     // GET: api/comments/post/5
     [HttpGet("post/{postId}")]
+    [AllowAnonymous]  // Allow anonymous access to read comments
     public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsForPost(int postId)
     {
         try

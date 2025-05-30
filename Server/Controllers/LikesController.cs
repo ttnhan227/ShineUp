@@ -24,6 +24,7 @@ public class LikesController : ControllerBase
 
     // GET: api/likes/post/5
     [HttpGet("post/{postId}")]
+    [AllowAnonymous]  // Allow anonymous access to see likes
     public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikesForPost(int postId)
     {
         try
@@ -54,6 +55,7 @@ public class LikesController : ControllerBase
 
     // GET: api/likes/post/5/count
     [HttpGet("post/{postId}/count")]
+    [AllowAnonymous]  // Allow anonymous access to see like counts
     public async Task<ActionResult<int>> GetLikeCountForPost(int postId)
     {
         try
@@ -72,7 +74,7 @@ public class LikesController : ControllerBase
     }
     
     // GET: api/likes/post/5/status
-    [Authorize]
+    [Authorize] // Keep this endpoint authenticated
     [HttpGet("post/{postId}/status")]
     public async Task<ActionResult<bool>> HasUserLikedPost(int postId)
     {

@@ -61,8 +61,8 @@ namespace Client.Services
         {
             try
             {
-                var client = await GetAuthenticatedClientAsync();
-                var response = await client.GetAsync($"api/comments/post/{postId}");
+                // Don't require authentication for public comments
+                var response = await _httpClient.GetAsync($"api/comments/post/{postId}");
                 response.EnsureSuccessStatusCode();
                 
                 var content = await response.Content.ReadAsStringAsync();
@@ -155,8 +155,8 @@ namespace Client.Services
         {
             try
             {
-                var client = await GetAuthenticatedClientAsync();
-                var response = await client.GetAsync($"api/likes/post/{postId}");
+                // Don't require authentication for public likes
+                var response = await _httpClient.GetAsync($"api/likes/post/{postId}");
                 response.EnsureSuccessStatusCode();
                 
                 var content = await response.Content.ReadAsStringAsync();
@@ -217,39 +217,22 @@ namespace Client.Services
             }
         }
 
+        // This method is deprecated. Use HasUserLikedPostAsync instead
         public async Task<bool> HasLikedPostAsync(int postId)
         {
-            try
-            {
-                var client = await GetAuthenticatedClientAsync();
-                var response = await client.GetAsync($"api/likes/post/{postId}");
-                response.EnsureSuccessStatusCode();
-                
-                var content = await response.Content.ReadAsStringAsync();
-                var likes = JsonConvert.DeserializeObject<List<LikeViewModel>>(content);
-                var hasLiked = likes?.Any() == true;
-                
-                _logger.LogInformation("Successfully checked like status. HasLiked: {HasLiked}", hasLiked);
-                return hasLiked;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking if post {PostId} is liked", postId);
-                throw;
-            }
+            return await HasUserLikedPostAsync(postId);
         }
 
         public async Task<int> GetLikeCountAsync(int postId)
         {
             try
             {
-                var client = await GetAuthenticatedClientAsync();
-                var response = await client.GetAsync($"api/likes/post/{postId}");
+                // Don't require authentication for public like counts
+                var response = await _httpClient.GetAsync($"api/likes/post/{postId}/count");
                 response.EnsureSuccessStatusCode();
                 
-                var content = await response.Content.ReadAsStringAsync();
-                var likes = JsonConvert.DeserializeObject<List<LikeViewModel>>(content);
-                return likes?.Count ?? 0;
+                var count = await response.Content.ReadFromJsonAsync<int>();
+                return count;
             }
             catch (Exception ex)
             {
