@@ -26,7 +26,7 @@
         .main-content-container {
             max-width: 1200px; /* Adjust container width for details page */
             margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 2rem 1rem; /* Reverted padding */
         }
 
         /* Post Card Styles (Copied from Index.cshtml) */
@@ -38,7 +38,7 @@
             overflow: hidden;
             transition: var(--transition);
             position: relative;
-            z-index: 1030;
+            z-index: 100; /* Changed to be lower than global header's z-index */
         }
 
         .post-card:hover {
@@ -311,7 +311,7 @@
 <div class="main-content-container">
     <div class="row g-4">
         <!-- Main Content (Single Post) -->
-        <div class="col-lg-6 offset-lg-3">
+        <div class="col-lg-6 offset-lg-3" style="position: relative; z-index: 1;">
             <div class="post-card">
                 @* Replicate post header from Index.cshtml, adapting for PostDetailsViewModel *@
                  <div class="post-header">
@@ -516,4 +516,4 @@
             _ => "grid-4"
         };
     }
-} 
+}
