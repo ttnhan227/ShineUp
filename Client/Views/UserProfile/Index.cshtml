@@ -112,34 +112,48 @@
                         @foreach (var post in Model.Posts)
                         {
                             <div class="post-card">
-                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="post-link">
+                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" 
+                                   class="text-decoration-none">
                                     <div class="post-header">
                                         <div class="post-avatar">
-                                            @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
-                                            {
-                                                <img src="@Model.ProfileImageURL" alt="@Model.Username">
+                                                @if (!string.IsNullOrEmpty(post.ProfileImageURL))
+                                                {
+                                                <img src="@post.ProfileImageURL" alt="@post.FullName">
                                             }
                                             else
                                             {
-                                                <div class="avatar-placeholder">
-                                                    <i class='bx bx-user'></i>
+                                                <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                    <i class='bx bx-user text-primary'></i>
                                                 </div>
                                             }
                                         </div>
                                         <div class="post-meta">
-                                            <h4>@post.Title</h4>
-                                            <span class="post-date">@post.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                            <div class="post-author">
+                                                @post.FullName
+                                                @if (!string.IsNullOrEmpty(post.CategoryName))
+                                                {
+                                                    <span class="talent-badge">@post.CategoryName</span>
+                                                }
+                                            </div>
+                                            <div class="post-info">
+                                                <span>@@@post.Username.ToLower().Replace(" ", "")</span>
+                                                <span class="mx-1">·</span>
+                                                <span>@post.CreatedAt.ToString("MMM dd")</span>
+                                            </div>
                                         </div>
                                     </div>
+
                                     <div class="post-content">
-                                        <p>@post.Content</p>
+                                        <h5 class="post-title">@post.Title</h5>
+                                        <p class="post-text">@post.Content</p>
+
                                         @if (post.MediaFiles != null && post.MediaFiles.Any())
                                         {
-                                            <div class="post-media">
+                                            <div class="media-grid">
                                                 @if (post.MediaFiles.Count == 1)
                                                 {
                                                     var media = post.MediaFiles[0];
-                                                    <div class="media-single">
+                                                    <div class="media-item">
                                                         @if (media.Type == "image")
                                                         {
                                                             <img src="@media.Url" alt="@post.Title">
@@ -154,7 +168,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <div class="media-grid @(GetGridClass(post.MediaFiles.Count))">
+                                                    <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
                                                         @foreach (var media in post.MediaFiles.Take(4))
                                                         {
                                                             <div class="media-item">
@@ -180,19 +194,24 @@
                                                 }
                                             </div>
                                         }
-                                    </div>
-                                    <div class="post-actions">
-                                        <div class="action-item">
-                                            <i class='bx bx-comment'></i>
-                                            <span>@post.CommentsCount</span>
-                                        </div>
-                                        <div class="action-item">
-                                            <i class='bx bx-repost'></i>
-                                            <span>Share</span>
-                                        </div>
-                                        <div class="action-item">
-                                            <i class='bx bx-heart'></i>
-                                            <span>@post.LikesCount</span>
+
+                                        <div class="post-actions">
+                                            <div class="post-action">
+                                                <i class='bx bx-comment'></i>
+                                                <span>@post.CommentsCount</span>
+                                            </div>
+                                            <div class="post-action">
+                                                <i class='bx bx-repost'></i>
+                                                <span>Share</span>
+                                            </div>
+                                            <div class="post-action">
+                                                <i class='bx bx-heart'></i>
+                                                <span>@post.LikesCount</span>
+                                            </div>
+                                            <div class="post-action">
+                                                <i class='bx bx-bar-chart'></i>
+                                                <span>Stats</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
@@ -455,41 +474,36 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Posts Feed Styles */
-        .posts-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-
+        /* Post Card Styles */
         .post-card {
-            background: var(--card-background);
+            background: white;
             border-radius: 1rem;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 100;
         }
 
         .post-card:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .post-link {
-            text-decoration: none;
-            color: inherit;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .post-header {
-            padding: 1rem;
+            padding: 1.5rem;
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
         .post-avatar {
-            width: 40px;
-            height: 40px;
+            width: 3rem;
+            height: 3rem;
             border-radius: 50%;
             overflow: hidden;
+            border: 2px solid var(--primary-color);
         }
 
         .post-avatar img {
@@ -498,57 +512,56 @@
             object-fit: cover;
         }
 
-        .post-meta h4 {
-            margin: 0;
-            color: var(--text-primary);
-            font-size: 1rem;
+        .post-meta {
+            flex: 1;
         }
 
-        .post-date {
+        .post-author {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .post-info {
             color: var(--text-secondary);
-            font-size: 0.8rem;
+            font-size: 0.875rem;
         }
 
         .post-content {
-            padding: 0 1rem 1rem;
+            padding: 0 1.5rem 1.5rem;
         }
 
-        .post-content p {
+        .post-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .post-text {
             color: var(--text-secondary);
+            line-height: 1.6;
             margin-bottom: 1rem;
         }
 
-        .post-media {
-            margin: 1rem 0;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-
-        .media-single img,
-        .media-single video {
-            width: 100%;
-            max-height: 400px;
-            object-fit: cover;
-        }
-
+        /* Media Grid Styles */
         .media-grid {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .media-grid-container {
             display: grid;
-            gap: 0.25rem;
-        }
-
-        .media-grid.grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .media-grid.grid-3,
-        .media-grid.grid-4 {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
+            gap: 0.5rem;
+            background: var(--secondary-color);
         }
 
         .media-item {
             position: relative;
-            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
         }
 
         .media-item img,
@@ -562,33 +575,87 @@
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
-            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
             font-size: 1.5rem;
-            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
         }
 
+        .media-item:hover .media-overlay {
+            opacity: 1;
+        }
+
+        /* Post Actions */
         .post-actions {
-            padding: 1rem;
+            padding: 1rem 1.5rem;
             border-top: 1px solid var(--border-color);
             display: flex;
-            gap: 1.5rem;
+            justify-content: space-around;
+            align-items: center;
         }
 
-        .action-item {
+        .post-action {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: color 0.2s;
         }
 
-        .action-item:hover {
+        .post-action:hover {
+            background: var(--secondary-color);
             color: var(--primary-color);
+        }
+
+        .post-action i {
+            font-size: 1.25rem;
+        }
+
+        /* Responsive Grid Layouts */
+        .media-grid-container.grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-3 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .media-grid-container.grid-3 .media-item:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .media-grid-container.grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        /* Talent-specific styles */
+        .talent-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .performance-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #f59e0b;
+        }
+
+        .performance-rating i {
+            font-size: 1rem;
         }
 
         .no-posts {
@@ -677,12 +744,12 @@
 @functions {
     private string GetGridClass(int mediaCount)
     {
-        return mediaCount switch
+        return (mediaCount > 4 ? 4 : mediaCount) switch
         {
             2 => "grid-2",
             3 => "grid-3",
             4 => "grid-4",
-            _ => "grid-more"
+            _ => "grid-4"
         };
     }
 }

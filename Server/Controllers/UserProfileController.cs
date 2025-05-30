@@ -180,6 +180,8 @@ public class UserProfileController : ControllerBase
                 CreatedAt = p.CreatedAt,
                 UserID = p.UserID,
                 UserName = p.User.Username,
+                FullName = p.User.FullName,
+                ProfileImageURL = p.User.ProfileImageURL,
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
                 CommentsCount = p.Comments?.Count ?? 0,

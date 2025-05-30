@@ -22,7 +22,7 @@ namespace Client.Models
         public DateTime CreatedAt { get; set; }
 
         [Display(Name = "Author")]
-        public string UserName { get; set; }
+        public string Username { get; set; }
 
         [Display(Name = "Full Name")]
         public string FullName { get; set; }
@@ -63,11 +63,9 @@ namespace Client.Models
         public string Content { get; set; }
     
         public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-    
         // User info
         public int UserID { get; set; }
-        public string Username { get; set; }
+        public string Username { get; set; } // Changed from Username to Username
         public string FullName { get; set; }
         public string? ProfileImageURL { get; set; }
     

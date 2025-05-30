@@ -71,30 +71,10 @@ namespace Client.Controllers
             if (postsResponse.IsSuccessStatusCode)
             {
                 var postsJson = await postsResponse.Content.ReadAsStringAsync();
-                var jsonObject = JsonConvert.DeserializeObject<List<dynamic>>(postsJson);
-                
-                posts = jsonObject?.Select(p => new PostDetailsViewModel
+                posts = System.Text.Json.JsonSerializer.Deserialize<List<PostDetailsViewModel>>(postsJson, new System.Text.Json.JsonSerializerOptions
                 {
-                    PostID = Convert.ToInt32(p.postID ?? 0),
-                    Title = (string?)p.title ?? string.Empty,
-                    Content = (string?)p.content ?? string.Empty,
-                    CreatedAt = (DateTime?)p.createdAt ?? DateTime.UtcNow,
-                    UserID = Convert.ToInt32(p.userID ?? 0),
-                    Username = (string?)p.userName ?? string.Empty,
-                    FullName = (string?)p.fullName ?? string.Empty,
-                    CategoryName = (string?)p.categoryName,
-                    CategoryID = Convert.ToInt32(p.categoryID ?? 1),
-                    PrivacyID = Convert.ToInt32(p.privacyID ?? 1),
-                    LikesCount = Convert.ToInt32(p.likesCount ?? 0),
-                    CommentsCount = Convert.ToInt32(p.commentsCount ?? 0),
-                    MediaFiles = p.mediaFiles != null ? 
-                        ((dynamic[])p.mediaFiles).Select(m => new MediaFileViewModel
-                        {
-                            Type = (string?)m.type,
-                            Url = (string?)m.url
-                        }).ToList()
-                        : new List<MediaFileViewModel>()
-                }).ToList() ?? new List<PostDetailsViewModel>();
+                    PropertyNameCaseInsensitive = true
+                }) ?? new List<PostDetailsViewModel>();
             }
 
             user.Posts = posts;

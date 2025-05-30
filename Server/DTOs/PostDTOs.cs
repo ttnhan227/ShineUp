@@ -79,6 +79,7 @@ public class PostListResponseDto
     public int UserID { get; set; }
     public string UserName { get; set; }
     public string FullName { get; set; }
+    public string? ProfileImageURL { get; set; }
 
     // Category info
     public string? CategoryName { get; set; }
@@ -95,4 +96,4 @@ public class MediaFileDTO
     public string Url { get; set; }
     public string Type { get; set; } // "image" or "video"
     public string PublicId { get; set; }
-} 
+}
