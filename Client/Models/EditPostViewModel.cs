@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Client.Models;
 
@@ -28,4 +29,7 @@ public class EditPostViewModel
     
     [Display(Name = "Privacy")]
     public int? PrivacyID { get; set; }
+
+    public List<IFormFile>? Images { get; set; }
+    public List<IFormFile>? Videos { get; set; }
 } 

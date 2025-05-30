@@ -56,6 +56,18 @@ public class PostsController : Controller
                 ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
             }
 
+            // Get privacy options
+            var privacyResponse = await client.GetAsync("api/privacy");
+            if (privacyResponse.IsSuccessStatusCode)
+            {
+                var privacyContent = await privacyResponse.Content.ReadAsStringAsync();
+                var privacyOptions = JsonSerializer.Deserialize<List<PrivacyViewModel>>(privacyContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                ViewBag.PrivacyOptions = new SelectList(privacyOptions, "PrivacyID", "Name");
+            }
+
             return View(posts);
         }
         catch (Exception ex)
@@ -142,9 +154,17 @@ public class PostsController : Controller
     {
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning("CreatePost ModelState is invalid.");
+            foreach (var state in ModelState.Values)
+            {
+                foreach (var error in state.Errors)
+                {
+                    _logger.LogError($"ModelState error: {error.ErrorMessage}");
+                }
+            }
             ViewBag.Categories = await GetCategoriesAsync();
             ViewBag.PrivacyOptions = await GetPrivacyOptionsAsync();
-            return View(model);
+            return RedirectToAction(nameof(Index));
         }
 
         try
@@ -163,7 +183,7 @@ public class PostsController : Controller
             formData.Add(new StringContent(model.Title), "Title");
             formData.Add(new StringContent(model.Content), "Content");
             formData.Add(new StringContent(model.CategoryID.ToString()), "CategoryID");
-            formData.Add(new StringContent(model.PrivacyID.ToString()), "PrivacyID");
+            formData.Add(new StringContent((model.PrivacyID ?? 1).ToString()), "PrivacyID");
 
             // Handle image uploads
             if (model.Images != null && model.Images.Any())
@@ -336,8 +356,6 @@ public class PostsController : Controller
                 return View(model);
             }
 
-            _logger.LogInformation($"JWT token found: {token.Substring(0, 20)}..."); // Log first 20 chars of token
-
             // Add the authorization header
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             
@@ -357,31 +375,34 @@ public class PostsController : Controller
             if (model.PrivacyID.HasValue)
                 formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
 
-            // Handle image upload if present
-            if (model.Image != null)
+            // Handle image uploads
+            if (model.Images != null && model.Images.Any())
             {
-                var imageContent = new StreamContent(model.Image.OpenReadStream());
-                imageContent.Headers.ContentType = new MediaTypeHeaderValue(model.Image.ContentType);
-                formData.Add(imageContent, "Image", model.Image.FileName);
-            }
-            else if (!string.IsNullOrEmpty(model.CurrentImageURL))
-            {
-                formData.Add(new StringContent(model.CurrentImageURL), "ImageURL");
-            }
-
-            if (model.Video != null)
-            {
-                var videoContent = new StreamContent(model.Video.OpenReadStream());
-                formData.Add(videoContent, "Video", model.Video.FileName);
-            }
-            else if (!string.IsNullOrEmpty(model.CurrentVideoURL))
-            {
-                formData.Add(new StringContent(model.CurrentVideoURL), "VideoURL");
+                foreach (var image in model.Images)
+                {
+                    if (image != null && image.Length > 0)
+                    {
+                        var imageContent = new StreamContent(image.OpenReadStream());
+                        imageContent.Headers.ContentType = new MediaTypeHeaderValue(image.ContentType);
+                        formData.Add(imageContent, "MediaFiles", image.FileName);
+                        formData.Add(new StringContent("image"), "MediaTypes");
+                    }
+                }
             }
 
-            if (!string.IsNullOrEmpty(model.MediaType))
+            // Handle video uploads
+            if (model.Videos != null && model.Videos.Any())
             {
-                formData.Add(new StringContent(model.MediaType), "MediaType");
+                foreach (var video in model.Videos)
+                {
+                    if (video != null && video.Length > 0)
+                    {
+                        var videoContent = new StreamContent(video.OpenReadStream());
+                        videoContent.Headers.ContentType = new MediaTypeHeaderValue(video.ContentType);
+                        formData.Add(videoContent, "MediaFiles", video.FileName);
+                        formData.Add(new StringContent("video"), "MediaTypes");
+                    }
+                }
             }
 
             _logger.LogInformation($"Sending PUT request to api/posts/{id} with Title: {model.Title}, Content: {model.Content}, CategoryID: {model.CategoryID}, PrivacyID: {model.PrivacyID}");

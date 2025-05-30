@@ -151,11 +151,13 @@ public class PostsController : ControllerBase
 
             var post = new Post
             {
-                Title = createPostDto.Title,
+                Title = string.IsNullOrEmpty(createPostDto.Title) ? 
+                        (createPostDto.Content.Length > 50 ? createPostDto.Content.Substring(0, 50) + "..." : createPostDto.Content) :
+                        createPostDto.Title,
                 Content = createPostDto.Content,
                 UserID = userId,
                 CategoryID = createPostDto.CategoryID,
-                PrivacyID = createPostDto.PrivacyID,
+                PrivacyID = createPostDto.PrivacyID ?? 1,
                 CreatedAt = DateTime.UtcNow
             };
 

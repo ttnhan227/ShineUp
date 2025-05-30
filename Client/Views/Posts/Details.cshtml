@@ -4,126 +4,55 @@
     ViewData["Title"] = Model.Title;
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-md-8 mx-auto">
-            <div class="card post-detail-card">
-                @if (!string.IsNullOrEmpty(Model.ImageURL))
-                {
-                    <img src="@Model.ImageURL" class="card-img-top post-detail-image" alt="@Model.Title">
-                }
-                <div class="card-body">
-                    <div class="post-header">
-                        <h1 class="post-title">@Model.Title</h1>
-                        <div class="post-meta">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class='bx bx-user'></i>
-                                <span class="ms-2">@Model.Username</span>
-                            </div>
-                            <div class="d-flex align-items-center mb-3">
-                                <i class='bx bx-time'></i>
-                                <span class="ms-2">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
-                            </div>
-                            @if (!string.IsNullOrEmpty(Model.CategoryName))
-                            {
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class='bx bx-category'></i>
-                                    <span class="ms-2">@Model.CategoryName</span>
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(Model.PrivacyName))
-                            {
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class='bx bx-lock-alt'></i>
-                                    <span class="ms-2">@Model.PrivacyName</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="post-content">
-                        @Model.Content
-                    </div>
-
-                    <div class="post-stats">
-                        <span class="me-4">
-                            <i class='bx bx-heart'></i> @Model.LikesCount Likes
-                        </span>
-                        <span>
-                            <i class='bx bx-comment'></i> @Model.CommentsCount Comments
-                        </span>
-                    </div>
-
-                    <div class="post-actions mt-4">
-                        @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
-                        {
-                            <a asp-action="Edit" asp-route-id="@Model.PostID" class="btn btn-primary me-2">
-                                <i class='bx bx-edit'></i> Edit
-                            </a>
-                            <form asp-action="Delete" asp-route-id="@Model.PostID" method="post" class="d-inline" 
-                                  onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-danger">
-                                    <i class='bx bx-trash'></i> Delete
-                                </button>
-                            </form>
-                        }
-                        <a asp-action="Index" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to List
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
+@section Styles {
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        .post-detail-card {
+        .post-card {
             border: none;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             border-radius: 15px;
             overflow: hidden;
             margin-bottom: 2rem;
-        }
-
-        .post-detail-image {
-            width: 100%;
-            max-height: 400px;
-            object-fit: cover;
+            background-color: #fff;
         }
 
         .post-header {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+            padding-top: 1rem;
         }
 
-        .post-title {
-            font-size: 2rem;
-            color: #32325d;
-            margin-bottom: 1rem;
+        .post-avatar {
+             font-size: 2.5rem; 
+             color: #657786; 
+             margin-right: 0.75rem;
         }
 
         .post-meta {
             color: #8898aa;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .post-meta span {
+             margin-right: 0.5rem;
         }
 
         .post-content {
             font-size: 1.1rem;
             line-height: 1.8;
             color: #525f7f;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+             padding: 0 1rem;
         }
 
         .post-stats {
             color: #8898aa;
             font-size: 1rem;
-            padding: 1rem 0;
+            padding: 1rem;
             border-top: 1px solid #e9ecef;
-            border-bottom: 1px solid #e9ecef;
+            /* border-bottom: 1px solid #e9ecef; */
         }
 
         .post-actions {
@@ -160,5 +89,182 @@
             background-color: #dc3545;
             border-color: #dc3545;
         }
+
+        .media-grid {
+            width: 100%;
+            background: #f8f9fa;
+            margin-bottom: 1rem;
+        }
+
+        .media-item {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            overflow: hidden;
+        }
+
+        .media-item img,
+        .media-item video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .dropdown-toggle::after {
+            display: none; /* Hide default caret */
+        }
+
+         .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+         .dropdown-item {
+             padding: 0.5rem 1rem;
+         }
     </style>
-} 
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <!-- Main Content -->
+        <div class="col-md-6">
+            <div class="card post-card">
+                 <div class="d-flex align-items-start post-header">
+                    @* User Avatar Placeholder *@
+                    <div class="post-avatar me-3">
+                         <i class='bx bx-user-circle'></i>
+                    </div>
+                    <div class="post-content flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="post-meta">
+                                <span class="fw-bold">@Model.Username</span>
+                                <span class="text-muted">@@@Model.Username.ToLower().Replace(" ", "")</span>
+                                <span class="text-muted">&middot;</span>
+                                <span class="text-muted">@Model.CreatedAt.ToString("MMM dd")</span>
+                                @if (!string.IsNullOrEmpty(Model.CategoryName))
+                                {
+                                    <span class="text-muted">&middot;</span>
+                                    <span class="text-muted">@Model.CategoryName</span>
+                                }
+                                 @if (!string.IsNullOrEmpty(Model.PrivacyName))
+                                {
+                                    <span class="text-muted">&middot;</span>
+                                    <span class="text-muted">@Model.PrivacyName</span>
+                                }
+                            </div>
+                             @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
+                            {
+                                <div class="dropdown">
+                                  <button class="btn btn-light btn-sm rounded-circle" type="button" id="postActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class='bx bx-dots-horizontal-rounded'></i>
+                                  </button>
+                                  <ul class="dropdown-menu" aria-labelledby="postActionsDropdown">
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.PostID"><i class='bx bx-edit me-2'></i>Edit</a></li>
+                                     <li>
+                                        <form asp-action="Delete" asp-route-id="@Model.PostID" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger"><i class='bx bx-trash me-2'></i>Delete</button>
+                                        </form>
+                                    </li>
+                                  </ul>
+                                </div>
+                            }
+                        </div>
+
+                        <p class="post-text mb-2">@Model.Content</p>
+
+                        @if (!string.IsNullOrEmpty(Model.ImageURL) || !string.IsNullOrEmpty(Model.VideoURL))
+                        {
+                            <div class="media-grid mt-2 mb-2 rounded-3 overflow-hidden">
+                                @if (!string.IsNullOrEmpty(Model.ImageURL))
+                                {
+                                    <div class="media-item single">
+                                         <img src="@Model.ImageURL" class="img-fluid" alt="@Model.Title">
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.VideoURL))
+                                {
+                                     <div class="media-item single">
+                                         <div class="video-container">
+                                             <video controls preload="metadata" class="w-100 h-100">
+                                                 <source src="@Model.VideoURL" type="video/mp4">
+                                                 Your browser does not support the video tag.
+                                             </video>
+                                         </div>
+                                     </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="post-stats d-flex justify-content-around mt-2">
+                            <span class="d-flex align-items-center">
+                                <i class='bx bx-comment me-1'></i> @Model.CommentsCount
+                            </span>
+                            <span class="d-flex align-items-center">
+                                <i class='bx bx-repost me-1'></i>
+                            </span>
+                            <span class="d-flex align-items-center">
+                                <i class='bx bx-heart me-1'></i> @Model.LikesCount
+                            </span>
+                            <span class="d-flex align-items-center">
+                                <i class='bx bx-bar-chart me-1'></i>
+                            </span>
+                            <span class="d-flex align-items-center">
+                                <i class='bx bx-upload me-1'></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <a asp-action="Index" class="btn btn-secondary">
+                 <i class='bx bx-arrow-back me-1'></i>Back to List
+            </a>
+        </div>
+         <!-- Right Sidebar (Placeholder) -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 fw-bold">
+                        <i class='bx bx-search me-2'></i> Search
+                    </h5>
+                    <div class="mb-3">
+                        <input type="text" class="form-control rounded-pill" placeholder="Search Twitter">
+                    </div>
+                    <h5 class="card-title mb-4 fw-bold mt-4">
+                        <i class='bx bx-trending-up me-2'></i> Trends for you
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">#TrendingTopic1 <span class="text-muted d-block">100K Posts</span></li>
+                        <li class="mb-2">#TrendingTopic2 <span class="text-muted d-block">50K Posts</span></li>
+                        <li class="mb-2">#TrendingTopic3 <span class="text-muted d-block">20K Posts</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
