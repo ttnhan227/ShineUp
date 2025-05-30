@@ -10,7 +10,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.IdentityModel.Tokens.Jwt; // Added for JWT token parsing
-using Microsoft.Extensions.Logging; // Added for logging
+using Microsoft.Extensions.Logging;
 
 namespace Client.Controllers
 {
