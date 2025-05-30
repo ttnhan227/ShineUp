@@ -4,150 +4,120 @@
     ViewData["Title"] = "User Profile";
 }
 
-<div class="container-fluid">
-    <div class="row align-items-start">
-        <!-- Left Sidebar - Profile Info -->
-        <div class="col-md-4">
-            <!-- Profile Summary Card -->
-            <div class="card newsfeed-user-card h-100">
-                <div class="row newsfeed-logged-user text-center">
-                    <div class="col-md-12">
-                        @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
-                        {
-                            <img src="@Model.ProfileImageURL" class="card-img-top w-shadow user-newsfeed-image" alt="Profile Image">
-                        }
-                        else
-                        {
-                            <div class="profile-image-placeholder">
-                                <i class='bx bx-user'></i>
-                            </div>
-                        }
+<div class="profile-container">
+    <!-- Profile Header Section -->
+    <div class="profile-header">
+        <div class="profile-cover">
+            <div class="profile-avatar">
+                @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
+                {
+                    <img src="@Model.ProfileImageURL" alt="Profile Image">
+                }
+                else
+                {
+                    <div class="avatar-placeholder">
+                        <i class='bx bx-user'></i>
                     </div>
-                    <div class="col-md-12 newsfeed-user-info">
-                        <div class="card-body">
-                            <h5 class="card-title"><a href="#" class="fs-1">@Model.Username</a></h5>
-                            <p class="card-text mb-4 fs-7">@Model.TalentArea</p>
-                            @if (Model.IsGoogleAccount)
-                            {
-                                <div class="google-account-badge mt-2">
-                                    <i class='bx bxl-google'></i>
-                                    <span>Linked with Google</span>
-                                </div>
-                            }
-                        </div>
+                }
+            </div>
+        </div>
+        <div class="profile-info">
+            <div class="profile-name-section">
+                <h1>@Model.Username</h1>
+                <p class="talent-area">@Model.TalentArea</p>
+                @if (Model.IsGoogleAccount)
+                {
+                    <div class="google-badge">
+                        <i class='bx bxl-google'></i>
+                        <span>Linked with Google</span>
                     </div>
+                }
+            </div>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">@Model.Posts.Count</span>
+                    <span class="stat-label">Posts</span>
                 </div>
-
-                <div class="card-footer">
-                    <div class="profile-additional-info">
-                        <h6 class="card-subtitle mb-3">
-                            <i class='bx bx-task'></i> Profile Completion
-                        </h6>
-                        <div class="progress mb-3" style="height: 25px;">
-                            <div class="progress-bar" role="progressbar" 
-                                 style="width: @Model.ProfileCompletionPercentage%;" 
-                                 aria-valuenow="@Model.ProfileCompletionPercentage" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                @Model.ProfileCompletionPercentage%
-                            </div>
-                        </div>
-                        <small class="text-muted">
-                            @if (Model.ProfileCompletionPercentage < 100)
-                            {
-                                <span>Complete your profile to get the most out of ShineUp!</span>
-                            }
-                            else
-                            {
-                                <span>Your profile is complete! Great job!</span>
-                            }
-                        </small>
-                    </div>
-
-                    <div class="profile-additional-info">
-                        <h6 class="card-subtitle mb-3">
-                            <i class='bx bx-time'></i> Last Login
-                        </h6>
-                        <p class="mb-0" id="lastLoginTime">
-                            @(Model.LastLoginTime?.ToString("o") ?? "Never")
-                        </p>
-                    </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.ProfileCompletionPercentage%</span>
+                    <span class="stat-label">Profile Complete</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.LastLoginTime?.ToString("MMM dd")</span>
+                    <span class="stat-label">Last Login</span>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Middle Column - Profile Details -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">Profile Details</h5>
-                    <div class="profile-details">
-                        <div class="profile-detail-item mb-3">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-envelope me-2'></i>Email</label>
-                            <div class="d-flex align-items-center">
-                                <span>@Model.Email</span>
-                                <span class="badge bg-success ms-2">Verified</span>
-                            </div>
-                        </div>
-                        <div class="profile-detail-item mb-3">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-user me-2'></i>Username</label>
-                            <span>@Model.Username</span>
-                        </div>
-                        <div class="profile-detail-item mb-3">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-user me-2'></i>Full Name</label>
-                            <span>@Model.FullName</span>
-                        </div>
-                        <div class="profile-detail-item mb-3">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-info-circle me-2'></i>Bio</label>
-                            <span>@(string.IsNullOrEmpty(Model.Bio) ? "Not provided" : Model.Bio)</span>
-                        </div>
-                        <div class="profile-detail-item mb-3">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-star me-2'></i>Talent Area</label>
-                            <span>@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</span>
-                        </div>
-                        <div class="profile-detail-item">
-                            <label class="d-block text-muted small mb-1"><i class='bx bx-lock-alt me-2'></i>Profile Privacy</label>
-                            <span>
-                                @(Model.ProfilePrivacy switch
-                                {
-                                    0 => "Public - Anyone can view your profile",
-                                    1 => "Friends Only - Only your friends can view your profile",
-                                    2 => "Private - Only you can view your profile",
-                                    _ => "Not specified"
-                                })
-                            </span>
-                        </div>
+    <!-- Main Content Section -->
+    <div class="profile-content">
+        <!-- Left Column - Profile Details -->
+        <div class="profile-details-card">
+            <div class="card-header">
+                <h3><i class='bx bx-user-circle'></i> Profile Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-group">
+                    <label><i class='bx bx-envelope'></i> Email</label>
+                    <div class="info-value">
+                        <span>@Model.Email</span>
+                        <span class="badge verified">Verified</span>
                     </div>
-
-                    <div class="button-group mt-4 pt-3 border-top">
-                        <a asp-action="Edit" class="btn btn-primary btn-sm me-2">
-                            <i class='bx bx-edit me-1'></i> Edit Profile
-                        </a>
-                        <a asp-action="ChangePassword" class="btn btn-outline-secondary btn-sm">
-                            <i class='bx bx-lock-alt me-1'></i> Change Password
-                        </a>
+                </div>
+                <div class="info-group">
+                    <label><i class='bx bx-user'></i> Full Name</label>
+                    <div class="info-value">@Model.FullName</div>
+                </div>
+                <div class="info-group">
+                    <label><i class='bx bx-info-circle'></i> Bio</label>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.Bio) ? "Not provided" : Model.Bio)</div>
+                </div>
+                <div class="info-group">
+                    <label><i class='bx bx-star'></i> Talent Area</label>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</div>
+                </div>
+                <div class="info-group">
+                    <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
+                    <div class="info-value">
+                        @(Model.ProfilePrivacy switch
+                        {
+                            0 => "Public - Anyone can view your profile",
+                            1 => "Friends Only - Only your friends can view your profile",
+                            2 => "Private - Only you can view your profile",
+                            _ => "Not specified"
+                        })
                     </div>
                 </div>
             </div>
+            <div class="card-footer">
+                <a asp-action="Edit" class="btn btn-primary">
+                    <i class='bx bx-edit'></i> Edit Profile
+                </a>
+                <a asp-action="ChangePassword" class="btn btn-secondary">
+                    <i class='bx bx-lock-alt'></i> Change Password
+                </a>
+            </div>
         </div>
 
-        <!-- Right Column - Posts Section -->
-        <div class="col-md-4">
-            <div class="profile-posts">
-                <h3>Posts</h3>
-                <div class="posts-feed">
-                    @if (Model.Posts.Any())
-                    {
+        <!-- Right Column - Posts Feed -->
+        <div class="posts-feed-card">
+            <div class="card-header">
+                <h3><i class='bx bx-news'></i> Recent Posts</h3>
+            </div>
+            <div class="card-body">
+                @if (Model.Posts.Any())
+                {
+                    <div class="posts-grid">
                         @foreach (var post in Model.Posts)
                         {
                             <div class="post-card">
-                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" 
-                                   class="text-decoration-none">
+                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="post-link">
                                     <div class="post-header">
                                         <div class="post-avatar">
                                             @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                                             {
-                                                <img src="@Model.ProfileImageURL" class="rounded-circle" alt="@Model.Username">
+                                                <img src="@Model.ProfileImageURL" alt="@Model.Username">
                                             }
                                             else
                                             {
@@ -156,24 +126,20 @@
                                                 </div>
                                             }
                                         </div>
-                                        <div class="post-user-info">
-                                            <h6>@Model.Username</h6>
-                                            <span class="post-time">@post.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        <div class="post-meta">
+                                            <h4>@post.Title</h4>
+                                            <span class="post-date">@post.CreatedAt.ToString("MMM dd, yyyy")</span>
                                         </div>
                                     </div>
-
                                     <div class="post-content">
-                                        <h5 class="post-title">@post.Title</h5>
-                                        <p class="post-text">@post.Content</p>
-
-
+                                        <p>@post.Content</p>
                                         @if (post.MediaFiles != null && post.MediaFiles.Any())
                                         {
-                                            <div class="media-grid">
+                                            <div class="post-media">
                                                 @if (post.MediaFiles.Count == 1)
                                                 {
                                                     var media = post.MediaFiles[0];
-                                                    <div class="media-item">
+                                                    <div class="media-single">
                                                         @if (media.Type == "image")
                                                         {
                                                             <img src="@media.Url" alt="@post.Title">
@@ -188,7 +154,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
+                                                    <div class="media-grid @(GetGridClass(post.MediaFiles.Count))">
                                                         @foreach (var media in post.MediaFiles.Take(4))
                                                         {
                                                             <div class="media-item">
@@ -214,35 +180,33 @@
                                                 }
                                             </div>
                                         }
-
-                                        <div class="post-actions">
-                                            <div class="post-action">
-                                                <i class='bx bx-comment'></i>
-                                                <span>@post.CommentsCount</span>
-                                            </div>
-                                            <div class="post-action">
-                                                <i class='bx bx-repost'></i>
-                                                <span>Share</span>
-                                            </div>
-                                            <div class="post-action">
-                                                <i class='bx bx-heart'></i>
-                                                <span>@post.LikesCount</span>
-                                            </div>
-                                            <div class="post-action">
-                                                <i class='bx bx-bar-chart'></i>
-                                                <span>Stats</span>
-                                            </div>
+                                    </div>
+                                    <div class="post-actions">
+                                        <div class="action-item">
+                                            <i class='bx bx-comment'></i>
+                                            <span>@post.CommentsCount</span>
+                                        </div>
+                                        <div class="action-item">
+                                            <i class='bx bx-repost'></i>
+                                            <span>Share</span>
+                                        </div>
+                                        <div class="action-item">
+                                            <i class='bx bx-heart'></i>
+                                            <span>@post.LikesCount</span>
                                         </div>
                                     </div>
                                 </a>
                             </div>
                         }
-                    }
-                    else
-                    {
-                        <p>No posts yet.</p>
-                    }
-                </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-posts">
+                        <i class='bx bx-news'></i>
+                        <p>No posts yet. Start sharing your journey!</p>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -251,128 +215,340 @@
 @section Styles {
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        /* Posts Feed Styles */
-        .posts-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+        /* Modern Color Scheme */
+        :root {
+            --primary-color: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
 
-        .post-card {
-            background: white;
+        /* Container Styles */
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--background-color);
+        }
+
+        /* Profile Header Styles */
+        .profile-header {
+            background: var(--card-background);
             border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
             overflow: hidden;
-            transition: all 0.3s ease;
         }
 
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .profile-cover {
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            position: relative;
         }
 
-        .post-header {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.25rem;
-        }
-
-        .post-avatar {
-            margin-right: 0.75rem;
-        }
-
-        .post-avatar img {
-            width: 40px;
-            height: 40px;
+        .profile-avatar {
+            position: absolute;
+            bottom: -50px;
+            left: 50px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
+            border: 4px solid var(--card-background);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
 
         .avatar-placeholder {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #f3f4f6;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-light);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6b7280;
-            font-size: 1.25rem;
+            color: var(--card-background);
+            font-size: 4rem;
         }
 
-        .post-user-info h6 {
-            margin: 0;
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: #1f2937;
+        .profile-info {
+            padding: 4rem 2rem 2rem;
         }
 
-        .post-time {
-            font-size: 0.75rem;
-            color: #6b7280;
+        .profile-name-section {
+            margin-bottom: 1.5rem;
         }
 
-        .post-content {
-            padding: 0 1.25rem 1rem;
-        }
-
-        .post-title {
-            font-size: 1.125rem;
-            font-weight: 600;
+        .profile-name-section h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
-            color: #1f2937;
         }
 
-        .post-text {
-            color: #4b5563;
+        .talent-area {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
             margin-bottom: 1rem;
-            white-space: pre-line;
         }
 
-        /* Media Grid Styles */
-        .media-grid {
-            width: 100%;
-            margin: 1rem 0;
-            border-radius: 0.75rem;
+        .google-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .google-badge i {
+            color: #4285F4;
+            margin-right: 0.5rem;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Profile Content Layout */
+        .profile-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        /* Card Styles */
+        .profile-details-card,
+        .posts-feed-card {
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-md);
             overflow: hidden;
         }
 
-        .media-grid-container {
+        .profile-details-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: nowrap;
+        }
+
+        /* Info Groups */
+        .info-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-group label i {
+            color: var(--primary-color);
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .badge.verified {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            flex-grow: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Posts Feed Styles */
+        .posts-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .post-card {
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .post-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .post-header {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .post-meta h4 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .post-date {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .post-content {
+            padding: 0 1rem 1rem;
+        }
+
+        .post-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .post-media {
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .media-single img,
+        .media-single video {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+        }
+
+        .media-grid {
             display: grid;
             gap: 0.25rem;
-            width: 100%;
         }
 
-        .media-grid-container.grid-2 {
+        .media-grid.grid-2 {
             grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: 1fr;
-            aspect-ratio: 2/1;
         }
 
-        .media-grid-container.grid-3 {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: 1fr 1fr;
-            aspect-ratio: 1/1;
-        }
-
-        .media-grid-container.grid-4 {
+        .media-grid.grid-3,
+        .media-grid.grid-4 {
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            aspect-ratio: 1/1;
-        }
-
-        .media-grid-container.grid-5,
-        .media-grid-container.grid-more {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            aspect-ratio: 1/1;
         }
 
         .media-item {
             position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            aspect-ratio: 1;
         }
 
         .media-item img,
@@ -380,474 +556,112 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
         }
-        .media-item video {
-            background-color: #000;
-        }
+
         .media-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: rgba(0, 0, 0, 0.5);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
-        /* Post Actions */
+
         .post-actions {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
             display: flex;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-top: 1px solid #f3f4f6;
-            margin-top: 1rem;
+            gap: 1.5rem;
         }
-        .post-action {
+
+        .action-item {
             display: flex;
             align-items: center;
-            margin-right: 1.5rem;
-            color: #6b7280;
-            font-size: 0.875rem;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
             cursor: pointer;
             transition: color 0.2s;
         }
-        .post-action:hover {
-            color: #7c3aed;
+
+        .action-item:hover {
+            color: var(--primary-color);
         }
-        .post-action i {
-            margin-right: 0.5rem;
-            font-size: 1.25rem;
+
+        .no-posts {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .no-posts i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 1024px) {
+            .profile-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .profile-container {
+                padding: 1rem;
+            }
+
+            .profile-avatar {
+                width: 120px;
+                height: 120px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .profile-info {
+                padding: 5rem 1rem 1rem;
+                text-align: center;
+            }
+
+            .profile-stats {
+                justify-content: center;
+            }
+
+            .card-footer {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 }
 
 @section Scripts {
     <script>
-        // Any additional scripts can go here
-    </script>
-    <style>
-        .newsfeed-user-card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .user-newsfeed-image {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 20px auto;
-            border: 3px solid #5e72e4;
-            box-shadow: 0 0 20px rgba(94, 114, 228, 0.3);
-        }
-
-        .profile-image-placeholder {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto;
-            border: 3px solid #5e72e4;
-        }
-
-        .profile-image-placeholder i {
-            font-size: 4rem;
-            color: #5e72e4;
-        }
-
-        .newsfeed-user-info .card-body {
-            padding-bottom: 1.5rem;
-        }
-
-        .newsfeed-user-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .card-footer {
-            background-color: #fff;
-            border-top: 1px solid #e9ecef;
-            padding: 1.5rem;
-            border-bottom-left-radius: 15px;
-            border-bottom-right-radius: 15px;
-        }
-
-        .profile-additional-info {
-            padding: 1rem 1.5rem; /* Adjusted padding for better fit */
-            border-top: 1px solid #e9ecef;
-            margin-top: 1rem; /* Adjusted margin-top */
-        }
-
-        .profile-additional-info:first-of-type {
-            border-top: none; /* Remove border for the first section */
-            margin-top: 0; /* Remove margin-top for the first section */
-        }
-
-        .profile-additional-info h6.card-subtitle {
-            margin-bottom: 0.5rem; /* Slightly reduced margin */
-        }
-
-        .profile-additional-info .progress {
-            margin-bottom: 0.75rem !important; /* Adjusted margin */
-        }
-
-        .profile-additional-info small.text-muted {
-            display: block;
-            margin-bottom: 0;
-            font-size: 0.8rem; /* Smaller font size for completion text */
-        }
-
-        .profile-additional-info p {
-            margin-bottom: 0;
-            font-size: 0.9rem; /* Slightly smaller font size for last login */
-            color: #525f7f; /* Darker color for better readability */
-        }
-
-        .newsfeed-user-info .card-title {
-            margin-bottom: 0.5rem;
-        }
-
-        .newsfeed-user-info .card-title a {
-            color: #32325d;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .newsfeed-user-info .fs-7 {
-            color: #8898aa;
-            font-size: 0.875rem;
-        }
-
-        .profile-details {
-            display: grid;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .profile-detail-item {
-            padding: 1.5rem;
-            background: #fff;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .profile-detail-item:hover {
-            background: #f8f9fa;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .profile-detail-item label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #525f7f;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .profile-detail-item label i {
-            font-size: 1.3rem;
-            color: #5e72e4;
-        }
-
-        .profile-detail-item span {
-            color: #32325d;
-            font-size: 1rem;
-            display: block;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-start;
-            margin-top: 2rem;
-        }
-
-        .button-group .btn {
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            border-radius: 8px;
-        }
-
-        .button-group .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-primary {
-            background: #5e72e4;
-            border: none;
-        }
-
-        .btn-secondary {
-            background: #8898aa;
-            border: none;
-        }
-
-        .alert {
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border: none;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .verification-status {
-            margin-top: 0.5rem;
-        }
-
-        .badge {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .badge i {
-            font-size: 1rem;
-        }
-
-        .bg-success {
-            background-color: #2dce89 !important;
-        }
-
-        .bg-warning {
-            background-color: #fb6340 !important;
-        }
-
-        @@media (max-width: 768px) {
-            .col-md-3 {
-                margin-bottom: 2rem;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .button-group .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .loading-overlay .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        .progress {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            background-color: #5e72e4;
-            transition: width 0.6s ease;
-        }
-
-        .card-subtitle {
-            color: #8898aa;
-            font-size: 0.875rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-subtitle i {
-            color: #5e72e4;
-            font-size: 1.25rem;
-        }
-
-        .google-account-badge {
-            display: inline-flex;
-            align-items: center;
-            background-color: #e6f7ff; /* Light blue background for prominence */
-            border: 1px solid #91d5ff; /* Blue border */
-            border-radius: 20px;
-            padding: 8px 15px; /* Increased padding */
-            margin: 10px 0;
-            font-size: 0.9rem;
-            color: #1890ff; /* Blue text color */
-            font-weight: 600; /* Make text bolder */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-        }
-
-        .google-account-badge i {
-            color: #4285F4;
-            margin-right: 8px;
-        }
-
-        .google-account-action {
-            margin: 10px 0;
-        }
-
-        .google-account-action .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .google-account-action .btn i {
-            font-size: 1rem;
-        }
-    </style>
-
-    <!-- Add loading overlay -->
-    <div id="loadingOverlay" class="loading-overlay d-none">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p id="loadingMessage" class="mt-3">Sending verification code...</p>
-    </div>
-
-    <script>
-        function showLoading(message) {
-            const overlay = document.getElementById('loadingOverlay');
-            const messageEl = document.getElementById('loadingMessage');
-            messageEl.textContent = message;
-            overlay.classList.remove('d-none');
-        }
-
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.add('d-none');
-        }
-
-        // Function to handle sending verification OTP
-        async function sendVerificationOTP() {
-            try {
-                showLoading('Sending verification code...');
-                
-                const response = await fetch('/UserProfile/SendVerificationOTP', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Redirect to verification page
-                    window.location.href = '/UserProfile/VerifyEmail';
-                } else {
-                    alert(data.message || 'Failed to send verification code');
-                }
-            } catch (error) {
-                console.error('Error sending verification OTP:', error);
-                alert('Failed to send verification code. Please try again.');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Read user data from localStorage and update the verification status
-        document.addEventListener('DOMContentLoaded', function() {
-            const userDataString = localStorage.getItem('user');
-            const verificationStatusContainer = document.querySelector('.verification-status');
-
-            // Get the server-rendered verification status
-            const serverVerified = @Model.Verified.ToString().ToLower();
-
-            if (userDataString && verificationStatusContainer) {
-                try {
-                    const userData = JSON.parse(userDataString);
-                    // Update the user data in localStorage with the server-rendered verification status
-                    userData.verified = serverVerified;
-                    localStorage.setItem('user', JSON.stringify(userData));
-
-                    let newStatusHtml = '';
-                    if (serverVerified) {
-                        // HTML for verified status
-                        newStatusHtml = `
-                            <span class="badge bg-success">
-                                <i class='bx bx-check-circle'></i> Email Verified
-                            </span>
-                        `;
-                    } else {
-                        // HTML for not verified status with button
-                         newStatusHtml = `
-                            <span class="badge bg-warning">
-                                <i class='bx bx-error-circle'></i> Email Not Verified
-                            </span>
-                            <button type="button" class="btn btn-sm btn-primary mt-2" onclick="sendVerificationOTP()">
-                                <i class='bx bx-envelope'></i> Verify Email
-                            </button>
-                        `;
-                    }
-                    // Replace the existing content of the verification status container
-                    verificationStatusContainer.innerHTML = newStatusHtml;
-                } catch (error) {
-                    console.error('Error parsing user data from localStorage:', error);
-                    // Fallback to server-rendered content if localStorage is invalid
-                }
-            }
-        });
         // Convert Last Login Time to local time
         document.addEventListener('DOMContentLoaded', function() {
-            const lastLoginTimeElement = document.getElementById('lastLoginTime');
+            const lastLoginTimeElement = document.querySelector('.stat-value:last-child');
             if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
                 try {
                     const utcTime = lastLoginTimeElement.textContent.trim();
                     const localTime = new Date(utcTime);
                     
-                    // Check if the date is valid
                     if (isNaN(localTime.getTime())) {
                         lastLoginTimeElement.textContent = 'Never';
                         return;
                     }
 
-                    // Format the date and time for display
                     const options = { 
                         year: 'numeric', 
                         month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: false 
+                        day: 'numeric'
                     };
                     
                     lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
