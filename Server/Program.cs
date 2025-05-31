@@ -1,4 +1,4 @@
-﻿using Google.Apis.Auth;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -78,10 +78,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddScoped<IVideoRepository, VideoRepository>();
 
-// Add Repositories
+// Add Repositories and Services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();  // Updated name
+builder.Services.AddScoped<ISocialService, SocialService>();
 
 // Add Distributed Memory Cache for session state
 builder.Services.AddDistributedMemoryCache();

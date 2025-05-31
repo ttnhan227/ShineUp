@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Client.Services;
 using Client.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,15 +33,6 @@ builder.Services.AddHttpClient("API", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
-// Register SocialService with HttpClient and IConfiguration
-builder.Services.AddScoped<ISocialService, SocialService>(sp => 
-    new SocialService(
-        sp.GetRequiredService<HttpClient>(),
-        sp.GetRequiredService<IConfiguration>(),
-        sp.GetRequiredService<ILogger<SocialService>>(),
-        sp.GetRequiredService<IHttpContextAccessor>()
-    )
-);
 
 // Register IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();

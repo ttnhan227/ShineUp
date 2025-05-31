@@ -97,11 +97,24 @@ public class PostsController : Controller
     {
         try
         {
-            var client = _clientFactory.CreateClient("API");
-            var response = await client.GetAsync($"api/posts/{id}");
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
+                var client = _clientFactory.CreateClient("API");
+                var token = HttpContext.Request.Cookies["auth_token"];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+                
+                // Get post details
+                var response = await client.GetAsync($"api/posts/{id}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Failed to get post {PostId}. Status code: {StatusCode}", id, response.StatusCode);
+                    return NotFound();
+                }
+                
                 var content = await response.Content.ReadAsStringAsync();
                 var post = JsonSerializer.Deserialize<PostDetailsViewModel>(content, new JsonSerializerOptions
                 {
@@ -120,7 +133,81 @@ public class PostsController : Controller
                     post.ProfileImageURL = user?.ProfileImageURL;
                 }
 
+                // Get comments for this post
+                var commentsResponse = await client.GetAsync($"api/social/posts/{id}/comments");
+                if (commentsResponse.IsSuccessStatusCode)
+                {
+                    var commentsContent = await commentsResponse.Content.ReadAsStringAsync();
+                    var comments = JsonSerializer.Deserialize<List<CommentViewModel>>(commentsContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    
+                    // Get profile images for commenters
+                    if (comments != null && comments.Any())
+                    {
+                        var userIds = comments.Select(c => c.UserID).Distinct().ToList();
+                        var usersResponse = await client.PostAsJsonAsync("api/UserProfile/profiles", new { UserIds = userIds });
+                        
+                        if (usersResponse.IsSuccessStatusCode)
+                        {
+                            var usersContent = await usersResponse.Content.ReadAsStringAsync();
+                            var users = JsonSerializer.Deserialize<List<UserViewModel>>(usersContent, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                            
+                            var userDictionary = users?.ToDictionary(u => u.UserID, u => u.ProfileImageURL) ?? new Dictionary<int, string>();
+                            
+                            foreach (var comment in comments)
+                            {
+                                if (userDictionary.TryGetValue(comment.UserID, out var profileImageUrl))
+                                {
+                                    comment.ProfileImageURL = profileImageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    ViewBag.Comments = comments ?? new List<CommentViewModel>();
+                }
+                else
+                {
+                    ViewBag.Comments = new List<CommentViewModel>();
+                }
+
+                // Check if current user has liked this post
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var hasLikedResponse = await client.GetAsync($"api/social/posts/{id}/has-liked");
+                    if (hasLikedResponse.IsSuccessStatusCode)
+                    {
+                        var hasLikedContent = await hasLikedResponse.Content.ReadAsStringAsync();
+                        post.HasLiked = JsonSerializer.Deserialize<bool>(hasLikedContent);
+                    }
+                }
+                else
+                {
+                    post.HasLiked = false;
+                }
+
+                // Get like count
+                var likesResponse = await client.GetAsync($"api/social/posts/{id}/like-count");
+                if (likesResponse.IsSuccessStatusCode)
+                {
+                    var likesCountContent = await likesResponse.Content.ReadAsStringAsync();
+                    if (int.TryParse(likesCountContent, out int likesCount))
+                    {
+                        post.LikesCount = likesCount;
+                    }
+                }
+
                 return View(post);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting post details for post {PostId}", id);
+                return StatusCode(500, "An error occurred while retrieving the post details.");
             }
             
             return NotFound();
