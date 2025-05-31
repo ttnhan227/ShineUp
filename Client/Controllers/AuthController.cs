@@ -266,6 +266,29 @@ namespace Client.Controllers
                 }
                 else
                 {
+                    // Check for the specific 403 Forbidden status for email verification
+                    if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        try
+                        {
+                            var errorDetails = JsonConvert.DeserializeObject<VerificationRequiredResponse>(content);
+                            if (errorDetails != null && errorDetails.RequiresVerification)
+                            {
+                                TempData["Email"] = errorDetails.Email;
+                                TempData["UserId"] = errorDetails.UserId.ToString();
+                                // Optionally, add a message to TempData to display on the VerifyEmail page
+                                TempData["VerificationMessage"] = errorDetails.Message;
+                                return RedirectToAction("VerifyEmail");
+                            }
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            _logger.LogError(jsonEx, "Failed to deserialize 403 Forbidden response during login.");
+                            // Fall through to generic error handling if deserialization fails
+                        }
+                    }
+
+                    // Generic error handling for other non-success status codes
                     var errorMessage = content;
                     try
                     {
@@ -515,4 +538,13 @@ namespace Client.Controllers
     {
         public string IdToken { get; set; }
     }
+}
+
+// Helper class to deserialize the 403 Forbidden response when verification is required
+public class VerificationRequiredResponse
+{
+    public string Message { get; set; }
+    public bool RequiresVerification { get; set; }
+    public string Email { get; set; }
+    public int UserId { get; set; }
 }

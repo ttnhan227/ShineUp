@@ -108,28 +108,34 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
     {
-        // Try to find user by either email or username
-        var existingUser = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == loginDTO.Email || u.Username == loginDTO.Email);
-
-        if (existingUser == null)
-        {
-            return Unauthorized("Invalid email/username: Account not found.");
-        }
-
-        if (!existingUser.IsActive)
-        {
-            return Unauthorized("Your account is not active. Please verify your email first.");
-        }
-
+        // The repository's Login method now handles finding the user and verifying the password.
+        // It returns the user if credentials are valid (and includes the Role), otherwise null.
+        // It no longer checks IsActive internally.
         var user = await _authRepository.Login(loginDTO.Email, loginDTO.Password);
 
         if (user == null)
         {
-            return Unauthorized("Invalid password: The password you entered is incorrect.");
+            // This means either user not found or password was incorrect.
+            return Unauthorized("Invalid email/username or password.");
         }
 
-        var token = GenerateToken(user);
+        // Credentials are valid, now check if the account is active.
+        if (!user.IsActive)
+        {
+            // User exists, password is correct, but email is not verified.
+            // Return a specific status code and payload that the client can use
+            // to redirect to the email verification page.
+            return StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status403Forbidden, new
+            {
+                Message = "Your account is not active. Please verify your email first.",
+                RequiresVerification = true,
+                Email = user.Email, // Send email back to help client redirect to OTP page for this email
+                UserId = user.UserID // Add UserId for the client to use
+            });
+        }
+
+        // User is active and credentials are valid. Proceed to login.
+        var token = GenerateToken(user); // GenerateToken needs user.Role, which _authRepository.Login includes.
 
         return Ok(new
         {
@@ -274,23 +280,9 @@ public class AuthController : ControllerBase
                 return BadRequest(new { success = false, message = "Email is already verified" });
             }
 
-            // Generate OTP
-            var otp = new Random().Next(100000, 999999).ToString();
+            // Generate OTP via repository (handles hashing and saving)
+            var otp = await _authRepository.GenerateOTP(user.Email);
             
-            // Save OTP to database
-            var otpModel = new OTPs
-            {
-                UserID = userId,
-                Email = user.Email,
-                OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15),
-                IsUsed = false
-            };
-
-            _context.OTPs.Add(otpModel);
-            await _context.SaveChangesAsync();
-
             // Send OTP email
             var emailBody = $@"
                 <h2>Email Verification</h2>
@@ -318,61 +310,45 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // Get the most recent OTP for this email
-            var otpRecord = await _context.OTPs
-                .Where(o => o.Email == model.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
-                .OrderByDescending(o => o.CreatedAt)
-                .FirstOrDefaultAsync();
+            bool isOtpValid = await _authRepository.VerifyEmail(model.Email, model.OTP);
 
-            if (otpRecord == null)
+            if (!isOtpValid)
             {
-                _logger.LogWarning($"No valid OTP found for email: {model.Email}");
-                return BadRequest(new { message = "Verification code has expired. Please request a new one." });
+                // _authRepository.VerifyEmail logs details, so a generic message here is fine.
+                // It handles cases like OTP not found, expired, or invalid.
+                return BadRequest(new { message = "Invalid or expired verification code. Please request a new one." });
             }
 
-            // Verify the OTP
-            bool isValid = BCrypt.Net.BCrypt.Verify(model.OTP, otpRecord.OTPCode);
-            if (!isValid)
-            {
-                _logger.LogWarning($"Invalid OTP for email: {model.Email}");
-                return BadRequest(new { message = "Invalid verification code" });
-            }
-
-            // Get the user
+            // OTP is valid, _authRepository.VerifyEmail has marked OTP as used and user.Verified = true.
+            // Now, fetch the user to activate and generate a token.
             var user = await _context.Users
-                .Include(u => u.Role)
+                .Include(u => u.Role) // Ensure Role is loaded for token generation
                 .FirstOrDefaultAsync(u => u.Email == model.Email);
 
             if (user == null)
             {
-                _logger.LogWarning($"User not found for email: {model.Email}");
-                return NotFound(new { message = "User not found" });
+                // This case should ideally not happen if VerifyEmail succeeded, but as a safeguard:
+                _logger.LogError($"User not found for email {model.Email} after successful OTP verification.");
+                return StatusCode(500, new { message = "Internal server error during verification." });
             }
-
-            if (user.Verified)
+            
+            // Activate the account if it's not already (VerifyEmail sets Verified, not IsActive)
+            if (!user.IsActive)
             {
-                return BadRequest(new { message = "Email is already verified" });
+                user.IsActive = true;
+                await _context.SaveChangesAsync();
             }
-
-            // Mark OTP as used
-            otpRecord.IsUsed = true;
-            await _context.SaveChangesAsync();
-
-            // Update user verification status and activate account
-            user.Verified = true;
-            user.IsActive = true;
-            await _context.SaveChangesAsync();
 
             // Generate new token with updated claims
             var token = GenerateToken(user);
 
-            return Ok(new { 
+            return Ok(new {
                 message = "Email verified successfully",
                 token = token,
                 user = new {
                     username = user.Username,
                     email = user.Email,
-                    verified = user.Verified,
+                    verified = user.Verified, // Should be true now
                     profileImageURL = user.ProfileImageURL
                 }
             });
@@ -398,8 +374,8 @@ public class AuthController : ControllerBase
             if (user.Verified)
                 return BadRequest(new { message = "Email is already verified" });
 
-            var otp = GenerateOTP();
-            await _authRepository.SaveOTP(userId, otp);
+            var otp = await _authRepository.GenerateOTP(user.Email);
+            // _authRepository.GenerateOTP already saves the hashed OTP.
 
             // Send OTP email
             var emailBody = $"Your verification code is: {otp}";
@@ -441,10 +417,4 @@ public class AuthController : ControllerBase
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private string GenerateOTP()
-    {
-        // Implement OTP generation logic
-        // This is a placeholder and should be replaced with a secure OTP generation method
-        return "123456"; // Placeholder OTP
-    }
 }

@@ -40,11 +40,6 @@ public class AuthRepository : IAuthRepository
             return null;
         }
 
-        if (!user.IsActive)
-        {
-            return null;
-        }
-
         // Check if user has a password hash (not a Google user)
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
