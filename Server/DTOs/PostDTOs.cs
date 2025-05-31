@@ -63,6 +63,7 @@ public class PostResponseDto
     // Social features
     public int LikesCount { get; set; }
     public int CommentsCount { get; set; }
+    public bool HasLiked { get; set; }
 
     public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();
 }

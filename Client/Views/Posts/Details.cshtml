@@ -608,6 +608,10 @@
                     }
 
                     const postId = this.dataset.postId;
+                    const likeIcon = this.querySelector('i');
+                    const likesCount = this.querySelector('#likes-count');
+                    const currentCount = parseInt(likesCount.textContent);
+                    
                     try {
                         const response = await fetch(`${API_URL}/api/likes/toggle`, {
                             method: 'POST',
@@ -621,16 +625,17 @@
                         });
 
                         if (response.ok) {
-                            const likeIcon = this.querySelector('i');
-                            const likesCount = this.querySelector('#likes-count');
-                            
-                            if (likeIcon.classList.contains('bxs-heart')) {
+                            // If response is NoContent (204), it means we unliked the post
+                            if (response.status === 204) {
                                 likeIcon.classList.replace('bxs-heart', 'bx-heart');
-                                likesCount.textContent = parseInt(likesCount.textContent) - 1;
+                                likeIcon.classList.remove('text-danger');
+                                likesCount.textContent = currentCount - 1;
                             } else {
+                                // If we get a response with data, it means we liked the post
+                                const data = await response.json();
                                 likeIcon.classList.replace('bx-heart', 'bxs-heart');
                                 likeIcon.classList.add('text-danger');
-                                likesCount.textContent = parseInt(likesCount.textContent) + 1;
+                                likesCount.textContent = currentCount + 1;
                             }
                         } else if (response.status === 401) {
                             window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);

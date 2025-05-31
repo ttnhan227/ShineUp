@@ -113,6 +113,7 @@ public class PostsController : ControllerBase
                 PrivacyName = post.Privacy?.Name,
                 LikesCount = post.Likes?.Count ?? 0,
                 CommentsCount = post.Comments?.Count ?? 0,
+                HasLiked = currentUserId.HasValue && await _postRepository.HasUserLikedPostAsync(post.PostID, currentUserId.Value),
                 MediaFiles = post.Images.Select(i => new MediaFileDTO
                 {
                     Url = i.ImageURL?.Replace("http://", "https://"),
