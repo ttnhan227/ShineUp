@@ -299,6 +299,84 @@
             font-size: 1rem;
         }
 
+        /* Comments section styles */
+        .comments-section {
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .comment {
+            margin-bottom: 1.5rem;
+        }
+
+        .comment .post-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+        }
+
+        .comment .post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            background-color: var(--secondary-color);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-left: 1rem;
+            flex: 1;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-time {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .comment-text {
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+
+        /* Comment form styles */
+        #comment-form .input-group {
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background-color: var(--secondary-color);
+        }
+
+        #comment-form input {
+            border: none;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--secondary-color);
+        }
+
+        #comment-form input:focus {
+            box-shadow: none;
+            background-color: white;
+        }
+
+        #comment-form button {
+            border-radius: 0;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        #comment-form button:hover {
+            background: var(--primary-hover);
+        }
     </style>
 }
 
@@ -307,37 +385,32 @@
         <!-- Main Content (Single Post) -->
         <div class="col-lg-6 offset-lg-3" style="position: relative; z-index: 1;">
             <div class="post-card">
-                @* Replicate post header from Index.cshtml, adapting for PostDetailsViewModel *@
-                 <div class="post-header">
+                @* Post header with user information *@
+                <div class="post-header">
                     <div class="post-avatar">
                         @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                         {
-                            <img src="@Model.ProfileImageURL" alt="Profile Image">
+                            <img src="@Model.ProfileImageURL" alt="@Model.FullName">
                         }
                         else
                         {
                             <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                                <i class='bx bx-user'></i>
+                                <i class='bx bx-user text-primary'></i>
                             </div>
                         }
                     </div>
-                    <div class="post-meta flex-grow-1">
+                    <div class="post-meta">
                         <div class="post-author">
-                             @Model.FullName
-                             @if (!string.IsNullOrEmpty(Model.CategoryName))
-                             {
-                                 <span class="talent-badge">@Model.CategoryName</span>
-                             }
+                            @Model.FullName
+                            @if (!string.IsNullOrEmpty(Model.CategoryName))
+                            {
+                                <span class="talent-badge">@Model.CategoryName</span>
+                            }
                         </div>
                         <div class="post-info">
                             <span>@@@Model.Username.ToLower().Replace(" ", "")</span>
                             <span class="mx-1">·</span>
                             <span>@Model.CreatedAt.ToString("MMM dd")</span>
-                             @if (!string.IsNullOrEmpty(Model.PrivacyName))
-                             {
-                                 <span class="mx-1">·</span>
-                                 <span>@Model.PrivacyName</span>
-                             }
                         </div>
                     </div>
                     @* Post Actions Dropdown (Edit/Delete) - Keep this for details view *@
@@ -614,7 +687,8 @@
                         },
                         body: JSON.stringify({
                             PostID: @Model.PostID,
-                            Content: commentContent
+                            Content: commentContent,
+                            VideoID: null
                         })
                     })
                     .then(response => {
@@ -680,22 +754,29 @@
                                 commentsList.innerHTML = '<div class="text-muted text-center py-3">No comments yet. Be the first to comment!</div>';
                             } else {
                                 commentsList.innerHTML = comments.map(comment => `
-                                    <div class="comment mb-3" data-comment-id="${comment.commentID || ''}">
-                                        <div class="d-flex align-items-start">
-                                            <div class="post-avatar me-3" style="width: 2rem; height: 2rem;">
-                                                ${comment.profileImageURL ? 
-                                                    `<img src="${escapeHtml(comment.profileImageURL)}" alt="${escapeHtml(comment.username || '')}" class="rounded-circle">` :
-                                                    `<div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                                        <i class='bx bx-user'></i>
+                                    <div class="comment" data-comment-id="${comment.CommentID || ''}">
+                                        <div class="d-flex">
+                                            <div class="post-avatar">
+                                                ${comment.ProfileImageURL ? 
+                                                    `<img src="${escapeHtml(comment.ProfileImageURL)}" alt="${escapeHtml(comment.username || 'User')}">` :
+                                                    `<div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                                                        <i class='bx bx-user text-primary'></i>
                                                     </div>`
                                                 }
                                             </div>
-                                            <div class="flex-grow-1">
+                                            <div class="comment-content">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-1 fw-bold">${escapeHtml(comment.username || '')}</h6>
-                                                    <small class="text-muted">${comment.createdAt ? formatTimeAgo(new Date(comment.createdAt)) : ''}</small>
+                                                    <div class="comment-author">
+                                                        <div>
+                                                            <span class="fw-bold">${escapeHtml(comment.FullName || 'Unknown User')}</span>
+                                                            <a href="/UserProfile/${comment.UserID || '#'}" class="text-decoration-none text-muted">
+                                                                @@${escapeHtml(comment.Username || 'Anonymous')}
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="comment-time">${formatTimeAgo(new Date(comment.CreatedAt))}</div>
                                                 </div>
-                                                <p class="mb-0">${escapeHtml(comment.content || '')}</p>
+                                                <p class="comment-text">${escapeHtml(comment.Content)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -711,7 +792,8 @@
             
             // Helper function to escape HTML
             function escapeHtml(unsafe) {
-                return unsafe
+                if (!unsafe) return '';
+                return String(unsafe)
                     .replace(/&/g, "&amp;")
                     .replace(/</g, "&lt;")
                     .replace(/>/g, "&gt;")

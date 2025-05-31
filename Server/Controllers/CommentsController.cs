@@ -40,6 +40,7 @@ public class CommentsController : ControllerBase
                 VideoID = c.VideoID,
                 UserID = c.UserID,
                 Username = c.User?.Username ?? "Unknown",
+                FullName = c.User?.FullName ?? "Unknown User",
                 ProfileImageURL = c.User?.ProfileImageURL,
                 Content = c.Content,
                 CreatedAt = c.CreatedAt
@@ -93,6 +94,7 @@ public class CommentsController : ControllerBase
                 VideoID = commentWithUser.VideoID,
                 UserID = commentWithUser.UserID,
                 Username = commentWithUser.User?.Username ?? "Unknown",
+                FullName = commentWithUser.User?.FullName ?? "Unknown User",
                 ProfileImageURL = commentWithUser.User?.ProfileImageURL,
                 Content = commentWithUser.Content,
                 CreatedAt = commentWithUser.CreatedAt
