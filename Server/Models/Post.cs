@@ -34,6 +34,10 @@ public class Post
     [ForeignKey("PrivacyID")]
     public Privacy Privacy { get; set; }
 
+    public int? CommunityID { get; set; }
+    [ForeignKey("CommunityID")]
+    public Community? Community { get; set; }
+
     public ICollection<Comment> Comments { get; set; }
     public ICollection<Like> Likes { get; set; }
     public ICollection<Image> Images { get; set; }

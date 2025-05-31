@@ -47,4 +47,6 @@ public class User
     public ICollection<Message> ReceivedMessages { get; set; }
     public ICollection<Post> Posts { get; set; }
     public ICollection<Image> Images { get; set; }
+    public ICollection<Community> CreatedCommunities { get; set; }
+    public ICollection<CommunityMember> CommunityMemberships { get; set; }
 }
