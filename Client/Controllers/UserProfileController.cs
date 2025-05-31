@@ -14,7 +14,7 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Http;
 
 namespace Client.Controllers
-{    [Authorize]
+{
     [Route("[controller]")]
     public class UserProfileController : Controller
     {
@@ -33,40 +33,61 @@ namespace Client.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            // Redirect to the public profile page of the currently logged-in user
+            var username = User.Identity?.Name; // Assumes username is stored in User.Identity.Name
+            if (string.IsNullOrEmpty(username))
             {
-                return Unauthorized("User ID not found in token.");
+                // If not authenticated or username is not available, redirect to login or home
+                // For now, let's redirect to login if not authenticated, or home if username is missing
+                if (User.Identity?.IsAuthenticated != true)
+                {
+                    return RedirectToAction("Login", "Auth");
+                }
+                _logger.LogWarning("UserProfile/Index: Username not found in claims for authenticated user. Redirecting to Home/Index.");
+                return RedirectToAction("Index", "Home");
             }
-
-            if (int.TryParse(userId, out int id))
-            {
-                return RedirectToAction(nameof(Index), new { id });
-            }
-            
-            return BadRequest("Invalid user ID format.");
+            return RedirectToAction(nameof(PublicProfile), new { username });
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Index(int id)
+        // Removed Index(int id) action as it's no longer used.
+
+        [AllowAnonymous] // Allow anonymous access for username-based profiles
+        [HttpGet("{username}")] // Route for username (string)
+        public async Task<IActionResult> PublicProfile(string username)
         {
-            var token = User.FindFirst("JWT")?.Value;
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized();
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return BadRequest("Username cannot be empty.");
+            }
 
             var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            // No Authorization header for public profiles
 
-            // Get user profile
-            var userResponse = await client.GetAsync($"api/UserProfile/{id}");
+            // Get user profile by username
+            var userResponse = await client.GetAsync($"api/UserProfile/username/{username}");
             if (!userResponse.IsSuccessStatusCode)
-                return NotFound();
+            {
+                _logger.LogError($"Failed to get user profile for username {username}. Status: {userResponse.StatusCode}");
+                if (userResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return NotFound($"Profile for '{username}' not found.");
+                }
+                return StatusCode((int)userResponse.StatusCode, "Error fetching profile.");
+            }
             
             var userJson = await userResponse.Content.ReadAsStringAsync();
             var user = JsonConvert.DeserializeObject<UserViewModel>(userJson);
+
+            if (user == null) // Double check after deserialization
+            {
+                _logger.LogError($"User profile for username {username} deserialized to null.");
+                return NotFound($"Profile for '{username}' not found.");
+            }
             
-            // Get user posts
-            var postsResponse = await client.GetAsync($"api/UserProfile/{id}/posts");
+            // Get user posts by user ID (since the server endpoint for posts still uses ID)
+            // We need the UserID from the profile we just fetched.
+            // Get user posts by username directly from the new server endpoint
+            var postsResponse = await client.GetAsync($"api/UserProfile/username/{username}/posts");
             List<PostDetailsViewModel> posts = new List<PostDetailsViewModel>();
             if (postsResponse.IsSuccessStatusCode)
             {
@@ -76,18 +97,27 @@ namespace Client.Controllers
                     PropertyNameCaseInsensitive = true
                 }) ?? new List<PostDetailsViewModel>();
             }
+            else
+            {
+                 _logger.LogWarning($"Failed to get posts for user {username} (ID: {user.UserID}). Status: {postsResponse.StatusCode}");
+            }
 
             user.Posts = posts;
-            return View(user);
+            // We can reuse the same Index.cshtml view if it's suitable for public display
+            // or create a new PublicProfile.cshtml if needed.
+            // For now, let's assume Index.cshtml can be used.
+            return View("Index", user);
         }
 
+        [Authorize] // Keep Authorize for edit
         [HttpGet("edit")]
         public async Task<IActionResult> Edit()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
+            var username = User.Identity?.Name; // Assumes username is stored in User.Identity.Name
+            if (string.IsNullOrEmpty(username))
             {
-                return Unauthorized("User ID not found in token.");
+                _logger.LogWarning("Edit GET: Username not found in claims for authenticated user.");
+                return Unauthorized("Username not found in token.");
             }
 
             var token = User.FindFirst("JWT")?.Value;
@@ -96,9 +126,11 @@ namespace Client.Controllers
                 return Unauthorized("JWT token not found.");
             }
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var client = _httpClientFactory.CreateClient("API");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _httpClient.GetAsync($"api/UserProfile/{userId}");
+            // Fetch profile by username for editing
+            var response = await client.GetAsync($"api/UserProfile/username/{username}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -135,19 +167,18 @@ namespace Client.Controllers
                 return View(model);
             }
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User ID not found in token.");
-            }
+            // Username for redirection, assuming it might be part of the model or can be fetched again if needed.
+            // For simplicity, we'll use model.Username for redirection.
+            // var currentUsernameForRedirect = User.Identity?.Name;
 
             var token = User.FindFirst("JWT")?.Value;
             if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized("JWT token not found.");
             }
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            
+            var client = _httpClientFactory.CreateClient("API");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             using var formData = new MultipartFormDataContent();
 
@@ -170,7 +201,8 @@ namespace Client.Controllers
                 formData.Add(fileStreamContent, "ProfileImageFile", model.ProfileImageFile.FileName);
             }
 
-            var response = await _httpClient.PutAsync($"api/UserProfile/{userId}", formData);
+            // UserID is not part of the URL anymore, server gets it from token
+            var response = await client.PutAsync("api/UserProfile/update", formData);
 
             if (response.IsSuccessStatusCode)
             {
@@ -188,7 +220,8 @@ namespace Client.Controllers
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
                 TempData["SuccessMessage"] = "Profile updated successfully!";
-                return RedirectToAction("Index");
+                // Redirect to the public profile page using the username from the model
+                return RedirectToAction(nameof(PublicProfile), new { username = model.Username });
             }
             else
             {
@@ -219,14 +252,15 @@ namespace Client.Controllers
                 if (string.IsNullOrEmpty(userId))
                 {
                     TempData["Error"] = "User not authenticated.";
-                    return RedirectToAction("Index");
+                    // If user ID is not found, perhaps redirect to login or an error page
+                    return RedirectToAction("Login", "Auth");
                 }
 
                 var token = User.FindFirst("JWT")?.Value;
                 if (string.IsNullOrEmpty(token))
                 {
                     TempData["Error"] = "Authentication token not found.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Login", "Auth");
                 }
 
                 var client = _httpClientFactory.CreateClient("API");
@@ -289,14 +323,15 @@ namespace Client.Controllers
                 if (string.IsNullOrEmpty(userId))
                 {
                     TempData["Error"] = "User not authenticated.";
-                    return RedirectToAction("Index");
+                    // If user ID is not found, perhaps redirect to login or an error page
+                    return RedirectToAction("Login", "Auth");
                 }
 
                 var token = User.FindFirst("JWT")?.Value;
                 if (string.IsNullOrEmpty(token))
                 {
                     TempData["Error"] = "Authentication token not found.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Login", "Auth");
                 }
 
                 var client = _httpClientFactory.CreateClient("API");

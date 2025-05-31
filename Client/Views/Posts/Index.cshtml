@@ -621,22 +621,21 @@
                     @foreach (var item in Model)
                     {
                     <div class="post-card">
-                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" 
-                           class="text-decoration-none">
-                            <div class="post-header">
+                        <div class="post-header">
+                            <a asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@item.Username" class="text-decoration-none d-flex align-items-center">
                                 <div class="post-avatar">
-                                        @if (!string.IsNullOrEmpty(item.ProfileImageURL))
-                                        {
+                                    @if (!string.IsNullOrEmpty(item.ProfileImageURL))
+                                    {
                                         <img src="@item.ProfileImageURL" alt="@item.FullName">
                                     }
                                     else
                                     {
-                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                                            <i class='bx bx-user text-primary'></i>
+                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle" style="width: 3rem; height: 3rem;">
+                                            <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
                                         </div>
                                     }
                                 </div>
-                                <div class="post-meta">
+                                <div class="post-meta ms-3">
                                     <div class="post-author">
                                         @item.FullName
                                         @if (!string.IsNullOrEmpty(item.CategoryName))
@@ -650,8 +649,9 @@
                                         <span>@item.CreatedAt.ToString("MMM dd")</span>
                                     </div>
                                 </div>
-                            </div>
-
+                            </a>
+                        </div>
+                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="text-decoration-none">
                             <div class="post-content">
                                 <h5 class="post-title">@item.Title</h5>
                                 <p class="post-text">@item.Content</p>
