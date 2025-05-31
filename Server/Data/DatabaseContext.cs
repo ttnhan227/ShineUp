@@ -23,6 +23,8 @@ public class DatabaseContext : DbContext
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Image> Images { get; set; }
+    public DbSet<Community> Communities { get; set; }
+    public DbSet<CommunityMember> CommunityMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -264,6 +266,42 @@ public class DatabaseContext : DbContext
             .HasOne(p => p.Category)
             .WithMany(c => c.Posts)
             .HasForeignKey(p => p.CategoryID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure Community relationships
+        modelBuilder.Entity<Community>()
+            .HasOne(c => c.CreatedBy)
+            .WithMany(u => u.CreatedCommunities)
+            .HasForeignKey(c => c.CreatedByUserID)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Community>()
+            .HasOne(c => c.Privacy)
+            .WithMany()
+            .HasForeignKey(c => c.PrivacyID)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Configure CommunityMember composite key and relationships
+        modelBuilder.Entity<CommunityMember>()
+            .HasKey(cm => new { cm.UserID, cm.CommunityID });
+
+        modelBuilder.Entity<CommunityMember>()
+            .HasOne(cm => cm.User)
+            .WithMany(u => u.CommunityMemberships)
+            .HasForeignKey(cm => cm.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CommunityMember>()
+            .HasOne(cm => cm.Community)
+            .WithMany(c => c.Members)
+            .HasForeignKey(cm => cm.CommunityID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Post-Community relationship
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Community)
+            .WithMany(c => c.Posts)
+            .HasForeignKey(p => p.CommunityID)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Configure Post-Image relationship

@@ -8,6 +8,10 @@
                     <div class="text-center mb-4">
                         <h4 class="card-title">Verify Email</h4>
                         <p class="text-muted">Please enter the verification code sent to your email: @Model.Email</p>
+                        @if (TempData["VerificationMessage"] != null)
+                        {
+                            <p class="alert alert-info mt-2">@TempData["VerificationMessage"] You can use the code previously sent or request a new one below.</p>
+                        }
                     </div>
 
                     <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>

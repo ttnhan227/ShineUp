@@ -78,6 +78,41 @@ public class UserProfileRepository : IUserProfileRepository
         return (int)((double)completedFields / totalFields * 100);
     }
 
+    public async Task<UserDTO?> GetUserProfileByUsername(string username)
+    {
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .SingleOrDefaultAsync(x => x.Username == username);
+
+        if (user == null) return null;
+
+        // Calculate profile completion percentage
+        var completionPercentage = CalculateProfileCompletion(user);
+
+        // A user is considered a Google account if they have a GoogleId or no password hash
+        var isGoogleAccount = !string.IsNullOrEmpty(user.GoogleId) || string.IsNullOrEmpty(user.PasswordHash);
+        _logger.LogInformation($"User {user.UserID} (Username: {user.Username}) - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
+
+        return new UserDTO
+        {
+            UserID = user.UserID,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            Bio = user.Bio,
+            ProfileImageURL = user.ProfileImageURL,
+            RoleID = user.RoleID,
+            TalentArea = user.TalentArea,
+            CreatedAt = user.CreatedAt,
+            IsActive = user.IsActive,
+            Verified = user.Verified,
+            LastLoginTime = user.LastLoginTime?.ToUniversalTime(), // Convert to UTC
+            ProfilePrivacy = user.ProfilePrivacy,
+            ProfileCompletionPercentage = completionPercentage,
+            IsGoogleAccount = isGoogleAccount
+        };
+    }
+
     public async Task<User> UpdateProfile(User userToUpdate)
     {
         var existingUser = await _context.Users

@@ -30,14 +30,16 @@ public class UserProfileController : ControllerBase
         _postRepository = postRepository; // Assigned
     }
 
-    [HttpGet("{userId}")]
-    [AllowAnonymous] // Temporarily allow anonymous access for testing
-    [Produces("application/json")] // Added back for this specific action
-    public async Task<ActionResult<UserDTO>> GetProfile(int userId)
+    // Removed [HttpGet("{userId}")] GetProfile(int userId) action as it's replaced by GetProfileByUsername
+
+    [HttpGet("username/{username}")]
+    [AllowAnonymous]
+    [Produces("application/json")]
+    public async Task<ActionResult<UserDTO>> GetProfileByUsername(string username)
     {
         try
         {
-            var userDto = await _userProfileRepository.GetUserProfile(userId);
+            var userDto = await _userProfileRepository.GetUserProfileByUsername(username);
             if (userDto == null)
             {
                 return NotFound(new { message = "User not found" });
@@ -47,29 +49,27 @@ public class UserProfileController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error getting profile: {ex.Message}");
+            _logger.LogError($"Error getting profile by username {username}: {ex.Message}");
             return StatusCode(500, new { message = "Internal server error" });
         }
     }
 
-    [HttpPut("{userId}")]
-    [Consumes("multipart/form-data")] // Consume multipart form data for file upload
-    [Produces("application/json")] // Produce JSON for response
-    public async Task<ActionResult<UserDTO>> UpdateProfile(int userId, [FromForm] UpdateProfileDto updateProfile) // Changed to FromForm
+    [HttpPut("update")] // Route changed, userId comes from token
+    [Consumes("multipart/form-data")]
+    [Produces("application/json")]
+    public async Task<ActionResult<UserDTO>> UpdateProfile([FromForm] UpdateProfileDto updateProfile)
     {
         try
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
-                return Unauthorized("Invalid token");
+                return Unauthorized("Invalid token: User ID claim not found.");
             }
 
-            var currentUserId = int.Parse(userIdClaim.Value);
-
-            if (userId != currentUserId)
+            if (!int.TryParse(userIdClaim.Value, out var currentUserId))
             {
-                return Unauthorized("You can only modify your own profile");
+                 return Unauthorized("Invalid token: User ID claim is not a valid integer.");
             }
 
             // Handle image upload if a file is provided
@@ -84,22 +84,23 @@ public class UserProfileController : ControllerBase
                 updateProfile.ProfileImageUrl = uploadResult.SecureUrl.ToString();
             }
 
-            var existingUser = await _userProfileRepository.GetUserProfile(userId);
-            if (existingUser == null)
+            // Fetch existing user by currentUserId from token to ensure we're updating the correct user
+            var existingUserDto = await _userProfileRepository.GetUserProfile(currentUserId);
+            if (existingUserDto == null)
             {
                 return NotFound(new { message = "User not found" });
             }
 
             var userModel = new Server.Models.User
             {
-                UserID = userId, // Ensure the ID is set for the update
+                UserID = currentUserId, // Use ID from token
                 Username = updateProfile.Username,
                 FullName = updateProfile.FullName,
                 Email = updateProfile.Email,
                 Bio = updateProfile.Bio,
-                ProfileImageURL = updateProfile.ProfileImageUrl, // Use the potentially new URL
+                ProfileImageURL = updateProfile.ProfileImageUrl,
                 TalentArea = updateProfile.TalentArea,
-                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUser.ProfilePrivacy // Use the value from DTO, fallback to existing
+                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUserDto.ProfilePrivacy
             };
 
             var updatedUser = await _userProfileRepository.UpdateProfile(userModel);
@@ -115,6 +116,12 @@ public class UserProfileController : ControllerBase
                 RoleID = updatedUser.RoleID,
                 TalentArea = updatedUser.TalentArea,
                 CreatedAt = updatedUser.CreatedAt,
+                IsActive = updatedUser.IsActive, // ensure all relevant fields are mapped
+                Verified = updatedUser.Verified,
+                LastLoginTime = updatedUser.LastLoginTime,
+                ProfilePrivacy = updatedUser.ProfilePrivacy,
+                ProfileCompletionPercentage = existingUserDto.ProfileCompletionPercentage, // Recalculate or carry over
+                IsGoogleAccount = existingUserDto.IsGoogleAccount
             };
 
             return Ok(userDto);
@@ -165,13 +172,21 @@ public class UserProfileController : ControllerBase
             _logger.LogError($"Error changing password: {ex.Message}");
             return StatusCode(500, new { message = "Internal server error." });
         }
-    }    [HttpGet("{id}/posts")]
-    [AllowAnonymous] // Temporarily allow anonymous access for testing
-    public async Task<ActionResult<IEnumerable<PostListResponseDto>>> GetUserPosts(int id)
+    }
+
+    [HttpGet("username/{username}/posts")] // Route changed to use username
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<PostListResponseDto>>> GetUserPosts(string username)
     {
         try
         {
-            var posts = await _postRepository.GetPostsByUserIdAsync(id);
+            var userDto = await _userProfileRepository.GetUserProfileByUsername(username);
+            if (userDto == null)
+            {
+                return NotFound(new { message = $"User '{username}' not found" });
+            }
+
+            var posts = await _postRepository.GetPostsByUserIdAsync(userDto.UserID);
             var postDtos = posts.Select(p => new PostListResponseDto
             {
                 PostID = p.PostID,

@@ -180,7 +180,7 @@
                                 <span class="fw-bold">Welcome @userEmail!</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile" asp-action="Index">Profile</a></li>
+                                <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@User.Identity.Name">Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post">

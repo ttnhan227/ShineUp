@@ -90,6 +90,8 @@
                     </div>
                 </div>
             </div>
+            @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
+            {
             <div class="card-footer">
                 <a asp-action="Edit" class="btn btn-primary">
                     <i class='bx bx-edit'></i> Edit Profile
@@ -98,6 +100,7 @@
                     <i class='bx bx-lock-alt'></i> Change Password
                 </a>
             </div>
+            }
         </div>
 
         <!-- Right Column - Posts Feed -->

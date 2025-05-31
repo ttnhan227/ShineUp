@@ -47,7 +47,7 @@ public class PostsController : Controller
             // Get user profile images for posts
             foreach (var post in posts)
             {
-                var userResponse = await client.GetAsync($"api/UserProfile/{post.UserID}");
+                var userResponse = await client.GetAsync($"api/UserProfile/username/{post.Username}");
                 if (userResponse.IsSuccessStatusCode)
                 {
                     var userContent = await userResponse.Content.ReadAsStringAsync();
@@ -122,7 +122,7 @@ public class PostsController : Controller
                 });
 
                 // Get user profile image
-                var userResponse = await client.GetAsync($"api/UserProfile/{post.UserID}");
+                var userResponse = await client.GetAsync($"api/UserProfile/username/{post.Username}");
                 if (userResponse.IsSuccessStatusCode)
                 {
                     var userContent = await userResponse.Content.ReadAsStringAsync();
