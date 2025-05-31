@@ -42,19 +42,9 @@ namespace Server.Controllers
 
         #region Comments
 
-        /// <summary>
-        /// Gets all comments for a specific post
-        /// </summary>
-        /// <param name="postId">The ID of the post</param>
-        /// <returns>List of comments for the post</returns>
-        /// <response code="200">Returns the list of comments</response>
-        /// <response code="404">If the post is not found</response>
-        /// <response code="500">If there was an error retrieving the comments</response>
         [HttpGet("posts/{postId}/comments")]
         [AllowAnonymous]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
         public async Task<ActionResult<IEnumerable<CommentDto>>> GetPostComments(
             [FromRoute, Required] int postId)
         {
@@ -84,22 +74,9 @@ namespace Server.Controllers
             }
         }
 
-        /// <summary>
-        /// Adds a new comment to a post or video
-        /// </summary>
-        /// <param name="commentDto">The comment data</param>
-        /// <returns>The created comment</returns>
-        /// <response code="201">Returns the created comment</response>
-        /// <response code="400">If the comment data is invalid</response>
-        /// <response code="401">If user is not authenticated</response>
-        /// <response code="404">If the post/video is not found</response>
-        /// <response code="500">If there was an error adding the comment</response>
+
         [HttpPost("comments")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
         public async Task<ActionResult<CommentDto>> AddComment([FromBody, Required] CreateCommentDto commentDto)
         {
             if (!ModelState.IsValid)
@@ -148,20 +125,9 @@ namespace Server.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes a comment
-        /// </summary>
-        /// <param name="commentId">The ID of the comment to delete</param>
-        /// <returns>No content if successful</returns>
-        /// <response code="204">If the comment was deleted successfully</response>
-        /// <response code="401">If user is not authorized to delete the comment</response>
-        /// <response code="404">If the comment is not found</response>
-        /// <response code="500">If there was an error deleting the comment</response>
+     
         [HttpDelete("comments/{commentId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+     
         public async Task<IActionResult> DeleteComment([FromRoute, Required] int commentId)
         {
             _logger.LogInformation("Deleting comment {CommentId}", commentId);

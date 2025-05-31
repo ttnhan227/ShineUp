@@ -8,7 +8,7 @@
 }
 
 @section Styles {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         :root {
             --primary-color: #7c3aed;
@@ -27,12 +27,11 @@
         }
 
         .main-content-container {
-            max-width: 1200px; /* Adjust container width for details page */
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem 1rem; /* Reverted padding */
+            padding: 2rem 1rem;
         }
 
-        /* Post Card Styles (Copied from Index.cshtml) */
         .post-card {
             background: white;
             border-radius: 1rem;
@@ -41,7 +40,7 @@
             overflow: hidden;
             transition: var(--transition);
             position: relative;
-            z-index: 100; /* Changed to be lower than global header's z-index */
+            z-index: 100;
         }
 
         .post-card:hover {
@@ -78,9 +77,9 @@
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 0.25rem;
-             display: flex;
-             align-items: center;
-             gap: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .post-info {
@@ -88,11 +87,10 @@
             font-size: 0.875rem;
         }
 
-         .post-info span {
-             margin-right: 0.5rem;
-         }
+        .post-info span {
+            margin-right: 0.5rem;
+        }
 
-        /* Post Content */
         .post-content {
             padding: 0 1.5rem 1.5rem;
         }
@@ -110,7 +108,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Media Grid Styles (Copied from Index.cshtml) */
         .media-grid {
             border-radius: 0.75rem;
             overflow: hidden;
@@ -154,7 +151,6 @@
             opacity: 1;
         }
 
-        /* Post Actions (Copied from Index.cshtml) */
         .post-actions {
             padding: 1rem 1.5rem;
             border-top: 1px solid var(--border-color);
@@ -167,7 +163,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
             transition: var(--transition);
@@ -183,50 +179,53 @@
             font-size: 1.25rem;
         }
 
+        .post-action span {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: var(--text-primary);
+        }
 
         .sidebar-card .card-title {
-             font-size: 1.25rem;
-             font-weight: 600;
-             color: var(--text-primary);
-             margin-bottom: 1.5rem;
-             display: flex;
-             align-items: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
         }
 
         .sidebar-card .form-control {
-             border-radius: 1.5rem;
-             padding: 0.75rem 1.5rem;
-             background-color: var(--secondary-color);
-             border-color: transparent;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--secondary-color);
+            border-color: transparent;
         }
 
         .sidebar-card .form-control:focus {
-             background-color: white;
-             border-color: var(--primary-color);
+            background-color: white;
+            border-color: var(--primary-color);
         }
 
-         .sidebar-card .list-unstyled li {
-             padding: 0.75rem 0;
-             border-bottom: 1px solid var(--border-color);
-             transition: var(--transition);
-             cursor: pointer;
-         }
+        .sidebar-card .list-unstyled li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
 
-         .sidebar-card .list-unstyled li:last-child {
-             border-bottom: none;
-         }
+        .sidebar-card .list-unstyled li:last-child {
+            border-bottom: none;
+        }
 
-         .sidebar-card .list-unstyled li:hover {
-              background-color: var(--secondary-color);
-              padding-left: 0.5rem;
-         }
+        .sidebar-card .list-unstyled li:hover {
+            background-color: var(--secondary-color);
+            padding-left: 0.5rem;
+        }
 
-         .sidebar-card .list-unstyled li span {
-             font-size: 0.875rem;
-             color: var(--text-secondary);
-         }
+        .sidebar-card .list-unstyled li span {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
 
-        /* Button Styles (Copied from Index.cshtml) */
         .btn-secondary {
             background: var(--secondary-color);
             border-color: var(--secondary-color);
@@ -234,35 +233,34 @@
             border-radius: 0.75rem;
             padding: 0.75rem 1.5rem;
             transition: var(--transition);
-             margin-top: 1rem;
+            margin-top: 1rem;
         }
 
         .btn-secondary:hover {
-             background: #e0e0e0;
-             border-color: #e0e0e0;
-             color: var(--text-primary);
-             transform: translateY(-2px);
+            background: #e0e0e0;
+            border-color: #e0e0e0;
+            color: var(--text-primary);
+            transform: translateY(-2px);
         }
 
-        /* Dropdown for Post Actions */
         .dropdown-toggle::after {
-            display: none; /* Hide default caret */
+            display: none;
         }
 
-         .dropdown-menu {
+        .dropdown-menu {
             border-radius: 0.75rem;
             box-shadow: var(--card-shadow);
-             padding: 0.5rem 0;
+            padding: 0.5rem 0;
         }
 
-         .dropdown-item {
-             padding: 0.75rem 1.25rem;
-             color: var(--text-primary);
-             transition: var(--transition);
-             display: flex;
-             align-items: center;
-             gap: 0.5rem;
-         }
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
         .dropdown-item:hover {
             background-color: var(--secondary-color);
@@ -270,15 +268,14 @@
         }
 
         .dropdown-item i {
-             font-size: 1.25rem;
+            font-size: 1.25rem;
         }
 
         .dropdown-item.text-danger:hover {
-             background-color: #fee2e2; /* Light red background on hover */
-             color: #dc2626; /* Darker red text on hover */
+            background-color: #fee2e2;
+            color: #dc2626;
         }
 
-        /* Talent-specific styles (Copied from Index.cshtml) */
         .talent-badge {
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
@@ -300,7 +297,6 @@
             font-size: 1rem;
         }
 
-        /* Comments section styles */
         .comments-section {
             padding-top: 1rem;
             border-top: 1px solid var(--border-color);
@@ -348,7 +344,6 @@
             margin-bottom: 0;
         }
 
-        /* Comment form styles */
         #comment-form .input-group {
             border-radius: 1.5rem;
             overflow: hidden;
@@ -383,12 +378,12 @@
 
 <div class="main-content-container">
     <div class="row g-4">
-        <!-- Main Content (Single Post) -->
         <div class="col-lg-6 offset-lg-3" style="position: relative; z-index: 1;">
             <div class="post-card">
-                @* Post header with user information *@
                 <div class="post-header">
-                    <div class="post-avatar">
+                    <div class="
+
+post-avatar">
                         @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                         {
                             <img src="@Model.ProfileImageURL" alt="@Model.FullName">
@@ -414,7 +409,6 @@
                             <span>@Model.CreatedAt.ToString("MMM dd")</span>
                         </div>
                     </div>
-                    @* Post Actions Dropdown (Edit/Delete) - Keep this for details view *@
                     @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
                     {
                         <div class="dropdown">
@@ -434,12 +428,10 @@
                     }
                 </div>
 
-                @* Replicate post content from Index.cshtml *@
                 <div class="post-content">
                     <h5 class="post-title">@Model.Title</h5>
                     <p class="post-text">@Model.Content</p>
 
-                    @* Replicate media display logic from Index.cshtml *@
                     @if (Model.MediaFiles != null && Model.MediaFiles.Any())
                     {
                         <div class="media-grid">
@@ -494,41 +486,36 @@
                         </div>
                     }
 
-                    <!-- Post Actions -->
                     <div class="post-actions d-flex justify-content-between align-items-center mt-3">
                         <div class="d-flex align-items-center">
-                            <!-- Like Button -->
                             <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="PostID" value="@Model.PostID" />
-                                <button type="submit" class="btn btn-link text-muted me-3">
+                                <button type="submit" class="btn btn-link me-3 post-action">
                                     <i class='@(Model.HasLiked ? "bx bxs-heart text-danger" : "bx bx-heart")'></i>
                                     <span class="ms-1">@Model.LikesCount</span>
                                 </button>
                             </form>
                             
-                            <!-- Comment Toggle Button -->
-                            <button type="button" class="btn btn-link text-muted me-3" id="toggle-comments">
+                            <button type="button" class="btn btn-link me-3 post-action" id="toggle-comments">
                                 <i class='bx bx-message-square-dots'></i>
                                 <span class="ms-1">@Model.CommentsCount</span>
                             </button>
                         </div>
                         <div>
-                            <button type="button" class="btn btn-link text-muted">
+                            <button type="button" class="btn btn-link post-action">
                                 <i class='bx bx-share-alt'></i>
                                 <span class="ms-1">Share</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Comments Section -->
                     <div class="comments-section mt-4 pt-4 border-top" id="comments-container" style="display: none;">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5>Comments</h5>
                             <button type="button" class="btn-close" id="close-comments"></button>
                         </div>
                         
-                        <!-- Comment Form -->
                         @if (User.Identity.IsAuthenticated)
                         {
                             <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4">
@@ -541,7 +528,6 @@
                             </form>
                         }
                         
-                        <!-- Comments List -->
                         <div id="comments-list">
                             @if (ViewBag.Comments != null && ViewBag.Comments.Count > 0)
                             {
@@ -584,7 +570,6 @@
                         </div>
                     </div>
                     
-                    <!-- Like/Unlike Confirmation Toast -->
                     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
                         <div id="like-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
                             <div class="toast-header">
@@ -599,13 +584,10 @@
                     </div>
                 </div>
             </div>
-            @* Back to List Button *@
             <a asp-action="Index" class="btn btn-secondary mt-3">
                 <i class='bx bx-arrow-back me-1'></i>Back to List
             </a>
         </div>
-
-
     </div>
 </div>
 
@@ -625,18 +607,15 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Toggle comments section
             const toggleCommentsBtn = document.getElementById('toggle-comments');
             const closeCommentsBtn = document.getElementById('close-comments');
             const commentsContainer = document.getElementById('comments-container');
             
-            // Initialize toasts
             const toastElList = [].slice.call(document.querySelectorAll('.toast'));
             const toastList = toastElList.map(function(toastEl) {
                 return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
             });
             
-            // Show success message after form submission if there's a success message in TempData
             const successMessage = '@TempData["SuccessMessage"]';
             if (successMessage) {
                 const toastBody = document.querySelector('.toast-body');
@@ -646,7 +625,6 @@
                 }
             }
             
-            // Show error message if there's an error in TempData
             const errorMessage = '@TempData["ErrorMessage"]';
             if (errorMessage) {
                 const toastBody = document.querySelector('.toast-body');
@@ -657,13 +635,11 @@
                 }
             }
             
-            // Toggle comments section
             if (toggleCommentsBtn && closeCommentsBtn && commentsContainer) {
                 toggleCommentsBtn.addEventListener('click', function() {
                     const isHidden = commentsContainer.style.display === 'none' || !commentsContainer.style.display;
                     commentsContainer.style.display = isHidden ? 'block' : 'none';
                     
-                    // Toggle icon based on visibility
                     const icon = this.querySelector('i');
                     if (isHidden) {
                         icon.classList.remove('bx-message-square-dots');
@@ -676,22 +652,18 @@
                 
                 closeCommentsBtn.addEventListener('click', function() {
                     commentsContainer.style.display = 'none';
-                    // Reset the icon when closing
                     const icon = toggleCommentsBtn.querySelector('i');
                     icon.classList.remove('bxs-message-square-dots');
                     icon.classList.add('bx-message-square-dots');
                 });
                 
-                // Initialize comments as hidden
                 commentsContainer.style.display = 'none';
             }
             
-            // Auto-hide toasts after delay
             const hideToast = () => {
                 toastList.forEach(toast => toast.hide());
             };
             
-            // Hide toasts after 5 seconds
             setTimeout(hideToast, 5000);
         });
     </script>
