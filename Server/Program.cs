@@ -1,4 +1,4 @@
-﻿using Google.Apis.Auth;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,16 +8,12 @@ using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Interfaces.Admin;
+using Server.Models;
 using Server.Repositories;
 using Server.Repositories.Admin;
 using Server.Services;
 using System.Text;
 using System.Security.Claims;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.SignalR;
-using Serilog;
-using Server.Hubs;
-using Server.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -82,13 +78,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddScoped<IVideoRepository, VideoRepository>();
 
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-builder.Services.Configure<CloundinarySettingsDTO>(builder.Configuration.GetSection("CloudinarySettings"));
-
-// Add Repositories
+// Add Repositories and Services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();  // Updated name
+builder.Services.AddScoped<ISocialService, SocialService>();
 
 // Add Distributed Memory Cache for session state
 builder.Services.AddDistributedMemoryCache();
@@ -117,7 +111,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
-            NameClaimType = ClaimTypes.NameIdentifier, // Changed to NameIdentifier
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = ClaimTypes.NameIdentifier,
             RoleClaimType = ClaimTypes.Role
         };
         
@@ -125,15 +120,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnTokenValidated = context =>
             {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 var userId = context.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
                 {
+                    logger.LogError("UserID claim is missing from token");
                     context.Fail("UserID claim is missing from token");
                 }
+                else
+                {
+                    logger.LogInformation($"Token validated successfully for user {userId}");
+                }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError($"Authentication failed: {context.Exception.Message}");
                 return Task.CompletedTask;
             },
             OnMessageReceived = context => 
             {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation($"Received token: {context.Token?.Substring(0, Math.Min(20, context.Token?.Length ?? 0))}...");
                 return Task.CompletedTask;
             }
         };
@@ -154,10 +163,14 @@ builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
-builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+
+// Add Cloudinary Service
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Admin Repositories
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
@@ -181,20 +194,6 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
     logging.SetMinimumLevel(LogLevel.Information);
 });
-builder.Services.AddControllers().AddJsonOptions(o =>
-{
-    o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    o.JsonSerializerOptions.WriteIndented = true;
-});
-builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
-
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/messages.log", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
-builder.Services.AddScoped<IMessageService, MessageService>();
-builder.Host.UseSerilog(); 
-builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -224,5 +223,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHub<ChatHub>("/chathub");
 app.Run();

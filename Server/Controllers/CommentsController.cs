@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
@@ -9,91 +7,150 @@ using System.Security.Claims;
 
 namespace Server.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CommentsController : ControllerBase
 {
-    private readonly ICommentRepository _commentRepository;
-    private readonly INotificationRepository _notificationRepository;
-    private readonly DatabaseContext _context;
+    private readonly IPostRepository _postRepository;
+    private readonly ILogger<CommentsController> _logger;
 
-    public CommentsController(ICommentRepository commentRepository, INotificationRepository notificationRepository, DatabaseContext context)
+    public CommentsController(
+        IPostRepository postRepository,
+        ILogger<CommentsController> logger)
     {
-        _commentRepository = commentRepository;
-        _notificationRepository = notificationRepository;
-        _context = context;
+        _postRepository = postRepository;
+        _logger = logger;
     }
 
-    [HttpGet("video/{videoId}")]
-    [AllowAnonymous] // Allow public access to view comments
-    public async Task<IActionResult> GetComments(Guid videoId)
+    // GET: api/comments/post/5
+    [HttpGet("post/{postId}")]
+    [AllowAnonymous]  // Allow anonymous access to read comments
+    public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsForPost(int postId)
     {
-        var comments = await _context.Comments
-            .Include(c => c.User)
-            .Where(c => c.VideoID == videoId)
-            .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new CommentDTO
+        try
+        {
+            if (!await _postRepository.PostExistsAsync(postId))
+                return NotFound("Post not found");
+
+            var comments = await _postRepository.GetCommentsForPostAsync(postId);
+            var commentDtos = comments.Select(c => new CommentDTO
             {
                 CommentID = c.CommentID,
-                VideoID = c.VideoID.ToString(),
+                PostID = c.PostID,
+                VideoID = c.VideoID,
                 UserID = c.UserID,
+                Username = c.User?.Username ?? "Unknown",
+                FullName = c.User?.FullName ?? "Unknown User",
+                ProfileImageURL = c.User?.ProfileImageURL,
                 Content = c.Content,
                 CreatedAt = c.CreatedAt
-            })
-            .ToListAsync();
+            });
 
-        return Ok(comments);
+            return Ok(commentDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting comments for post {PostId}", postId);
+            return StatusCode(500, "Internal server error while retrieving comments");
+        }
     }
 
+    // POST: api/comments
+    [Authorize]
     [HttpPost]
-    public async Task<IActionResult> PostComment([FromBody] CommentDTO dto)
+    public async Task<ActionResult<CommentDTO>> CreateComment([FromBody] CreateCommentDTO createCommentDto)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
+        try
         {
-            return Unauthorized("Invalid token");
-        }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        var userId = int.Parse(userIdClaim.Value);
-        var video = await _context.Videos.Include(v => v.User).FirstOrDefaultAsync(v => v.VideoID == Guid.Parse(dto.VideoID));
-        if (video == null)
-        {
-            return NotFound("Video not found");
-        }
+            if (createCommentDto.PostID == null && createCommentDto.VideoID == null)
+                return BadRequest("Either PostID or VideoID must be provided");
 
-        var comment = new Comment
-        {
-            VideoID = Guid.Parse(dto.VideoID),
-            UserID = userId,
-            Content = dto.Content,
-            CreatedAt = DateTime.UtcNow
-        };
+            if (createCommentDto.PostID != null && !await _postRepository.PostExistsAsync(createCommentDto.PostID.Value))
+                return NotFound("Post not found");
 
-        await _commentRepository.AddAsync(comment);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-        // Create notification for video owner
-        if (video.UserID != userId) // Don't notify if user comments on their own video
-        {
-            var triggerUser = await _context.Users.FindAsync(userId);
-            var notification = new Notification
+            var comment = new Comment
             {
-                UserID = video.UserID,
-                NotificationType = "Comment",
-                Message = $"{triggerUser.Username} commented on your video: {video.Title}",
-                VideoID = video.VideoID,
-                CommentID = comment.CommentID,
-                TriggeredByUserID = userId,
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
+                PostID = createCommentDto.PostID,
+                VideoID = createCommentDto.VideoID,
+                UserID = userId,
+                Content = createCommentDto.Content,
+                CreatedAt = DateTime.UtcNow
             };
-            await _notificationRepository.AddAsync(notification);
+
+            var createdComment = await _postRepository.AddCommentToPostAsync(comment);
+            
+            // Reload the comment with user data
+            var commentWithUser = await _postRepository.GetCommentByIdAsync(createdComment.CommentID);
+            
+            var commentDto = new CommentDTO
+            {
+                CommentID = commentWithUser.CommentID,
+                PostID = commentWithUser.PostID,
+                VideoID = commentWithUser.VideoID,
+                UserID = commentWithUser.UserID,
+                Username = commentWithUser.User?.Username ?? "Unknown",
+                FullName = commentWithUser.User?.FullName ?? "Unknown User",
+                ProfileImageURL = commentWithUser.User?.ProfileImageURL,
+                Content = commentWithUser.Content,
+                CreatedAt = commentWithUser.CreatedAt
+            };
+
+            return CreatedAtAction(
+                nameof(GetCommentsForPost),
+                new { postId = commentDto.PostID },
+                commentDto);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating comment");
+            return StatusCode(500, "Internal server error while creating comment");
+        }
+    }
 
-        dto.CommentID = comment.CommentID;
-        dto.UserID = comment.UserID;
-        dto.CreatedAt = comment.CreatedAt;
+    // DELETE: api/comments/5
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteComment(int id)
+    {
+        try
+        {
+            var comment = await _postRepository.GetCommentByIdAsync(id);
+            if (comment == null)
+                return NotFound("Comment not found");
 
-        return Ok(dto);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            
+            // Only the comment owner or post owner can delete the comment
+            if (comment.UserID != userId)
+            {
+                if (comment.PostID.HasValue)
+                {
+                    var post = await _postRepository.GetPostByIdAsync(comment.PostID.Value);
+                    if (post?.UserID != userId)
+                        return Forbid();
+                }
+                else
+                {
+                    // For video comments, only the comment owner can delete
+                    return Forbid();
+                }
+            }
+
+            var success = await _postRepository.DeleteCommentAsync(id, userId);
+            if (!success)
+                return NotFound("Comment not found or you don't have permission to delete it");
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting comment {CommentId}", id);
+            return StatusCode(500, "Internal server error while deleting comment");
+        }
     }
 }

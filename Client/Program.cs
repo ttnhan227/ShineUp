@@ -2,17 +2,9 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Serilog;
+using Client.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/messages.log", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
-
-builder.Host.UseSerilog();
 
 // Add secrets configuration
 builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
@@ -40,6 +32,10 @@ builder.Services.AddHttpClient("API", client =>
     }
     client.BaseAddress = new Uri(apiBaseUrl);
 });
+
+
+// Register IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthentication(options =>
 {

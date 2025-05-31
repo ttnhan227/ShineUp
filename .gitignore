@@ -402,3 +402,4 @@ FodyWeavers.xsd
 **/appsettings.secrets.json
 /argon-social-0.2
 /Server/Migrations
+qodana.yaml

@@ -1,5 +1,6 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 using Server.Interfaces;
 
 namespace Server.Services;
@@ -20,7 +21,6 @@ public class CloudinaryService : ICloudinaryService
 
         _cloudinary = new Cloudinary(account);
     }
-
 
     public async Task<ImageUploadResult> UploadImgAsync(IFormFile file)
     {
@@ -44,7 +44,7 @@ public class CloudinaryService : ICloudinaryService
         return result;
     }
 
-    public async Task<VideoUploadResult> UploadVidAsync(IFormFile file)
+    public async Task<VideoUploadResult> UploadVideoAsync(IFormFile file)
     {
         var result = new VideoUploadResult();
         if (file.Length > 0)
@@ -66,7 +66,7 @@ public class CloudinaryService : ICloudinaryService
         return result;
     }
 
-    public async Task<DeletionResult> DeleteAsync(string publicId)
+    public async Task<DeletionResult> DeleteMediaAsync(string publicId)
     {
         var deletionParams = new DeletionParams(publicId)
         {

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
@@ -9,19 +8,18 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class VideosController : ControllerBase
+public class CloudinaryController : ControllerBase
 {
     private readonly ICloudinaryService _cloudinary;
     private readonly DatabaseContext _db;
 
-    public VideosController(ICloudinaryService cloudinary, DatabaseContext db)
+    public CloudinaryController(ICloudinaryService cloudinary, DatabaseContext db)
     {
         _cloudinary = cloudinary;
         _db = db;
     }
 
-
-    [HttpPost("upload")]
+    [HttpPost("upload/video")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadVideo([FromForm] VideoUploadDTO dto)
     {
@@ -32,10 +30,11 @@ public class VideosController : ControllerBase
 
         var userId = GetCurrentUserId();
 
-        var uploadResult = await _cloudinary.UploadVidAsync(dto.VideoFile);
+        var uploadResult = await _cloudinary.UploadVideoAsync(dto.VideoFile);
 
         var video = new Video
         {
+            VideoID = uploadResult.PublicId,
             UserID = userId,
             CategoryID = dto.CategoryID,
             Title = dto.Title,
@@ -64,33 +63,66 @@ public class VideosController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("upload/image")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadImage([FromForm] ImageUploadDTO dto)
+    {
+        if (dto.ImageFile == null || dto.ImageFile.Length == 0)
+        {
+            return BadRequest("Image file is required.");
+        }
 
-    [HttpPost("delete" + "/{publicId}")]
-    public async Task<IActionResult> Delete(string publicId)
+        var userId = GetCurrentUserId();
+
+        var uploadResult = await _cloudinary.UploadImgAsync(dto.ImageFile);
+
+        var image = new Image
+        {
+            ImageID = uploadResult.PublicId,
+            UserID = userId,
+            CategoryID = dto.CategoryID,
+            Title = dto.Title,
+            Description = dto.Description,
+            ImageURL = uploadResult.SecureUrl.ToString(),
+            CloudPublicId = uploadResult.PublicId,
+            PrivacyID = dto.PrivacyID,
+            UploadDate = DateTime.UtcNow
+        };
+
+        _db.Images.Add(image);
+        await _db.SaveChangesAsync();
+
+        var result = new ImageDTO
+        {
+            ImageID = image.ImageID,
+            UserID = image.UserID,
+            CategoryID = image.CategoryID,
+            Title = image.Title,
+            Description = image.Description,
+            ImageURL = image.ImageURL,
+            PrivacyID = image.PrivacyID,
+            UploadDate = image.UploadDate
+        };
+
+        return Ok(result);
+    }
+
+    [HttpDelete("{publicId}")]
+    public async Task<IActionResult> DeleteMedia(string publicId)
     {
         if (string.IsNullOrEmpty(publicId))
         {
             return BadRequest("Public ID is required");
         }
-        
-        //Find video in database
-        var video = await _db.Videos.FirstOrDefaultAsync(v => v.CloudPublicId == publicId);
-        if (video == null)
-        {
-            return NotFound("Video not found");
-        }
 
-        var deletionResult = await _cloudinary.DeleteAsync(publicId);
+        var deletionResult = await _cloudinary.DeleteMediaAsync(publicId);
         if (deletionResult.Error != null)
         {
             return BadRequest(deletionResult.Error.Message);
-        } 
-        _db.Videos.Remove(video);
-        await _db.SaveChangesAsync();
+        }
 
         return Ok(new { Message = "File deleted successfully" });
     }
-
 
     private int GetCurrentUserId()
     {

@@ -14,8 +14,8 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Http;
 
 namespace Client.Controllers
-{
-    [Authorize]
+{    [Authorize]
+    [Route("[controller]")]
     public class UserProfileController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -28,11 +28,10 @@ namespace Client.Controllers
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
-            _httpClientFactory = httpClientFactory;
-        }
+            _httpClientFactory = httpClientFactory;        }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -40,36 +39,49 @@ namespace Client.Controllers
                 return Unauthorized("User ID not found in token.");
             }
 
-            var token = User.FindFirst("JWT")?.Value;
-            if (string.IsNullOrEmpty(token))
+            if (int.TryParse(userId, out int id))
             {
-                return Unauthorized("JWT token not found.");
+                return RedirectToAction(nameof(Index), new { id });
             }
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await _httpClient.GetAsync($"api/UserProfile/{userId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation($"User profile response: {content}");
-                var userProfile = JsonConvert.DeserializeObject<UserViewModel>(content);
-                _logger.LogInformation($"Deserialized IsGoogleAccount: {userProfile.IsGoogleAccount}");
-                return View(userProfile);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return NotFound("User profile not found.");
-            }
-            else
-            {
-                ModelState.AddModelError("", "Error fetching user profile.");
-                return View(new UserViewModel());
-            }
+            
+            return BadRequest("Invalid user ID format.");
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Index(int id)
+        {
+            var token = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            var client = _httpClientFactory.CreateClient("API");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // Get user profile
+            var userResponse = await client.GetAsync($"api/UserProfile/{id}");
+            if (!userResponse.IsSuccessStatusCode)
+                return NotFound();
+            
+            var userJson = await userResponse.Content.ReadAsStringAsync();
+            var user = JsonConvert.DeserializeObject<UserViewModel>(userJson);
+            
+            // Get user posts
+            var postsResponse = await client.GetAsync($"api/UserProfile/{id}/posts");
+            List<PostDetailsViewModel> posts = new List<PostDetailsViewModel>();
+            if (postsResponse.IsSuccessStatusCode)
+            {
+                var postsJson = await postsResponse.Content.ReadAsStringAsync();
+                posts = System.Text.Json.JsonSerializer.Deserialize<List<PostDetailsViewModel>>(postsJson, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new List<PostDetailsViewModel>();
+            }
+
+            user.Posts = posts;
+            return View(user);
+        }
+
+        [HttpGet("edit")]
         public async Task<IActionResult> Edit()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -115,7 +127,7 @@ namespace Client.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("edit")]
         public async Task<IActionResult> Edit(ProfileViewModel model)
         {
             if (!ModelState.IsValid)
@@ -186,13 +198,13 @@ namespace Client.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("verify-password")]
         public IActionResult VerifyCurrentPassword()
         {
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("verify-password")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyCurrentPassword(VerifyCurrentPasswordViewModel model)
         {
@@ -246,7 +258,7 @@ namespace Client.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("change-password")]
         public IActionResult ChangePassword()
         {
             if (string.IsNullOrEmpty(HttpContext.Session.GetString("PasswordVerified")))
@@ -257,7 +269,7 @@ namespace Client.Controllers
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("change-password")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {

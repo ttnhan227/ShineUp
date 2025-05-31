@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http; // Added for IFormFile
 using Server.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace Server.DTOs
 {
@@ -14,6 +15,15 @@ namespace Server.DTOs
         public string? TalentArea { get; set; }
         public IFormFile? ProfileImageFile { get; set; } // Added for image upload
         public ProfilePrivacy? ProfilePrivacy { get; set; }
+    }
+    public class ChangePasswordDTO
+    {
+        [Required]
+        public string CurrentPassword { get; set; }
+
+        [Required]
+        [StringLength(100, MinimumLength = 6)]
+        public string NewPassword { get; set; }
     }
 
 }

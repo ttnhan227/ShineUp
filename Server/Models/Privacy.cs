@@ -8,6 +8,8 @@ public class Privacy
 
     public string Name { get; set; }
 
-    // Navigation property
+    // Navigation properties
     public ICollection<Video> Videos { get; set; }
+    public ICollection<Post> Posts { get; set; }
+    public ICollection<Image> Images { get; set; }
 }
