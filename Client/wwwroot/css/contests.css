@@ -1,0 +1,18 @@
+﻿.card {
+    border: 1px solid #eff3f4;
+    border-radius: 8px;
+    transition: box-shadow 0.2s ease;
+}
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.card-title {
+    color: #0f1419;
+    font-weight: 700;
+}
+.card-text {
+    color: #657786;
+}
+video {
+    border-radius: 8px;
+}

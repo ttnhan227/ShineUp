@@ -1,0 +1,42 @@
+﻿@model ContestViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var entries = ViewBag.Entries as List<ContestEntryViewModel>;
+}
+
+<h1>@Model.Title</h1>
+<p>@Model.Description</p>
+<p><strong>Start:</strong> @Model.StartDate.ToString("MMM dd, yyyy")</p>
+<p><strong>End:</strong> @Model.EndDate.ToString("MMM dd, yyyy")</p>
+<p><strong>Status:</strong> @(Model.IsActive ? "Active" : "Inactive")</p>
+
+@if (Model.IsActive && User.Identity.IsAuthenticated)
+{
+    <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-success">Submit Entry</a>
+}
+
+<h2>Entries</h2>
+@if (entries.Any())
+{
+    <div class="row">
+        @foreach (var entry in entries)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@entry.VideoTitle</h5>
+                        <p><strong>By:</strong> @entry.UserName</p>
+                        <p><strong>Submitted:</strong> @entry.SubmissionDate.ToString("MMM dd, yyyy")</p>
+                        <video controls preload="metadata" class="w-100">
+                            <source src="@entry.VideoURL" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No entries yet.</p>
+}

@@ -1,0 +1,23 @@
+﻿@model List<ContestViewModel>
+    @{
+    ViewData["Title"] = "Contests";
+}
+
+<h1>Contests</h1>
+    <div class="row">
+    @foreach (var contest in Model)
+{
+    <div class="col-md-4 mb-4">
+        <div class="card">
+        <div class="card-body">
+        <h5 class="card-title">@contest.Title</h5>
+        <p class="card-text">@contest.Description</p>
+        <p><strong>Start:</strong> @contest.StartDate.ToString("MMM dd, yyyy")</p>
+        <p><strong>End:</strong> @contest.EndDate.ToString("MMM dd, yyyy")</p>
+        <p><strong>Status:</strong> @(contest.IsActive ? "Active" : "Inactive")</p>
+        <a asp-action="Details" asp-route-id="@contest.ContestID" class="btn btn-primary">View Details</a>
+        </div>
+        </div>
+        </div>
+}
+</div>
