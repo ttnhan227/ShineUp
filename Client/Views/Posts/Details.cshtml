@@ -4,7 +4,7 @@
 @model Client.Models.PostDetailsViewModel
 
 @{
-ViewData["Title"] = Model.Title;
+    ViewData["Title"] = Model.Title;
 }
 
 <div class="main-content-container">
@@ -18,13 +18,13 @@ ViewData["Title"] = Model.Title;
                             <div class="post-avatar">
                                 @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                                 {
-                                <img src="@Model.ProfileImageURL" alt="@Model.FullName">
+                                    <img src="@Model.ProfileImageURL" alt="@Model.FullName">
                                 }
                                 else
                                 {
-                                <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                    <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
-                                </div>
+                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
+                                    </div>
                                 }
                             </div>
                             <div class="post-meta ms-3">
@@ -32,7 +32,7 @@ ViewData["Title"] = Model.Title;
                                     @Model.FullName
                                     @if (!string.IsNullOrEmpty(Model.CategoryName))
                                     {
-                                    <span class="talent-badge">@Model.CategoryName</span>
+                                        <span class="talent-badge">@Model.CategoryName</span>
                                     }
                                 </div>
                                 <div class="post-info">
@@ -44,20 +44,20 @@ ViewData["Title"] = Model.Title;
                         </a>
                         @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
                         {
-                        <div class="dropdown ms-auto">
-                            <button class="btn btn-light btn-sm rounded-circle" type="button" id="postActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class='bx bx-dots-horizontal-rounded'></i>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="postActionsDropdown">
-                                <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.PostID"><i class='bx bx-edit me-2'></i>Edit</a></li>
-                                <li>
-                                    <form asp-action="Delete" asp-route-id="@Model.PostID" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item text-danger"><i class='bx bx-trash me-2'></i>Delete</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                            <div class="dropdown ms-auto">
+                                <button class="btn btn-light btn-sm rounded-circle" type="button" id="postActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class='bx bx-dots-horizontal-rounded'></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="postActionsDropdown">
+                                    <li><a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.PostID"><i class='bx bx-edit me-2'></i>Edit</a></li>
+                                    <li>
+                                        <form asp-action="Delete" asp-route-id="@Model.PostID" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger"><i class='bx bx-trash me-2'></i>Delete</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
                         }
                     </div>
 
@@ -67,54 +67,54 @@ ViewData["Title"] = Model.Title;
 
                         @if (Model.MediaFiles != null && Model.MediaFiles.Any())
                         {
-                        <div class="media-grid">
-                            @if (Model.MediaFiles.Count == 1)
-                            {
-                            var media = Model.MediaFiles[0];
-                            <div class="media-item">
-                                @if (media.Type == "image")
+                            <div class="media-grid">
+                                @if (Model.MediaFiles.Count == 1)
                                 {
-                                <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
-                                }
-                                else if (media.Type == "video")
-                                {
-                                <video controls preload="metadata">
-                                    <source src="@media.Url" type="video/mp4">
-                                </video>
-                                }
-                            </div>
-                            }
-                            else
-                            {
-                            <div class="media-grid-container @(GetGridClass(Model.MediaFiles.Count))">
-                                @foreach (var media in Model.MediaFiles.Take(4))
-                                {
-                                <div class="media-item">
-                                    @if (media.Type == "image")
-                                    {
-                                    <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
-                                    }
-                                    else if (media.Type == "video")
-                                    {
-                                    <video controls preload="metadata">
-                                        <source src="@media.Url" type="video/mp4">
-                                    </video>
-                                    }
-                                    @if (Model.MediaFiles.Count > 4 && media == Model.MediaFiles.Skip(3).First())
-                                    {
-                                    <div class="media-overlay">
-                                        +@(Model.MediaFiles.Count - 4)
+                                    var media = Model.MediaFiles[0];
+                                    <div class="media-item">
+                                        @if (media.Type == "image")
+                                        {
+                                            <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
+                                        }
+                                        else if (media.Type == "video")
+                                        {
+                                            <video controls preload="metadata">
+                                                <source src="@media.Url" type="video/mp4">
+                                            </video>
+                                        }
                                     </div>
-                                    }
-                                </div>
+                                }
+                                else
+                                {
+                                    <div class="media-grid-container @(GetGridClass(Model.MediaFiles.Count))">
+                                        @foreach (var media in Model.MediaFiles.Take(4))
+                                        {
+                                            <div class="media-item">
+                                                @if (media.Type == "image")
+                                                {
+                                                    <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                }
+                                                else if (media.Type == "video")
+                                                {
+                                                    <video controls preload="metadata">
+                                                        <source src="@media.Url" type="video/mp4">
+                                                    </video>
+                                                }
+                                                @if (Model.MediaFiles.Count > 4 && media == Model.MediaFiles.Skip(3).First())
+                                                {
+                                                    <div class="media-overlay">
+                                                        +@(Model.MediaFiles.Count - 4)
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
                                 }
                             </div>
-                            }
-                        </div>
                         }
 
                         <div class="post-actions">
-                            <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline">
+                            <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline toggle-like-form" data-post-id="@Model.PostID">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="PostID" value="@Model.PostID" />
                                 <button type="submit" class="post-action">
@@ -146,54 +146,54 @@ ViewData["Title"] = Model.Title;
 
                             @if (User.Identity.IsAuthenticated)
                             {
-                            <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="PostID" value="@Model.PostID" />
-                                <div class="input-group">
-                                    <input type="text" name="Content" class="form-control" placeholder="Write a comment..." required>
-                                    <button type="submit" class="btn btn-primary">Post</button>
-                                </div>
-                            </form>
+                                <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="PostID" value="@Model.PostID" />
+                                    <div class="input-group">
+                                        <input type="text" name="Content" class="form-control" placeholder="Write a comment..." required>
+                                        <button type="submit" class="btn btn-primary">Post</button>
+                                    </div>
+                                </form>
                             }
 
                             <div id="comments-list">
                                 @if (ViewBag.Comments != null && ViewBag.Comments.Count > 0)
                                 {
-                                foreach (var comment in ViewBag.Comments)
-                                {
-                                <div class="comment-item mb-3 d-flex">
-                                    <div class="flex-shrink-0 me-2">
-                                        <img src="@(string.IsNullOrEmpty(comment.ProfileImageURL) ? "/images/default-avatar.png" : comment.ProfileImageURL)"
-                                             class="rounded-circle" width="40" height="40" alt="@comment.Username" />
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="comment-header d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>@comment.Username</strong>
-                                                <small class="text-muted ms-2">@comment.TimeAgo</small>
+                                    foreach (var comment in ViewBag.Comments)
+                                    {
+                                        <div class="comment-item mb-3 d-flex">
+                                            <div class="flex-shrink-0 me-2">
+                                                <img src="@(string.IsNullOrEmpty(comment.ProfileImageURL) ? "/images/default-avatar.png" : comment.ProfileImageURL)"
+                                                     class="rounded-circle" width="40" height="40" alt="@comment.Username" />
                                             </div>
-                                            @if (User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier)?.Value == comment.UserID.ToString())
-                                            {
-                                            <form asp-controller="Social" asp-action="DeleteComment" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="commentId" value="@comment.CommentID" />
-                                                <input type="hidden" name="postId" value="@Model.PostID" />
-                                                <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
-                                                    <i class='bx bx-trash'></i>
-                                                </button>
-                                            </form>
-                                            }
+                                            <div class="flex-grow-1">
+                                                <div class="comment-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>@comment.Username</strong>
+                                                        <small class="text-muted ms-2">@comment.TimeAgo</small>
+                                                    </div>
+                                                    @if (User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier)?.Value == comment.UserID.ToString())
+                                                    {
+                                                        <form asp-controller="Social" asp-action="DeleteComment" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="commentId" value="@comment.CommentID" />
+                                                            <input type="hidden" name="postId" value="@Model.PostID" />
+                                                            <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                                <i class='bx bx-trash'></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                                <div class="comment-content">
+                                                    @comment.Content
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="comment-content">
-                                            @comment.Content
-                                        </div>
-                                    </div>
-                                </div>
-                                }
+                                    }
                                 }
                                 else
                                 {
-                                <p class="text-muted">No comments yet. Be the first to comment!</p>
+                                    <p class="text-muted">No comments yet. Be the first to comment!</p>
                                 }
                             </div>
                         </div>
@@ -202,18 +202,6 @@ ViewData["Title"] = Model.Title;
                 <a asp-action="Index" class="btn btn-secondary mt-3">
                     <i class='bx bx-arrow-back me-1'></i>Back to List
                 </a>
-            </div>
-            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                <div id="like-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header">
-                        <i class='bx bx-check-circle text-success me-2'></i>
-                        <strong class="me-auto">Success</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                    <div class="toast-body">
-                        Post liked!
-                    </div>
-                </div>
             </div>
             <!-- Image Popup -->
             <div class="image-popup" id="imagePopup">
@@ -237,10 +225,10 @@ ViewData["Title"] = Model.Title;
                         </a>
                         @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                         {
-                        <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
-                           class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
-                            <i class='bx bx-category'></i> @category.Text
-                        </a>
+                            <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
+                               class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
+                                <i class='bx bx-category'></i> @category.Text
+                            </a>
                         }
                     </div>
                 </div>
@@ -272,105 +260,104 @@ ViewData["Title"] = Model.Title;
 </div>
 
 @functions {
-private string GetGridClass(int mediaCount)
-{
-return (mediaCount > 4 ? 4 : mediaCount) switch
-{
-2 => "grid-2",
-3 => "grid-3",
-4 => "grid-4",
-_ => "grid-4"
-};
-}
+    private string GetGridClass(int mediaCount)
+    {
+        return (mediaCount > 4 ? 4 : mediaCount) switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            4 => "grid-4",
+            _ => "grid-4"
+        };
+    }
 }
 
 @section Scripts {
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleCommentsBtn = document.getElementById('toggle-comments');
-        const closeCommentsBtn = document.getElementById('close-comments');
-        const commentsContainer = document.getElementById('comments-container');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleCommentsBtn = document.getElementById('toggle-comments');
+            const closeCommentsBtn = document.getElementById('close-comments');
+            const commentsContainer = document.getElementById('comments-container');
 
-        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        const toastList = toastElList.map(function(toastEl) {
-            return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
-        });
+            if (toggleCommentsBtn && closeCommentsBtn && commentsContainer) {
+                toggleCommentsBtn.addEventListener('click', function() {
+                    const isHidden = commentsContainer.style.display === 'none' || !commentsContainer.style.display;
+                    commentsContainer.style.display = isHidden ? 'block' : 'none';
 
-        const successMessage = '@TempData["SuccessMessage"]';
-        if (successMessage) {
-            const toastBody = document.querySelector('.toast-body');
-            if (toastBody) {
-                toastBody.textContent = successMessage;
-                toastList[0].show();
-            }
-        }
+                    const icon = this.querySelector('i');
+                    if (isHidden) {
+                        icon.classList.remove('bx-comment');
+                        icon.classList.add('bxs-comment');
+                    } else {
+                        icon.classList.remove('bxs-comment');
+                        icon.classList.add('bx-comment');
+                    }
+                });
 
-        const errorMessage = '@TempData["ErrorMessage"]';
-        if (errorMessage) {
-            const toastBody = document.querySelector('.toast-body');
-            if (toastBody) {
-                toastBody.textContent = errorMessage;
-                toastBody.classList.add('text-danger');
-                toastList[0].show();
-            }
-        }
-
-        if (toggleCommentsBtn && closeCommentsBtn && commentsContainer) {
-            toggleCommentsBtn.addEventListener('click', function() {
-                const isHidden = commentsContainer.style.display === 'none' || !commentsContainer.style.display;
-                commentsContainer.style.display = isHidden ? 'block' : 'none';
-
-                const icon = this.querySelector('i');
-                if (isHidden) {
-                    icon.classList.remove('bx-comment');
-                    icon.classList.add('bxs-comment');
-                } else {
+                closeCommentsBtn.addEventListener('click', function() {
+                    commentsContainer.style.display = 'none';
+                    const icon = toggleCommentsBtn.querySelector('i');
                     icon.classList.remove('bxs-comment');
                     icon.classList.add('bx-comment');
-                }
-            });
+                });
 
-            closeCommentsBtn.addEventListener('click', function() {
                 commentsContainer.style.display = 'none';
-                const icon = toggleCommentsBtn.querySelector('i');
-                icon.classList.remove('bxs-comment');
-                icon.classList.add('bx-comment');
-            });
+            }
 
-            commentsContainer.style.display = 'none';
-        }
-
-        const hideToast = () => {
-            toastList.forEach(toast => toast.hide());
-        };
-
-        setTimeout(hideToast, 5000);
-
-        // Image popup functionality
-        const images = document.querySelectorAll('.clickable-image');
-        const popup = document.getElementById('imagePopup');
-        const popupImage = document.getElementById('popupImage');
-        const closeBtn = document.getElementById('closePopup');
-
-        images.forEach(image => {
-            image.addEventListener('click', function (e) {
+            // Handle like toggle
+            $('.toggle-like-form').on('submit', function(e) {
                 e.preventDefault();
-                popupImage.src = this.dataset.fullsize;
-                popup.style.display = 'flex';
+                var $form = $(this);
+                var postId = $form.data('post-id');
+                var $button = $form.find('button');
+                var $icon = $button.find('i');
+                var $count = $button.find('span');
+
+                $.ajax({
+                    url: '@Url.Action("ToggleLike", "Social")',
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        // Toggle heart icon
+                        if ($icon.hasClass('bx-heart')) {
+                            $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
+                            $count.text(parseInt($count.text()) + 1);
+                        } else {
+                            $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
+                            $count.text(parseInt($count.text()) - 1);
+                        }
+                    }
+                });
             });
-        });
 
-        closeBtn.addEventListener('click', function () {
-            popup.style.display = 'none';
-            popupImage.src = '';
-        });
+            // Image popup functionality
+            const images = document.querySelectorAll('.clickable-image');
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            const closeBtn = document.getElementById('closePopup');
 
-        popup.addEventListener('click', function (e) {
-            if (e.target === popup) {
+            images.forEach(image => {
+                image.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    popupImage.src = this.dataset.fullsize;
+                    popup.style.display = 'flex';
+                });
+            });
+
+            closeBtn.addEventListener('click', function() {
                 popup.style.display = 'none';
                 popupImage.src = '';
-            }
+            });
+
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popupImage.src = '';
+                }
+            });
         });
-    });
-</script>
+    </script>
 }

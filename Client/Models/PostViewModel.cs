@@ -41,6 +41,8 @@ namespace Client.Models
 
         [Display(Name = "Comments")]
         public int CommentsCount { get; set; }
+        
+        public bool HasLiked { get; set; }
 
         public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
     }

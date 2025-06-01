@@ -159,33 +159,61 @@ ViewData["Title"] = "Talent Showcase";
                                 }
                             </div>
                             }
-
-                            <div class="post-actions">
-                                <div class="post-action">
-                                    <i class='bx bx-comment'></i>
-                                    <span>@item.CommentsCount</span>
-                                </div>
-                                <div class="post-action">
-                                    <i class='bx bx-repost'></i>
-                                    <span>Share</span>
-                                </div>
-                                <div class="post-action">
-                                    <i class='bx bx-heart'></i>
-                                    <span>@item.LikesCount</span>
-                                </div>
-                                <div class="post-action">
-                                    <i class='bx bx-bar-chart'></i>
-                                    <span>Stats</span>
-                                </div>
-                            </div>
                         </div>
                     </a>
+                    <div class="post-actions">
+                        <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline toggle-like-form" data-post-id="@item.PostID">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="PostID" value="@item.PostID" />
+                            <button type="submit" class="post-action">
+                                <i class='@(item.HasLiked ? "bx bxs-heart text-danger" : "bx bx-heart")'></i>
+                                <span>@item.LikesCount</span>
+                            </button>
+                        </form>
+                        <div class="post-action">
+                            <button type="button" class="toggle-comments" data-post-id="@item.PostID">
+                                <i class='bx bx-comment'></i>
+                                <span>@item.CommentsCount</span>
+                            </button>
+                        </div>
+                        <div class="post-action">
+                            <i class='bx bx-repost'></i>
+                            <span>Share</span>
+                        </div>
+                        <div class="post-action">
+                            <i class='bx bx-bar-chart'></i>
+                            <span>Stats</span>
+                        </div>
+                    </div>
+
+                    <div class="comments-section mt-4 pt-4 border-top" id="comments-container-@item.PostID" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Comments</h5>
+                            <button type="button" class="btn-close close-comments" data-post-id="@item.PostID"></button>
+                        </div>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                        <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4 add-comment-form" data-post-id="@item.PostID">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="PostID" value="@item.PostID" />
+                            <div class="input-group">
+                                <input type="text" name="Content" class="form-control" placeholder="Write a comment..." required>
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </div>
+                        </form>
+                        }
+
+                        <div id="comments-list-@item.PostID">
+                            <!-- Comments will be loaded via AJAX -->
+                        </div>
+                    </div>
                 </div>
                 }
             </div>
             <!-- Image Popup -->
             <div class="image-popup" id="imagePopup">
-                <span class="close-btn" id="closePopup">&times;</span>
+                <span class="close-btn" id="closePopup">×</span>
                 <img id="popupImage" src="" alt="Full-size image">
             </div>
         </div>
@@ -255,93 +283,312 @@ _ => "grid-4"
 @section Scripts {
 @await Html.PartialAsync("_ValidationScriptsPartial")
 <script>
-    // Tooltip initialization
     $(function () {
         $('[data-bs-toggle="tooltip"]').tooltip();
-    });
 
-    // Preview selected images
-    document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
-        const previewContainer = document.createElement('div');
-        previewContainer.className = 'row g-2';
+        // Handle like toggle
+        $('.toggle-like-form').on('submit', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var postId = $form.data('post-id');
+            var $button = $form.find('button');
+            var $icon = $button.find('i');
+            var $count = $button.find('span');
 
-        Array.from(e.target.files).forEach(file => {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-3';
-                    col.innerHTML = `
-                            <div class="card">
-                                <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
-                            </div>
-                        `;
-                    previewContainer.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        const existingPreview = document.querySelector('#mediaPreview');
-        if (existingPreview) {
-            existingPreview.innerHTML = '';
-            existingPreview.appendChild(previewContainer);
-        }
-    });
-
-    // Preview selected videos
-    document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
-        const previewContainer = document.createElement('div');
-        previewContainer.className = 'row g-2';
-
-        Array.from(e.target.files).forEach(file => {
-            if (file.type.startsWith('video/')) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-6';
-                    col.innerHTML = `
-                            <div class="card">
-                                <video src="${e.target.result}" class="card-img-top" style="height: 200px; object-fit: cover;" controls></video>
-                            </div>
-                        `;
-                    previewContainer.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        const existingPreview = document.querySelector('#mediaPreview');
-        if (existingPreview) {
-            existingPreview.innerHTML = '';
-            existingPreview.appendChild(previewContainer);
-        }
-    });
-
-    // Image popup functionality
-    document.addEventListener('DOMContentLoaded', function () {
-        const images = document.querySelectorAll('.clickable-image');
-        const popup = document.getElementById('imagePopup');
-        const popupImage = document.getElementById('popupImage');
-        const closeBtn = document.getElementById('closePopup');
-
-        images.forEach(image => {
-            image.addEventListener('click', function (e) {
-                e.preventDefault(); // Prevent default link behavior
-                popupImage.src = this.dataset.fullsize;
-                popup.style.display = 'flex';
+            $.ajax({
+                url: '@Url.Action("ToggleLike", "Social")',
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    // Toggle heart icon
+                    if ($icon.hasClass('bx-heart')) {
+                        $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
+                        $count.text(parseInt($count.text()) + 1);
+                    } else {
+                        $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
+                        $count.text(parseInt($count.text()) - 1);
+                    }
+                }
             });
         });
 
-        closeBtn.addEventListener('click', function () {
-            popup.style.display = 'none';
-            popupImage.src = '';
+        // Toggle comments section
+        $('.toggle-comments').on('click', function () {
+            var postId = $(this).data('post-id');
+            var $container = $('#comments-container-' + postId);
+            var $icon = $(this).find('i');
+            var isHidden = $container.is(':hidden');
+
+            $container.toggle();
+            $icon.toggleClass('bx-comment bxs-comment');
+
+            if (isHidden) {
+                // Load comments via AJAX
+                $.ajax({
+                    url: '@Url.Action("GetComments", "Social")',
+                    type: 'GET',
+                    data: { postId: postId },
+                    success: function (comments) {
+                        var $commentsList = $('#comments-list-' + postId);
+                        $commentsList.empty();
+                        if (comments.length > 0) {
+                            comments.forEach(function (comment) {
+                                var commentHtml = `
+                                        <div class="comment-item mb-3 d-flex">
+                                            <div class="flex-shrink-0 me-2">
+                                                <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="comment-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>${comment.username}</strong>
+                                                        <small class="text-muted ms-2">${comment.timeAgo}</small>
+                                                    </div>
+                                                    ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
+                                                        <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
+                                                            <input type="hidden" name="commentId" value="${comment.commentID}" />
+                                                            <input type="hidden" name="postId" value="${postId}" />
+                                                            <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                                <i class='bx bx-trash'></i>
+                                                            </button>
+                                                        </form>
+                                                    ` : ''}
+                                                </div>
+                                                <div class="comment-content">${comment.content}</div>
+                                            </div>
+                                        </div>`;
+                                $commentsList.append(commentHtml);
+                            });
+                        } else {
+                            $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                        }
+                    }
+                });
+            }
         });
 
-        popup.addEventListener('click', function (e) {
-            if (e.target === popup) {
+        // Close comments section
+        $('.close-comments').on('click', function () {
+            var postId = $(this).data('post-id');
+            $('#comments-container-' + postId).hide();
+            var $icon = $('.toggle-comments[data-post-id="' + postId + '"] i');
+            $icon.removeClass('bxs-comment').addClass('bx-comment');
+        });
+
+        // Handle comment submission
+        $('.add-comment-form').on('submit', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var postId = $form.data('post-id');
+            var $commentsList = $('#comments-list-' + postId);
+            var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
+
+            $.ajax({
+                url: '@Url.Action("AddComment", "Social")',
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    // Clear input
+                    $form.find('input[name="Content"]').val('');
+                    // Increment comment count
+                    $count.text(parseInt($count.text()) + 1);
+                    // Reload comments
+                    $.ajax({
+                        url: '@Url.Action("GetComments", "Social")',
+                        type: 'GET',
+                        data: { postId: postId },
+                        success: function (comments) {
+                            $commentsList.empty();
+                            if (comments.length > 0) {
+                                comments.forEach(function (comment) {
+                                    var commentHtml = `
+                                            <div class="comment-item mb-3 d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="comment-header d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>${comment.username}</strong>
+                                                            <small class="text-muted ms-2">${comment.timeAgo}</small>
+                                                        </div>
+                                                        ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
+                                                            <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
+                                                                <input type="hidden" name="commentId" value="${comment.commentID}" />
+                                                                <input type="hidden" name="postId" value="${postId}" />
+                                                                <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                                    <i class='bx bx-trash'></i>
+                                                                </button>
+                                                            </form>
+                                                        ` : ''}
+                                                    </div>
+                                                    <div class="comment-content">${comment.content}</div>
+                                                </div>
+                                            </div>`;
+                                    $commentsList.append(commentHtml);
+                                });
+                            } else {
+                                $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        // Handle comment deletion
+        $(document).on('submit', '.delete-comment-form', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var commentId = $form.data('comment-id');
+            var postId = $form.data('post-id');
+            var $commentsList = $('#comments-list-' + postId);
+            var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
+
+            // Confirmation is handled by the button's onclick, so proceed with AJAX if form is submitted
+            $.ajax({
+                url: '@Url.Action("DeleteComment", "Social")',
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    // Decrement comment count
+                    $count.text(parseInt($count.text()) - 1);
+                    // Reload comments
+                    $.ajax({
+                        url: '@Url.Action("GetComments", "Social")',
+                        type: 'GET',
+                        data: { postId: postId },
+                        success: function (comments) {
+                            $commentsList.empty();
+                            if (comments.length > 0) {
+                                comments.forEach(function (comment) {
+                                    var commentHtml = `
+                                            <div class="comment-item mb-3 d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="comment-header d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>${comment.username}</strong>
+                                                            <small class="text-muted ms-2">${comment.timeAgo}</small>
+                                                        </div>
+                                                        ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
+                                                            <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
+                                                                <input type="hidden" name="commentId" value="${comment.commentID}" />
+                                                                <input type="hidden" name="postId" value="${postId}" />
+                                                                <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                                    <i class='bx bx-trash'></i>
+                                                                </button>
+                                                            </form>
+                                                        ` : ''}
+                                                    </div>
+                                                    <div class="comment-content">${comment.content}</div>
+                                                </div>
+                                            </div>`;
+                                    $commentsList.append(commentHtml);
+                                });
+                            } else {
+                                $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        // Image popup functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const images = document.querySelectorAll('.clickable-image');
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            const closeBtn = document.getElementById('closePopup');
+
+            images.forEach(image => {
+                image.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    popupImage.src = this.dataset.fullsize;
+                    popup.style.display = 'flex';
+                });
+            });
+
+            closeBtn.addEventListener('click', function () {
                 popup.style.display = 'none';
                 popupImage.src = '';
+            });
+
+            popup.addEventListener('click', function (e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popupImage.src = '';
+                }
+            });
+        });
+
+        // Preview selected images
+        document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row g-2';
+
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3';
+                        col.innerHTML = `
+                                <div class="card">
+                                    <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                </div>
+                            `;
+                        previewContainer.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const existingPreview = document.querySelector('#mediaPreview');
+            if (existingPreview) {
+                existingPreview.innerHTML = '';
+                existingPreview.appendChild(previewContainer);
+            }
+        });
+
+        // Preview selected videos
+        document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row g-2';
+
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('video/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6';
+                        col.innerHTML = `
+                                <div class="card">
+                                    <video src="${e.target.result}" class="card-img-top" style="height: 200px; object-fit: cover;" controls></video>
+                                </div>
+                            `;
+                        previewContainer.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const existingPreview = document.querySelector('#mediaPreview');
+            if (existingPreview) {
+                existingPreview.innerHTML = '';
+                existingPreview.appendChild(previewContainer);
             }
         });
     });

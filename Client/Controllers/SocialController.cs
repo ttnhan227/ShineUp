@@ -181,5 +181,62 @@ namespace Client.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+        [HttpGet]
+public async Task<IActionResult> GetComments(int postId)
+{
+    try
+    {
+        var client = await GetAuthenticatedClient();
+        if (client == null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await client.GetAsync($"api/social/posts/{postId}/comments");
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to get comments for post {PostId}. Status code: {StatusCode}", postId, response.StatusCode);
+            return Json(new List<CommentViewModel>());
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var comments = JsonSerializer.Deserialize<List<CommentViewModel>>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        // Get profile images for commenters
+        if (comments != null && comments.Any())
+        {
+            var userIds = comments.Select(c => c.UserID).Distinct().ToList();
+            var usersResponse = await client.PostAsJsonAsync("api/UserProfile/profiles", new { UserIds = userIds });
+            if (usersResponse.IsSuccessStatusCode)
+            {
+                var usersContent = await usersResponse.Content.ReadAsStringAsync();
+                var users = JsonSerializer.Deserialize<List<UserViewModel>>(usersContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                var userDictionary = users?.ToDictionary(u => u.UserID, u => u.ProfileImageURL) ?? new Dictionary<int, string>();
+                foreach (var comment in comments)
+                {
+                    if (userDictionary.TryGetValue(comment.UserID, out var profileImageUrl))
+                    {
+                        comment.ProfileImageURL = profileImageUrl;
+                    }
+               
+                }
+            }
+        }
+
+        return Json(comments ?? new List<CommentViewModel>());
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting comments for post {PostId}", postId);
+        return Json(new List<CommentViewModel>());
+    }
+}
+    }
+    
 }

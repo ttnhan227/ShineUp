@@ -25,72 +25,93 @@ public class PostsController : Controller
     }
 
     // GET: Posts
-    public async Task<IActionResult> Index()
+   public async Task<IActionResult> Index()
+{
+    try
     {
-        try
+        var client = _clientFactory.CreateClient("API");
+        var token = HttpContext.Request.Cookies["auth_token"];
+        if (!string.IsNullOrEmpty(token))
         {
-            var client = _clientFactory.CreateClient("API");
-            
-            // Get posts
-            var response = await client.GetAsync("api/posts");
-            if (!response.IsSuccessStatusCode)
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        // Get posts
+        var response = await client.GetAsync("api/posts");
+        if (!response.IsSuccessStatusCode)
+        {
+            return View("Error");
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        // Get user profile images and like status for posts
+        foreach (var post in posts)
+        {
+            // Get user profile image
+            var userResponse = await client.GetAsync($"api/UserProfile/username/{post.Username}");
+            if (userResponse.IsSuccessStatusCode)
             {
-                return View("Error");
+                var userContent = await userResponse.Content.ReadAsStringAsync();
+                var user = JsonSerializer.Deserialize<UserViewModel>(userContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                post.ProfileImageURL = user?.ProfileImageURL;
             }
-            
-            var content = await response.Content.ReadAsStringAsync();
-            var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
+
+            // Check if current user has liked this post
+            if (!string.IsNullOrEmpty(token))
+            {
+                var hasLikedResponse = await client.GetAsync($"api/social/posts/{post.PostID}/has-liked");
+                if (hasLikedResponse.IsSuccessStatusCode)
+                {
+                    var hasLikedContent = await hasLikedResponse.Content.ReadAsStringAsync();
+                    post.HasLiked = JsonSerializer.Deserialize<bool>(hasLikedContent);
+                }
+            }
+            else
+            {
+                post.HasLiked = false;
+            }
+        }
+
+        // Get categories
+        var categoriesResponse = await client.GetAsync("api/categories");
+        if (categoriesResponse.IsSuccessStatusCode)
+        {
+            var categoriesContent = await categoriesResponse.Content.ReadAsStringAsync();
+            var categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(categoriesContent, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-
-            // Get user profile images for posts
-            foreach (var post in posts)
-            {
-                var userResponse = await client.GetAsync($"api/UserProfile/username/{post.Username}");
-                if (userResponse.IsSuccessStatusCode)
-                {
-                    var userContent = await userResponse.Content.ReadAsStringAsync();
-                    var user = JsonSerializer.Deserialize<UserViewModel>(userContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                    post.ProfileImageURL = user?.ProfileImageURL;
-                }
-            }
-
-            // Get categories
-            var categoriesResponse = await client.GetAsync("api/categories");
-            if (categoriesResponse.IsSuccessStatusCode)
-            {
-                var categoriesContent = await categoriesResponse.Content.ReadAsStringAsync();
-                var categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(categoriesContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-                ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
-            }
-
-            // Get privacy options
-            var privacyResponse = await client.GetAsync("api/privacy");
-            if (privacyResponse.IsSuccessStatusCode)
-            {
-                var privacyContent = await privacyResponse.Content.ReadAsStringAsync();
-                var privacyOptions = JsonSerializer.Deserialize<List<PrivacyViewModel>>(privacyContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-                ViewBag.PrivacyOptions = new SelectList(privacyOptions, "PrivacyID", "Name");
-            }
-
-            return View(posts);
+            ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
         }
-        catch (Exception ex)
+
+        // Get privacy options
+        var privacyResponse = await client.GetAsync("api/privacy");
+        if (privacyResponse.IsSuccessStatusCode)
         {
-            _logger.LogError(ex, "Error getting posts");
-            return View("Error");
+            var privacyContent = await privacyResponse.Content.ReadAsStringAsync();
+            var privacyOptions = JsonSerializer.Deserialize<List<PrivacyViewModel>>(privacyContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            ViewBag.PrivacyOptions = new SelectList(privacyOptions, "PrivacyID", "Name");
         }
+
+        return View(posts);
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting posts");
+        return View("Error");
+    }
+}
 
     // GET: Posts/Details/5
     public async Task<IActionResult> Details(int id)
