@@ -5,6 +5,7 @@ using Server.DTOs;
 using Server.Interfaces;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
+using Server.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,14 +36,64 @@ public class UserProfileController : ControllerBase
     [HttpGet("username/{username}")]
     [AllowAnonymous]
     [Produces("application/json")]
-    public async Task<ActionResult<UserDTO>> GetProfileByUsername(string username)
+    public async Task<ActionResult> GetProfileByUsername(string username)
     {
         try
         {
+            // First, get the current username from the token
+            var currentUsername = User.FindFirst(ClaimTypes.Name)?.Value;
+            var isCurrentUser = false;
+            
+            // Get the requested user's profile
             var userDto = await _userProfileRepository.GetUserProfileByUsername(username);
             if (userDto == null)
             {
                 return NotFound(new { message = "User not found" });
+            }
+
+            // Check if the current user is viewing their own profile
+            if (!string.IsNullOrEmpty(currentUsername) && 
+                string.Equals(currentUsername, userDto.Username, StringComparison.OrdinalIgnoreCase))
+            {
+                isCurrentUser = true;
+            }
+            
+            _logger.LogInformation($"Is Current User: {isCurrentUser}, Profile Privacy: {userDto.ProfilePrivacy}");
+
+            // Set IsPrivate flag based on privacy setting and ownership
+            userDto.IsPrivate = userDto.ProfilePrivacy == ProfilePrivacy.Private && !isCurrentUser;
+            
+            // If profile is private and user is not the owner, return limited information
+            if (userDto.IsPrivate && !isCurrentUser)
+            {
+                var result = new Dictionary<string, object>
+                {
+                    { "IsPrivate", true },
+                    { "Username", userDto.Username },
+                    { "ProfilePrivacy", userDto.ProfilePrivacy },
+                    { "ProfileImageURL", userDto.ProfileImageURL },
+                    { "FullName", userDto.FullName },
+                    { "IsGoogleAccount", userDto.IsGoogleAccount },
+                    { "TalentArea", userDto.TalentArea },
+                    { "ProfileCompletionPercentage", userDto.ProfileCompletionPercentage },
+                    { "LastLoginTime", userDto.LastLoginTime },
+                    { "CreatedAt", userDto.CreatedAt },
+                    { "IsActive", userDto.IsActive },
+                    { "Verified", userDto.Verified }
+                };
+
+                // Only include Email and Bio if they are not null
+                if (userDto.Email != null)
+                {
+                    result.Add("Email", userDto.Email);
+                }
+                
+                if (userDto.Bio != null)
+                {
+                    result.Add("Bio", userDto.Bio);
+                }
+
+                return Ok(result);
             }
 
             // Ensure the profile image URL is fully qualified
@@ -50,7 +101,7 @@ public class UserProfileController : ControllerBase
             {
                 userDto.ProfileImageURL = EnsureFullImageUrl(userDto.ProfileImageURL);
             }
-
+            
             return Ok(userDto);
         }
         catch (Exception ex)

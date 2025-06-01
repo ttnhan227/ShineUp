@@ -144,7 +144,8 @@ namespace Client.Controllers
                     Email = userProfile.Email,
                     Bio = userProfile.Bio,
                     ProfileImageURL = userProfile.ProfileImageURL,
-                    TalentArea = userProfile.TalentArea
+                    TalentArea = userProfile.TalentArea,
+                    ProfilePrivacy = userProfile.ProfilePrivacy // Add this line
                 };
                 return View(profileViewModel);
             }

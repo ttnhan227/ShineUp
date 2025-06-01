@@ -19,4 +19,5 @@ public class UserDTO
     public ProfilePrivacy ProfilePrivacy { get; set; }
     public int ProfileCompletionPercentage { get; set; }
     public bool IsGoogleAccount { get; set; }
+    public bool IsPrivate { get; set; }
 }
