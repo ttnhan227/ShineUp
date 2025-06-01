@@ -19,8 +19,8 @@ public class DatabaseContext : DbContext
     public DbSet<Like> Likes { get; set; }
     public DbSet<Contest> Contests { get; set; }
     public DbSet<ContestEntry> ContestEntries { get; set; }
-    public DbSet<Message> Messages { get; set; }
     public DbSet<Vote> Votes { get; set; } //anh
+    public DbSet<Message> Messages { get; set; }
 
     public DbSet<Notification> Notifications { get; set; } // Phat
     public DbSet<Share> Shares { get; set; } // Phat
@@ -109,15 +109,21 @@ public class DatabaseContext : DbContext
             .WithOne(v => v.Privacy)
             .HasForeignKey(v => v.PrivacyID);
 
-        modelBuilder.Entity<Vote>() //anh
-            .HasOne(v => v.ContestEntry)
-            .WithMany()
+        // Thiết lập quan hệ giữa ContestEntry và Vote (1-n)
+        modelBuilder.Entity<ContestEntry>()
+            .HasMany(e => e.Votes)
+            .WithOne(v => v.ContestEntry)
             .HasForeignKey(v => v.EntryID);
 
+        // Thiết lập constraint tránh người dùng vote nhiều lần cho cùng một entry
         modelBuilder.Entity<Vote>()
-            .HasOne(v => v.User)
-            .WithMany()
-            .HasForeignKey(v => v.UserID);
+            .HasIndex(v => new { v.EntryID, v.UserID })
+            .IsUnique();
+
+        // Thiết lập mặc định ngày giờ khi người dùng vote
+        modelBuilder.Entity<Vote>()
+            .Property(v => v.VotedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         // Configure ForgetPasswordOTP
         modelBuilder.Entity<OTPs>()

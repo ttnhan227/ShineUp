@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Server.Models;
+namespace Client.Models;
 
 public class ContestEntry
 {
@@ -16,9 +16,10 @@ public class ContestEntry
     public string Caption { get; set; }
     public DateTime SubmittedAt { get; set; }
 
-    // Navigation
+    // Navigation properties
     public Contest Contest { get; set; }
     public Video Video { get; set; }
     public User User { get; set; }
+
     public ICollection<Vote> Votes { get; set; }
 }

@@ -108,10 +108,14 @@ namespace Server.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EntryID"));
 
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("ContestID")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("SubmissionDate")
+                    b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserID")
@@ -131,41 +135,23 @@ namespace Server.Migrations
                     b.ToTable("ContestEntries");
                 });
 
-            modelBuilder.Entity("Server.Models.ForgetPasswordOTP", b =>
+            modelBuilder.Entity("Server.Models.Conversation", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
+                    b.Property<string>("GroupName")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
+                    b.Property<bool>("IsGroup")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("OTPCode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("UserID")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
-
-                    b.HasIndex("UserID");
-
-                    b.ToTable("ForgetPasswordOTPs");
+                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("Server.Models.Like", b =>
@@ -196,30 +182,44 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.Message", b =>
                 {
-                    b.Property<int>("MessageID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MessageID"));
-
-                    b.Property<string>("MessageContent")
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ReceiverID")
-                        .HasColumnType("integer");
+                    b.Property<string>("ConversationId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("SenderID")
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MediaUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("SentAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("MessageID");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
-                    b.HasIndex("ReceiverID");
+                    b.Property<int?>("UserID")
+                        .HasColumnType("integer");
 
-                    b.HasIndex("SenderID");
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("UserID");
+
+                    b.HasIndex("ConversationId", "SentAt");
 
                     b.ToTable("Messages");
                 });
@@ -271,6 +271,43 @@ namespace Server.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Server.Models.OTPs", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OTPCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("OTPs");
+                });
+
             modelBuilder.Entity("Server.Models.Privacy", b =>
                 {
                     b.Property<int>("PrivacyID")
@@ -303,6 +340,18 @@ namespace Server.Migrations
                     b.HasKey("RoleID");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleID = 1,
+                            Name = "User"
+                        },
+                        new
+                        {
+                            RoleID = 2,
+                            Name = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("Server.Models.Share", b =>
@@ -327,9 +376,9 @@ namespace Server.Migrations
 
                     b.HasKey("ShareID");
 
-                    b.HasIndex("VideoID");
+                    b.HasIndex("UserID");
 
-                    b.HasIndex("UserID", "VideoID");
+                    b.HasIndex("VideoID");
 
                     b.ToTable("Shares");
                 });
@@ -356,12 +405,21 @@ namespace Server.Migrations
                     b.Property<string>("GoogleId")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastLoginTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
                     b.Property<string>("ProfileImageURL")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("ProfilePrivacy")
+                        .HasColumnType("integer");
 
                     b.Property<int>("RoleID")
                         .HasColumnType("integer");
@@ -374,11 +432,29 @@ namespace Server.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("Verified")
+                        .HasColumnType("boolean");
+
                     b.HasKey("UserID");
 
                     b.HasIndex("RoleID");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Server.Models.UserConversation", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConversationId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "ConversationId");
+
+                    b.HasIndex("ConversationId");
+
+                    b.ToTable("UserConversations");
                 });
 
             modelBuilder.Entity("Server.Models.Video", b =>
@@ -440,13 +516,16 @@ namespace Server.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("VotedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("VoteID");
 
-                    b.HasIndex("EntryID");
-
                     b.HasIndex("UserID");
+
+                    b.HasIndex("EntryID", "UserID")
+                        .IsUnique();
 
                     b.ToTable("Votes");
                 });
@@ -497,16 +576,6 @@ namespace Server.Migrations
                     b.Navigation("Video");
                 });
 
-            modelBuilder.Entity("Server.Models.ForgetPasswordOTP", b =>
-                {
-                    b.HasOne("Server.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Server.Models.Like", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
@@ -528,24 +597,39 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.Message", b =>
                 {
-                    b.HasOne("Server.Models.User", "Receiver")
-                        .WithMany("ReceivedMessages")
-                        .HasForeignKey("ReceiverID")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("Server.Models.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Server.Models.User", "Sender")
                         .WithMany("SentMessages")
-                        .HasForeignKey("SenderID")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Receiver");
+                    b.HasOne("Server.Models.User", null)
+                        .WithMany("ReceivedMessages")
+                        .HasForeignKey("UserID");
+
+                    b.Navigation("Conversation");
 
                     b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Server.Models.Notification", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Server.Models.OTPs", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
                         .WithMany()
@@ -586,6 +670,25 @@ namespace Server.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("Server.Models.UserConversation", b =>
+                {
+                    b.HasOne("Server.Models.Conversation", "Conversation")
+                        .WithMany("Participants")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany("Conversations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Server.Models.Video", b =>
                 {
                     b.HasOne("Server.Models.Category", "Category")
@@ -614,7 +717,7 @@ namespace Server.Migrations
             modelBuilder.Entity("Server.Models.Vote", b =>
                 {
                     b.HasOne("Server.Models.ContestEntry", "ContestEntry")
-                        .WithMany()
+                        .WithMany("Votes")
                         .HasForeignKey("EntryID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -640,6 +743,18 @@ namespace Server.Migrations
                     b.Navigation("ContestEntries");
                 });
 
+            modelBuilder.Entity("Server.Models.ContestEntry", b =>
+                {
+                    b.Navigation("Votes");
+                });
+
+            modelBuilder.Entity("Server.Models.Conversation", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Participants");
+                });
+
             modelBuilder.Entity("Server.Models.Privacy", b =>
                 {
                     b.Navigation("Videos");
@@ -655,6 +770,8 @@ namespace Server.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("ContestEntries");
+
+                    b.Navigation("Conversations");
 
                     b.Navigation("Likes");
 

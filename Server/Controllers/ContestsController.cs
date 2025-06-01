@@ -8,24 +8,37 @@ using Server.Models;
 
 namespace Server.Controllers;
 
-[Authorize]
+// Quản lý các cuộc thi: tạo mới, lấy danh sách, chi tiết cuộc thi
 [ApiController]
 [Route("api/[controller]")]
 public class ContestsController : ControllerBase
 {
-    private readonly IContestRepositories _contestRepository;
-    private readonly INotificationRepository _notificationRepository;
-    private readonly DatabaseContext _context;
+    // 1. Constructor
+    private readonly IContestRepository _repo;
 
-    public ContestsController(IContestRepositories contestRepository, INotificationRepository notificationRepository, DatabaseContext context)
+    public ContestsController(IContestRepository repo)
     {
-        _contestRepository = contestRepository;
-        _notificationRepository = notificationRepository;
-        _context = context;
+        _repo = repo;
     }
 
+    // 2. [HttpGet] GetAll() – Lấy danh sách tất cả contest
+    [HttpGet]
+    public async Task<IActionResult> GetAll() => Ok(await _repo.GetAllContestsAsync());
+    // Trả về danh sách toàn bộ các cuộc thi dưới dạng List<ContestDTO>.
+
+    // 3. [HttpGet("{id}")] Get(int id) – Lấy chi tiết 1 contest theo ID
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var contest = await _repo.GetContestByIdAsync(id);
+        return contest == null ? NotFound() : Ok(contest);
+    }
+    //Trả về chi tiết 1 contest theo id (được truyền trong URL).
+    //Dùng khi bấm vào 1 cuộc thi để xem chi tiết.
+
+    // 4. [HttpPost] Create() – Tạo mới 1 contest
     [HttpPost]
-    public async Task<IActionResult> CreateContest([FromBody] ContestDTO dto)
+    public async Task<IActionResult> Create([FromBody] CreateContestDTO dto)
     {
         var contest = new Contest
         {
@@ -34,61 +47,9 @@ public class ContestsController : ControllerBase
             StartDate = dto.StartDate,
             EndDate = dto.EndDate
         };
-
-        await _contestRepository.AddAsync(contest);
-
-        // Notify all users about the new contest
-        var users = await _context.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            var notification = new Notification
-            {
-                UserID = user.UserID,
-                NotificationType = "ContestUpdate",
-                Message = $"New contest created: {contest.Title}",
-                ContestID = contest.ContestID,
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
-            };
-            await _notificationRepository.AddAsync(notification);
-        }
-
-        dto.ContestID = contest.ContestID;
-        return Ok(dto);
+        var created = await _repo.CreateContestAsync(contest);
+        return CreatedAtAction(nameof(Get), new { id = created.ContestID }, created);
     }
-
-    [HttpPut("{contestId}")]
-    public async Task<IActionResult> UpdateContest(int contestId, [FromBody] ContestDTO dto)
-    {
-        var contest = await _contestRepository.GetByIdAsync(contestId);
-        if (contest == null)
-        {
-            return NotFound("Contest not found");
-        }
-
-        contest.Title = dto.Title;
-        contest.Description = dto.Description;
-        contest.StartDate = dto.StartDate;
-        contest.EndDate = dto.EndDate;
-
-        await _contestRepository.UpdateAsync(contest);
-
-        // Notify all users about the contest update
-        var users = await _context.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            var notification = new Notification
-            {
-                UserID = user.UserID,
-                NotificationType = "ContestUpdate",
-                Message = $"Contest updated: {contest.Title}",
-                ContestID = contest.ContestID,
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
-            };
-            await _notificationRepository.AddAsync(notification);
-        }
-
-        return Ok(dto);
-    }
+    //Nhận dữ liệu từ body qua CreateContestDTO
+    //Tạo object Contest mới và lưu vào DB qua repository.
 }

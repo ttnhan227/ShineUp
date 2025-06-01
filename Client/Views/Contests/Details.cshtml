@@ -1,0 +1,110 @@
+﻿@model Client.Models.Contest
+
+@{
+    ViewBag.Title = "Contest Details";
+    var entries = ViewBag.Entries as List<Client.Models.ContestEntry>;
+    var votedIds = ViewBag.VotedEntryIds as List<int> ?? new List<int>();
+    var results = ViewBag.VoteResults as List<Client.Models.VoteResult> ?? new List<Client.Models.VoteResult>();
+    var chartLabels = string.Join(",", results.Select(r => $"'{r.VideoTitle}'"));
+    var chartData = string.Join(",", results.Select(r => r.VoteCount));
+}
+
+<h2>@Model.Title</h2>
+<p>@Model.Description</p>
+<p>
+    <strong>Start:</strong> @Model.StartDate.ToShortDateString() |
+    <strong>End:</strong> @Model.EndDate.ToShortDateString()
+</p>
+
+<a asp-controller="ContestEntries" asp-action="Submit" asp-route-contestId="@Model.ContestID" class="btn btn-success mb-3">Submit Entry</a>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<h3>Submitted Entries</h3>
+
+@if (entries != null && entries.Any())
+{
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        @foreach (var entry in entries)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Entry #@entry.EntryID</strong>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">@entry.Caption</h5>
+
+                        @* TODO: Hiển thị video nếu có *@
+                        @*
+                <video width="100%" controls>
+                    <source src="@entry.Video?.VideoURL" type="video/mp4" />
+                </video>
+                *@
+                        <p class="text-muted fst-italic">Video preview coming soon...</p>
+
+                        @if (!votedIds.Contains(entry.EntryID))
+                        {
+                            <form asp-controller="Votes" asp-action="Vote" method="post" onsubmit="return confirm('Vote for this entry?');">
+                                <input type="hidden" name="EntryID" value="@entry.EntryID" />
+                                <input type="hidden" name="contestId" value="@Model.ContestID" />
+                                <button type="submit" class="btn btn-outline-primary mt-2 w-100">
+                                    <i class="bx bx-like me-1"></i> Vote
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success mt-3 text-center" role="alert">
+                                <i class="bx bx-check-double me-1"></i> You already voted for this entry
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No entries submitted for this contest yet.</p>
+}
+
+@if (results.Any())
+{
+    <h3 class="mt-5">Live Voting Chart</h3>
+    <canvas id="voteChart" width="600" height="300"></canvas>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('voteChart');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [@Html.Raw(chartLabels)],
+                datasets: [{
+                    label: 'Votes',
+                    data: [@chartData],
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                }
+            }
+        });
+    </script>
+}

@@ -1,94 +1,55 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
+using System.Security.Claims;
 
 namespace Server.Controllers;
 
+// Bỏ phiếu và xem kết quả
 [ApiController]
 [Route("api/[controller]")]
 public class VotesController : ControllerBase
 {
-    private readonly DatabaseContext _context;
-    private readonly IVoteRepositories _repository;
-    private readonly INotificationRepository _notificationRepository;
+    // 1. Constructor
+    private readonly IVoteRepository _repo;
 
-    public VotesController(IVoteRepositories repository, DatabaseContext context, INotificationRepository notificationRepository)
+    public VotesController(IVoteRepository repo)
     {
-        _repository = repository;
-        _context = context;
-        _notificationRepository = notificationRepository;
+        _repo = repo;
     }
 
+    // 2. [HttpPost] Vote() – Tiến hành vote cho một entry
     [HttpPost]
-    public async Task<IActionResult> Vote([FromBody] VoteDTO dto)
+    public async Task<IActionResult> Vote([FromBody] CastVoteDTO dto)
     {
-        var entry = await _context.ContestEntries
-            .Include(e => e.Contest)
-            .Include(e => e.User)
-            .FirstOrDefaultAsync(e => e.EntryID == dto.EntryID);
-        if (entry == null || DateTime.UtcNow < entry.Contest.StartDate || DateTime.UtcNow > entry.Contest.EndDate)
-        {
-            return BadRequest("Voting is not allowed at this time.");
-        }
-
-        if (await _repository.HasVotedAsync(dto.EntryID, dto.UserID))
-        {
-            return BadRequest("Already voted.");
-        }
+        var userId = GetUserIdFromClaims();
+        if (await _repo.HasUserVotedAsync(dto.EntryID, userId))
+            return BadRequest("User đã vote cho entry này");
 
         var vote = new Vote
         {
             EntryID = dto.EntryID,
-            UserID = dto.UserID,
+            UserID = userId,
             VotedAt = DateTime.UtcNow
         };
 
-        await _repository.AddAsync(vote);
-
-        // Create notification for entry owner
-        if (entry.UserID != dto.UserID) // Don't notify if user votes for their own entry
-        {
-            var triggerUser = await _context.Users.FindAsync(dto.UserID);
-            var notification = new Notification
-            {
-                UserID = entry.UserID,
-                NotificationType = "Vote",
-                Message = $"{triggerUser.Username} voted for your contest entry",
-                ContestID = entry.ContestID,
-                TriggeredByUserID = dto.UserID,
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
-            };
-            await _notificationRepository.AddAsync(notification);
-        }
-
-        dto.VoteID = vote.VoteID;
-        dto.VotedAt = vote.VotedAt;
-        return Ok(dto);
+        var created = await _repo.CastVoteAsync(vote);
+        return Ok(created);
     }
 
-    [HttpGet("contest/{contestId}")]
+    // 3. [HttpGet("hasvoted/{entryId}")] – Kiểm tra người dùng đã vote cho entry này chưa
+    [HttpGet("results/{contestId}")]
     public async Task<IActionResult> Results(int contestId)
-    {
-        var results = await _context.Votes
-            .Include(v => v.ContestEntry)
-            .ThenInclude(e => e.Video)
-            .Include(v => v.ContestEntry.User)
-            .Where(v => v.ContestEntry.ContestID == contestId)
-            .GroupBy(v => v.EntryID)
-            .Select(g => new
-            {
-                EntryID = g.Key,
-                VoteCount = g.Count(),
-                VideoTitle = g.First().ContestEntry.Video.Title,
-                VideoURL = g.First().ContestEntry.Video.VideoURL,
-                UserName = g.First().ContestEntry.User.Username
-            })
-            .ToListAsync();
+        => Ok(await _repo.GetVoteResultsByContestAsync(contestId));
 
-        return Ok(results);
+    // 4. Lấy ID người dùng từ token trong Claims (token chứa ClaimTypes.NameIdentifier là UserID)
+    private int GetUserIdFromClaims()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return userIdClaim != null ? int.Parse(userIdClaim) : throw new UnauthorizedAccessException();
     }
 }

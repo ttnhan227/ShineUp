@@ -1,61 +1,64 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Humanizer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
+using System.Security.Claims;
 
 namespace Server.Controllers;
 
+// Quản lý các bài dự thi: gửi bài, xem bài theo contest
 [ApiController]
 [Route("api/[controller]")]
 public class ContestEntriesController : ControllerBase
 {
-    private readonly DatabaseContext _context;
-    private readonly IContestEntryRepositories _repository;
+    // 1. Constructor
+    private readonly IContestEntryRepository _repo;
 
-    public ContestEntriesController(IContestEntryRepositories repository, DatabaseContext context)
+    public ContestEntriesController(IContestEntryRepository repo)
     {
-        _repository = repository;
-        _context = context;
+        _repo = repo;
     }
 
+    // 2. [HttpGet("bycontest/{contestId}")] – Lấy tất cả bài dự thi của một cuộc thi theo contest
+    [HttpGet("bycontest/{contestId}")]
+    public async Task<IActionResult> GetEntries(int contestId)
+        => Ok(await _repo.GetEntriesByContestAsync(contestId));
+    //Gọi IContestEntryRepository.GetEntriesByContestAsync()
+    //Trả về danh sách các entry thuộc contest có contestId
+    //Trả về dạng DTO để đảm bảo bảo mật và dễ dùng ở frontend
+
+    // 3. [HttpGet("{entryId}")] – Lấy chi tiết một bài dự thi theo EntryID, Gửi bài dự thi
     [HttpPost]
-    public async Task<IActionResult> Submit([FromBody] ContestEntryDTO dto)
+    public async Task<IActionResult> Submit([FromBody] SubmitEntryDTO dto) //DTO này không chứa UserID vì controller tự lấy từ token
     {
-        var contest = await _context.Contests.FindAsync(dto.ContestID);
-        if (contest == null || DateTime.UtcNow < contest.StartDate || DateTime.UtcNow > contest.EndDate)
-        {
-            return BadRequest("This contest is not active.");
-        }
+        var userId = GetUserIdFromClaims(); // Lấy từ token
 
-        if (await _repository.HasSubmittedAsync(dto.ContestID, dto.UserID))
+        // Kiểm tra xem người dùng đã gửi bài dự thi cho cuộc thi này chưa(bảo mật, Tránh để người dùng giả mạo UserID từ client gửi lên)
+        var entry = new ContestEntry
         {
-            return BadRequest("You have already submitted.");
-        }
-
-        var entity = new ContestEntry
-        {
+            Caption = dto.Caption,
             ContestID = dto.ContestID,
-            UserID = dto.UserID,
-            SubmissionDate = DateTime.UtcNow
+            VideoID = dto.VideoID,
+            UserID = userId,
+            SubmittedAt = DateTime.UtcNow
         };
-        await _repository.AddAsync(entity);
-        dto.EntryID = entity.EntryID;
-        dto.SubmissionDate = entity.SubmissionDate;
-        return Ok(dto);
+        var created = await _repo.SubmitEntryAsync(entry);
+        return Ok(created);
     }
 
-    [HttpGet("contest/{contestId}")]
-    public async Task<IActionResult> GetByContest(int contestId)
+    // 4.[HttpGet("hasuser/{contestId}")] – Kiểm tra người dùng đã gửi bài dự thi cho cuộc thi này chưa
+    // Lấy ID người dùng từ token trong Claims (token chứa ClaimTypes.NameIdentifier là UserID)
+    private int GetUserIdFromClaims()
     {
-        var entries = await _repository.GetEntriesByContestAsync(contestId);
-        return Ok(entries);
-    }
+        // Tìm claim có type là NameIdentifier (UserID)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-    [HttpGet("user/{userId}/contest/{contestId}")]
-    public async Task<IActionResult> CheckUserSubmission(int userId, int contestId)
-    {
-        var exists = await _repository.HasSubmittedAsync(contestId, userId);
-        return Ok(new { hasSubmitted = exists });
+        // Nếu có claim => ép kiểu sang int, ngược lại => ném lỗi truy cập
+        return userIdClaim != null
+            ? int.Parse(userIdClaim)
+            : throw new UnauthorizedAccessException();
     }
 }

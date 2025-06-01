@@ -1,0 +1,69 @@
+﻿@model List<Client.Models.VoteResult>
+
+@{
+    ViewBag.Title = "Voting Results";
+    var labels = string.Join(",", Model.Select(r => $"'{r.VideoTitle}'"));
+    var data = string.Join(",", Model.Select(r => r.VoteCount));
+}
+
+<h2>Voting Results</h2>
+
+@if (Model != null && Model.Any())
+{
+    <canvas id="voteChart" width="600" height="300" class="mb-5"></canvas>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Entry ID</th>
+                <th>Video Title</th>
+                <th>Caption</th>
+                <th>Total Votes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var result in Model)
+            {
+                <tr>
+                    <td>@result.EntryID</td>
+                    <td>@result.VideoTitle</td>
+                    <td>@result.Caption</td>
+                    <td>@result.VoteCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No votes recorded yet.</p>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('voteChart');
+        const voteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [@Html.Raw(labels)],
+                datasets: [{
+                    label: 'Votes',
+                    data: [@data],
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                }
+            }
+        });
+    </script>
+}

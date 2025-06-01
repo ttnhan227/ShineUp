@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models;
+namespace Client.Models;
 
 public class Contest
 {
@@ -11,6 +11,6 @@ public class Contest
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
-    // Navigation
+    // Navigation property để hiển thị các bài dự thi (Entries)
     public ICollection<ContestEntry> ContestEntries { get; set; }
 }

@@ -148,9 +148,9 @@ builder.Services.Configure<GoogleJsonWebSignature.ValidationSettings>(options =>
 builder.Services.AddAuthorization(); // Add Authorization service
 
 // AddScoped for Repositories
-builder.Services.AddScoped<IContestRepositories, ContestRepositories>();
-builder.Services.AddScoped<IContestEntryRepositories, ContestEntryRepositories>();
-builder.Services.AddScoped<IVoteRepositories, VoteRepositories>();
+builder.Services.AddScoped<IContestRepository, ContestRepository>();
+builder.Services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
+builder.Services.AddScoped<IVoteRepository, VoteRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();

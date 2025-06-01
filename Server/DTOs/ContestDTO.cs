@@ -1,10 +1,11 @@
-namespace Server.DTOs;
+﻿namespace Server.DTOs;
 
+// DTO để hiển thị thông tin cuộc thi ra ngoài UI
 public class ContestDTO
 {
-    public int ContestID { get; set; }
-    public string Title { get; set; }
-    public string Description { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public int ContestID { get; set; }         // ID cuộc thi
+    public string Title { get; set; }          // Tiêu đề
+    public string Description { get; set; }    // Mô tả
+    public DateTime StartDate { get; set; }    // Ngày bắt đầu
+    public DateTime EndDate { get; set; }      // Ngày kết thúc
 }

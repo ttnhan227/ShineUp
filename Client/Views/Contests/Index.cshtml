@@ -1,0 +1,40 @@
+﻿@model List<Client.Models.Contest>
+
+@{
+    ViewBag.Title = "Contests";
+}
+
+<h2>All Talent Contests</h2>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contest in Model)
+            {
+                <tr>
+                    <td>@contest.Title</td>
+                    <td>@contest.Description</td>
+                    <td>@contest.StartDate.ToShortDateString()</td>
+                    <td>@contest.EndDate.ToShortDateString()</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@contest.ContestID" class="btn btn-primary">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No contests found.</p>
+}
