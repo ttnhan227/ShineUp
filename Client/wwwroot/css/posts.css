@@ -206,6 +206,27 @@ body {
     transition: transform 0.3s ease;
 }
 
+/* Ensure videos can go fullscreen properly */
+.media-item video {
+    position: relative;
+    z-index: 1;
+}
+
+/* Reset fullscreen styles */
+.media-item video:-webkit-full-screen {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+}
+
+.media-item video:fullscreen {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+}
+
 .media-item:hover img,
 .media-item:hover video {
     transform: scale(1.03);
