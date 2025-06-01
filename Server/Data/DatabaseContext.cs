@@ -25,6 +25,8 @@ public class DatabaseContext : DbContext
     public DbSet<Image> Images { get; set; }
     public DbSet<Community> Communities { get; set; }
     public DbSet<CommunityMember> CommunityMembers { get; set; }
+    public DbSet<OpportunityApplication> OpportunityApplications { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -317,6 +319,23 @@ public class DatabaseContext : DbContext
             .WithOne(v => v.Post)
             .HasForeignKey(v => v.PostID)
             .OnDelete(DeleteBehavior.Cascade);
+          // OpportunityApplication configuration
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasKey(oa => oa.ApplicationID);
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasOne(oa => oa.User)
+            .WithMany()
+            .HasForeignKey(oa => oa.UserID)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Notification configuration
+        modelBuilder.Entity<Notification>()
+            .HasKey(n => n.NotificationID);
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserID)
+            .OnDelete(DeleteBehavior.Cascade);    
 
         // Seed Categories
         modelBuilder.Entity<Category>().HasData(

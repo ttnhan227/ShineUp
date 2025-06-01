@@ -1,6 +1,6 @@
 namespace Server.DTOs;
 
-public class CloundinarySettingsDTO
+public class CloudinarySettingsDTO
 {
     public string CloudName { get; set; }
     public string ApiKey { get; set; }
