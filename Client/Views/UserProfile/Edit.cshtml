@@ -56,7 +56,8 @@
                             <label asp-for="Username" class="form-label">
                                 <i class='bx bx-user'></i> Username
                             </label>
-                            <input asp-for="Username" class="form-control post-input" />
+                            <div class="info-value">@Model.Username</div>
+                            <input type="hidden" asp-for="Username" />
                             <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
 
