@@ -11,7 +11,7 @@
             <div class="profile-avatar">
                 @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                 {
-                    <img src="@Model.ProfileImageURL" alt="Profile Image">
+                    <img src="@Model.ProfileImageURL" alt="@Model.Username's profile image">
                 }
                 else
                 {
@@ -24,7 +24,10 @@
         <div class="profile-info">
             <div class="profile-name-section">
                 <h1>@Model.Username</h1>
-                <p class="talent-area">@Model.TalentArea</p>
+                @if (!string.IsNullOrEmpty(Model.TalentArea))
+                {
+                    <p class="talent-area">@Model.TalentArea</p>
+                }
                 @if (Model.IsGoogleAccount)
                 {
                     <div class="google-badge">
@@ -43,16 +46,16 @@
                     <span class="stat-label">Profile Complete</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-value">@Model.LastLoginTime?.ToString("MMM dd")</span>
+                    <span class="stat-value">@(Model.LastLoginTime?.ToString("MMM dd") ?? "Never")</span>
                     <span class="stat-label">Last Login</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Section -->
+    <!-- Profile Content Section -->
     <div class="profile-content">
-        <!-- Left Column - Profile Details -->
+        <!-- Profile Details Card -->
         <div class="profile-details-card">
             <div class="card-header">
                 <h3><i class='bx bx-user-circle'></i> Profile Information</h3>
@@ -67,7 +70,7 @@
                 </div>
                 <div class="info-group">
                     <label><i class='bx bx-user'></i> Full Name</label>
-                    <div class="info-value">@Model.FullName</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.FullName) ? "Not provided" : Model.FullName)</div>
                 </div>
                 <div class="info-group">
                     <label><i class='bx bx-info-circle'></i> Bio</label>
@@ -82,9 +85,9 @@
                     <div class="info-value">
                         @(Model.ProfilePrivacy switch
                         {
-                            0 => "Public - Anyone can view your profile",
-                            1 => "Friends Only - Only your friends can view your profile",
-                            2 => "Private - Only you can view your profile",
+                            0 => "Public",
+                            1 => "Friends Only",
+                            2 => "Private",
                             _ => "Not specified"
                         })
                     </div>
@@ -92,18 +95,18 @@
             </div>
             @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Model.UserID.ToString())
             {
-            <div class="card-footer">
-                <a asp-action="Edit" class="btn btn-primary">
-                    <i class='bx bx-edit'></i> Edit Profile
-                </a>
-                <a asp-action="ChangePassword" class="btn btn-secondary">
-                    <i class='bx bx-lock-alt'></i> Change Password
-                </a>
-            </div>
+                <div class="card-footer">
+                    <a asp-action="Edit" class="btn btn-primary">
+                        <i class='bx bx-edit'></i> Edit Profile
+                    </a>
+                    <a asp-action="ChangePassword" class="btn btn-secondary">
+                        <i class='bx bx-lock-alt'></i> Change Password
+                    </a>
+                </div>
             }
         </div>
 
-        <!-- Right Column - Posts Feed -->
+        <!-- Posts Feed Card -->
         <div class="posts-feed-card">
             <div class="card-header">
                 <h3><i class='bx bx-news'></i> Recent Posts</h3>
@@ -115,18 +118,17 @@
                         @foreach (var post in Model.Posts)
                         {
                             <div class="post-card">
-                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" 
-                                   class="text-decoration-none">
+                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none">
                                     <div class="post-header">
                                         <div class="post-avatar">
-                                                @if (!string.IsNullOrEmpty(post.ProfileImageURL))
-                                                {
+                                            @if (!string.IsNullOrEmpty(post.ProfileImageURL))
+                                            {
                                                 <img src="@post.ProfileImageURL" alt="@post.FullName">
                                             }
                                             else
                                             {
-                                                <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                                                    <i class='bx bx-user text-primary'></i>
+                                                <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                                    <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
                                                 </div>
                                             }
                                         </div>
@@ -140,16 +142,14 @@
                                             </div>
                                             <div class="post-info">
                                                 <span>@@@post.Username.ToLower().Replace(" ", "")</span>
-                                                <span class="mx-1">·</span>
+                                                <span>·</span>
                                                 <span>@post.CreatedAt.ToString("MMM dd")</span>
                                             </div>
                                         </div>
                                     </div>
-
                                     <div class="post-content">
                                         <h5 class="post-title">@post.Title</h5>
                                         <p class="post-text">@post.Content</p>
-
                                         @if (post.MediaFiles != null && post.MediaFiles.Any())
                                         {
                                             <div class="media-grid">
@@ -159,7 +159,7 @@
                                                     <div class="media-item">
                                                         @if (media.Type == "image")
                                                         {
-                                                            <img src="@media.Url" alt="@post.Title">
+                                                            <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
                                                         }
                                                         else if (media.Type == "video")
                                                         {
@@ -177,7 +177,7 @@
                                                             <div class="media-item">
                                                                 @if (media.Type == "image")
                                                                 {
-                                                                    <img src="@media.Url" alt="@post.Title">
+                                                                    <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
                                                                 }
                                                                 else if (media.Type == "video")
                                                                 {
@@ -197,7 +197,6 @@
                                                 }
                                             </div>
                                         }
-
                                         <div class="post-actions">
                                             <div class="post-action">
                                                 <i class='bx bx-comment'></i>
@@ -226,520 +225,67 @@
                 {
                     <div class="no-posts">
                         <i class='bx bx-news'></i>
-                        <p>No posts yet. Start sharing your journey!</p>
+                        <p>No posts yet. Start sharing your talent!</p>
                     </div>
                 }
             </div>
         </div>
     </div>
+
+    <!-- Image Popup -->
+    <div class="image-popup" id="imagePopup">
+        <span class="close-btn" id="closePopup">&times;</span>
+        <img id="popupImage" src="" alt="Full-size image">
+    </div>
 </div>
 
-@section Styles {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <style>
-        /* Modern Color Scheme */
-        :root {
-            --primary-color: #4f46e5;
-            --primary-light: #818cf8;
-            --secondary-color: #64748b;
-            --success-color: #22c55e;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border-color: #e2e8f0;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        }
-
-        /* Container Styles */
-        .profile-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            background-color: var(--background-color);
-        }
-
-        /* Profile Header Styles */
-        .profile-header {
-            background: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: var(--shadow-md);
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-
-        .profile-cover {
-            height: 200px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-            position: relative;
-        }
-
-        .profile-avatar {
-            position: absolute;
-            bottom: -50px;
-            left: 50px;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid var(--card-background);
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-placeholder {
-            width: 100%;
-            height: 100%;
-            background: var(--primary-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--card-background);
-            font-size: 4rem;
-        }
-
-        .profile-info {
-            padding: 4rem 2rem 2rem;
-        }
-
-        .profile-name-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .profile-name-section h1 {
-            font-size: 2rem;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .talent-area {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .google-badge {
-            display: inline-flex;
-            align-items: center;
-            background: #f1f5f9;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .google-badge i {
-            color: #4285F4;
-            margin-right: 0.5rem;
-        }
-
-        .profile-stats {
-            display: flex;
-            gap: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        /* Profile Content Layout */
-        .profile-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 2rem;
-        }
-
-        /* Card Styles */
-        .profile-details-card,
-        .posts-feed-card {
-            background: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-        }
-
-        .profile-details-card {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card-header h3 {
-            margin: 0;
-            color: var(--text-primary);
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-            flex-grow: 1;
-        }
-
-        .card-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 1rem;
-            flex-wrap: nowrap;
-        }
-
-        /* Info Groups */
-        .info-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .info-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .info-group label i {
-            color: var(--primary-color);
-        }
-
-        .info-value {
-            color: var(--text-primary);
-            font-size: 1rem;
-        }
-
-        .badge.verified {
-            background: var(--success-color);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.8rem;
-            margin-left: 0.5rem;
-        }
-
-        /* Button Styles */
-        .btn {
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            flex-grow: 1;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* Post Card Styles */
-        .post-card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 100;
-        }
-
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        .post-header {
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .post-avatar {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid var(--primary-color);
-        }
-
-        .post-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .post-meta {
-            flex: 1;
-        }
-
-        .post-author {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .post-info {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .post-content {
-            padding: 0 1.5rem 1.5rem;
-        }
-
-        .post-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.75rem;
-        }
-
-        .post-text {
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
-
-        /* Media Grid Styles */
-        .media-grid {
-            border-radius: 0.75rem;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
-
-        .media-grid-container {
-            display: grid;
-            gap: 0.5rem;
-            background: var(--secondary-color);
-        }
-
-        .media-item {
-            position: relative;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-        }
-
-        .media-item img,
-        .media-item video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .media-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .media-item:hover .media-overlay {
-            opacity: 1;
-        }
-
-        /* Post Actions */
-        .post-actions {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .post-action {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .post-action:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-
-        .post-action i {
-            font-size: 1.25rem;
-        }
-
-        /* Responsive Grid Layouts */
-        .media-grid-container.grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .media-grid-container.grid-3 {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-        }
-
-        .media-grid-container.grid-3 .media-item:first-child {
-            grid-column: 1 / -1;
-        }
-
-        .media-grid-container.grid-4 {
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-        }
-
-        /* Talent-specific styles */
-        .talent-badge {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-
-        .performance-rating {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            color: #f59e0b;
-        }
-
-        .performance-rating i {
-            font-size: 1rem;
-        }
-
-        .no-posts {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-secondary);
-        }
-
-        .no-posts i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Responsive Design */
-        @@media (max-width: 1024px) {
-            .profile-content {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @@media (max-width: 768px) {
-            .profile-container {
-                padding: 1rem;
-            }
-
-            .profile-avatar {
-                width: 120px;
-                height: 120px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-
-            .profile-info {
-                padding: 5rem 1rem 1rem;
-                text-align: center;
-            }
-
-            .profile-stats {
-                justify-content: center;
-            }
-
-            .card-footer {
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
-}
-
 @section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
     <script>
         // Convert Last Login Time to local time
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const lastLoginTimeElement = document.querySelector('.stat-value:last-child');
             if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
                 try {
                     const utcTime = lastLoginTimeElement.textContent.trim();
                     const localTime = new Date(utcTime);
-                    
                     if (isNaN(localTime.getTime())) {
                         lastLoginTimeElement.textContent = 'Never';
                         return;
                     }
-
-                    const options = { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric'
-                    };
-                    
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
                     lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
                 } catch (error) {
                     console.error('Error formatting date:', error);
                     lastLoginTimeElement.textContent = 'Never';
                 }
             }
+
+            // Image popup functionality
+            const images = document.querySelectorAll('.clickable-image');
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            const closeBtn = document.getElementById('closePopup');
+
+            images.forEach(image => {
+                image.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    popupImage.src = this.dataset.fullsize;
+                    popup.style.display = 'flex';
+                });
+            });
+
+            closeBtn.addEventListener('click', function () {
+                popup.style.display = 'none';
+                popupImage.src = '';
+            });
+
+            popup.addEventListener('click', function (e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popupImage.src = '';
+                }
+            });
         });
     </script>
 }
@@ -752,7 +298,7 @@
             2 => "grid-2",
             3 => "grid-3",
             4 => "grid-4",
-            _ => "grid-4"
+            _ => "grid-1"
         };
     }
 }
