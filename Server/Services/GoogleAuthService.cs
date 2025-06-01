@@ -64,7 +64,12 @@ public class GoogleAuthService : IGoogleAuthService
 
             // Update user information from Google
             user.GoogleId = payload.Subject;
-            user.FullName = payload.Name;
+            // Only update FullName if it's not already set
+            if (string.IsNullOrEmpty(user.FullName))
+            {
+                user.FullName = payload.Name;
+            }
+            // Always update the profile picture from Google
             user.ProfileImageURL = payload.Picture;
             user.Verified = true;
             _context.Users.Update(user);
