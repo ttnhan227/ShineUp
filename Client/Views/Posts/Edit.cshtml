@@ -67,7 +67,7 @@ ViewData["Title"] = "Edit Post";
                                 <div class="media-item">
                                     @if (media.Type == "image")
                                     {
-                                    <img src="@media.Url" alt="Media">
+                                    <img src="@media.Url" alt="Media" class="clickable-image" data-fullsize="@media.Url">
                                     }
                                     else if (media.Type == "video")
                                     {
@@ -85,7 +85,7 @@ ViewData["Title"] = "Edit Post";
                                     <div class="media-item">
                                         @if (media.Type == "image")
                                         {
-                                        <img src="@media.Url" alt="Media">
+                                        <img src="@media.Url" alt="Media" class="clickable-image" data-fullsize="@media.Url">
                                         }
                                         else if (media.Type == "video")
                                         {
@@ -134,6 +134,11 @@ ViewData["Title"] = "Edit Post";
                         </div>
                     </form>
                 </div>
+            </div>
+            <!-- Image Popup -->
+            <div class="image-popup" id="imagePopup">
+                <span class="close-btn" id="closePopup">×</span>
+                <img id="popupImage" src="" alt="Full-size image">
             </div>
         </div>
 
@@ -194,7 +199,7 @@ ViewData["Title"] = "Edit Post";
         $('[data-bs-toggle="tooltip"]').tooltip();
     });
 
-    // Preview selected images and videos
+    // Preview selected images
     document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
         const previewContainer = document.createElement('div');
         previewContainer.className = 'row g-2';
@@ -223,6 +228,7 @@ ViewData["Title"] = "Edit Post";
         }
     });
 
+    // Preview selected videos
     document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
         const previewContainer = document.createElement('div');
         previewContainer.className = 'row g-2';
@@ -249,6 +255,34 @@ ViewData["Title"] = "Edit Post";
             existingPreview.innerHTML = '';
             existingPreview.appendChild(previewContainer);
         }
+    });
+
+    // Image popup functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const images = document.querySelectorAll('.clickable-image');
+        const popup = document.getElementById('imagePopup');
+        const popupImage = document.getElementById('popupImage');
+        const closeBtn = document.getElementById('closePopup');
+
+        images.forEach(image => {
+            image.addEventListener('click', function (e) {
+                e.preventDefault();
+                popupImage.src = this.dataset.fullsize;
+                popup.style.display = 'flex';
+            });
+        });
+
+        closeBtn.addEventListener('click', function () {
+            popup.style.display = 'none';
+            popupImage.src = '';
+        });
+
+        popup.addEventListener('click', function (e) {
+            if (e.target === popup) {
+                popup.style.display = 'none';
+                popupImage.src = '';
+            }
+        });
     });
 </script>
 }

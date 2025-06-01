@@ -74,7 +74,7 @@ ViewData["Title"] = Model.Title;
                             <div class="media-item">
                                 @if (media.Type == "image")
                                 {
-                                <img src="@media.Url" alt="@Model.Title">
+                                <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
                                 }
                                 else if (media.Type == "video")
                                 {
@@ -92,7 +92,7 @@ ViewData["Title"] = Model.Title;
                                 <div class="media-item">
                                     @if (media.Type == "image")
                                     {
-                                    <img src="@media.Url" alt="@Model.Title">
+                                    <img src="@media.Url" alt="@Model.Title" class="clickable-image" data-fullsize="@media.Url">
                                     }
                                     else if (media.Type == "video")
                                     {
@@ -214,6 +214,11 @@ ViewData["Title"] = Model.Title;
                         Post liked!
                     </div>
                 </div>
+            </div>
+            <!-- Image Popup -->
+            <div class="image-popup" id="imagePopup">
+                <span class="close-btn" id="closePopup">×</span>
+                <img id="popupImage" src="" alt="Full-size image">
             </div>
         </div>
 
@@ -340,6 +345,32 @@ _ => "grid-4"
         };
 
         setTimeout(hideToast, 5000);
+
+        // Image popup functionality
+        const images = document.querySelectorAll('.clickable-image');
+        const popup = document.getElementById('imagePopup');
+        const popupImage = document.getElementById('popupImage');
+        const closeBtn = document.getElementById('closePopup');
+
+        images.forEach(image => {
+            image.addEventListener('click', function (e) {
+                e.preventDefault();
+                popupImage.src = this.dataset.fullsize;
+                popup.style.display = 'flex';
+            });
+        });
+
+        closeBtn.addEventListener('click', function () {
+            popup.style.display = 'none';
+            popupImage.src = '';
+        });
+
+        popup.addEventListener('click', function (e) {
+            if (e.target === popup) {
+                popup.style.display = 'none';
+                popupImage.src = '';
+            }
+        });
     });
 </script>
 }

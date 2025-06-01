@@ -121,7 +121,7 @@ ViewData["Title"] = "Talent Showcase";
                                 <div class="media-item">
                                     @if (media.Type == "image")
                                     {
-                                    <img src="@media.Url" alt="@item.Title">
+                                    <img src="@media.Url" alt="@item.Title" class="clickable-image" data-fullsize="@media.Url">
                                     }
                                     else if (media.Type == "video")
                                     {
@@ -139,7 +139,7 @@ ViewData["Title"] = "Talent Showcase";
                                     <div class="media-item">
                                         @if (media.Type == "image")
                                         {
-                                        <img src="@media.Url" alt="@item.Title">
+                                        <img src="@media.Url" alt="@item.Title" class="clickable-image" data-fullsize="@media.Url">
                                         }
                                         else if (media.Type == "video")
                                         {
@@ -182,6 +182,11 @@ ViewData["Title"] = "Talent Showcase";
                     </a>
                 </div>
                 }
+            </div>
+            <!-- Image Popup -->
+            <div class="image-popup" id="imagePopup">
+                <span class="close-btn" id="closePopup">&times;</span>
+                <img id="popupImage" src="" alt="Full-size image">
             </div>
         </div>
 
@@ -311,6 +316,34 @@ _ => "grid-4"
             existingPreview.innerHTML = '';
             existingPreview.appendChild(previewContainer);
         }
+    });
+
+    // Image popup functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const images = document.querySelectorAll('.clickable-image');
+        const popup = document.getElementById('imagePopup');
+        const popupImage = document.getElementById('popupImage');
+        const closeBtn = document.getElementById('closePopup');
+
+        images.forEach(image => {
+            image.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
+                popupImage.src = this.dataset.fullsize;
+                popup.style.display = 'flex';
+            });
+        });
+
+        closeBtn.addEventListener('click', function () {
+            popup.style.display = 'none';
+            popupImage.src = '';
+        });
+
+        popup.addEventListener('click', function (e) {
+            if (e.target === popup) {
+                popup.style.display = 'none';
+                popupImage.src = '';
+            }
+        });
     });
 </script>
 }
