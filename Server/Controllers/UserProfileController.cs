@@ -45,6 +45,12 @@ public class UserProfileController : ControllerBase
                 return NotFound(new { message = "User not found" });
             }
 
+            // Ensure the profile image URL is fully qualified
+            if (!string.IsNullOrEmpty(userDto.ProfileImageURL))
+            {
+                userDto.ProfileImageURL = EnsureFullImageUrl(userDto.ProfileImageURL);
+            }
+
             return Ok(userDto);
         }
         catch (Exception ex)
@@ -81,7 +87,7 @@ public class UserProfileController : ControllerBase
                     _logger.LogError($"Cloudinary image upload error: {uploadResult.Error.Message}");
                     return BadRequest(new { message = "Image upload failed: " + uploadResult.Error.Message });
                 }
-                updateProfile.ProfileImageUrl = uploadResult.SecureUrl.ToString();
+                updateProfile.ProfileImageUrl = EnsureFullImageUrl(uploadResult.SecureUrl.ToString());
             }
 
             // Fetch existing user by currentUserId from token to ensure we're updating the correct user
@@ -220,5 +226,29 @@ public class UserProfileController : ControllerBase
             _logger.LogError($"Error getting user posts: {ex.Message}");
             return StatusCode(500, new { message = "Internal server error" });
         }
+    }
+    // In Server/Controllers/UserProfileController.cs
+    private string EnsureFullImageUrl(string imageUrl)
+    {
+        if (string.IsNullOrEmpty(imageUrl))
+            return imageUrl;
+
+        // If it's already a full URL, return as is
+        if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+            imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return imageUrl;
+        }
+
+        // If it's a Cloudinary URL without scheme, add https://
+        if (imageUrl.StartsWith("res.cloudinary.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://" + imageUrl;
+        }
+
+        // For relative URLs, you might want to prepend your site's base URL
+        // return $"{Request.Scheme}://{Request.Host}{imageUrl.TrimStart('~')}";
+    
+        return imageUrl; // Fallback
     }
 }
