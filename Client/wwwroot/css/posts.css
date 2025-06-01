@@ -168,6 +168,12 @@ body {
     gap: 4px;
     border-radius: 12px;
     overflow: hidden;
+    aspect-ratio: 1/1; /* Ensure container maintains square aspect ratio */
+}
+
+.media-grid-container.grid-1 {
+    grid-template-columns: 1fr;
+    aspect-ratio: 16/9; /* Wider aspect ratio for single item */
 }
 
 .media-grid-container.grid-2 {
@@ -181,19 +187,28 @@ body {
 
 .media-grid-container.grid-4 {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
 }
 
 .media-item {
     position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .media-item img,
 .media-item video {
     width: 100%;
-    height: auto;
-    max-height: 400px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 12px;
+    border-radius: 4px;
+    transition: transform 0.3s ease;
+}
+
+.media-item:hover img,
+.media-item:hover video {
+    transform: scale(1.03);
 }
 
 .media-overlay {
