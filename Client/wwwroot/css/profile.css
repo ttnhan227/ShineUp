@@ -34,6 +34,7 @@
     font-size: 15px;
     line-height: 1.5;
 }
+
 :root {
     --primary-color: #1DA1F2;
     --danger-color: #E0245E;
@@ -200,8 +201,8 @@
 .profile-details-card,
 .posts-feed-card {
     background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Updated to match auth.css */
     flex: 1;
 }
 
@@ -211,12 +212,13 @@
 
 .card-header {
     padding: 15px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e9ecef; /* Updated to match auth.css */
 }
 
 .card-header h3 {
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 1.5rem; /* Matches card-title in auth.css */
+    font-weight: 600; /* Matches auth.css */
+    color: #32325d; /* Matches auth.css */
     margin: 0;
     display: flex;
     align-items: center;
@@ -224,7 +226,8 @@
 
 .card-header i {
     margin-right: 8px;
-    font-size: 20px;
+    font-size: 1.25rem; /* Matches auth.css */
+    color: #5e72e4; /* Matches auth.css */
 }
 
 .card-body {
@@ -232,19 +235,47 @@
 }
 
 .info-group {
-    margin-bottom: 15px;
+    margin-bottom: 1.5rem; /* Matches form-group in auth.css */
 }
 
 .info-group label {
-    font-size: 14px;
-    color: var(--muted-color);
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    gap: 0.5rem; /* Matches auth.css */
+    color: #8898aa; /* Matches auth.css */
+    font-size: 0.875rem; /* Matches auth.css */
+    margin-bottom: 0.5rem; /* Matches auth.css */
+    font-weight: 600; /* Matches auth.css */
 }
 
 .info-group label i {
-    margin-right: 8px;
+    font-size: 1.25rem; /* Matches auth.css */
+    color: #5e72e4; /* Matches auth.css */
+}
+
+.info-group input.form-control {
+    border-radius: 8px; /* Matches auth.css */
+    border: 1px solid #e9ecef; /* Matches auth.css */
+    padding: 0.75rem 1rem; /* Matches auth.css */
+    font-size: 0.875rem; /* Matches auth.css */
+    transition: all 0.3s ease; /* Matches auth.css */
+}
+
+.info-group input.form-control:focus {
+    border-color: #5e72e4; /* Matches auth.css */
+    box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25); /* Matches auth.css */
+}
+
+.info-group .text-danger {
+    font-size: 0.75rem; /* Matches auth.css */
+    margin-top: 0.25rem; /* Matches auth.css */
+    display: block; /* Matches auth.css */
+}
+
+.info-group .form-text {
+    font-size: 0.75rem; /* Matches auth.css */
+    color: #8898aa; /* Matches auth.css */
+    margin-top: 0.25rem; /* Matches auth.css */
 }
 
 .info-value {
@@ -263,36 +294,45 @@
 
 .card-footer {
     padding: 15px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #e9ecef; /* Updated to match auth.css */
     display: flex;
-    gap: 10px;
+    gap: 1rem; /* Matches button-group in auth.css */
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    border-radius: 20px;
-    font-size: 14px;
-    padding: 8px 16px;
+    background: #5e72e4; /* Updated to match auth.css */
+    border: none; /* Updated to match auth.css */
+    border-radius: 8px; /* Updated to match auth.css */
+    font-size: 0.875rem; /* Updated to match auth.css */
+    padding: 0.75rem 1.5rem; /* Updated to match auth.css */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Matches auth.css */
+    transition: all 0.3s ease; /* Matches auth.css */
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: #1A91DA;
-    border-color: #1A91DA;
+    transform: translateY(-2px); /* Matches auth.css */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Matches auth.css */
 }
 
 .btn-secondary {
-    background: var(--background-color);
-    border-color: var(--border-color);
-    border-radius: 20px;
-    font-size: 14px;
-    padding: 8px 16px;
-    color: var(--text-color);
+    background: #8898aa; /* Updated to match auth.css */
+    border: none; /* Updated to match auth.css */
+    border-radius: 8px; /* Updated to match auth.css */
+    font-size: 0.875rem; /* Updated to match auth.css */
+    padding: 0.75rem 1.5rem; /* Updated to match auth.css */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Matches auth.css */
+    transition: all 0.3s ease; /* Matches auth.css */
+    color: #fff;
 }
 
 .btn-secondary:hover {
-    background: #E1E8ED;
+    transform: translateY(-2px); /* Matches auth.css */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Matches auth.css */
 }
 
 .btn-primary i,
@@ -555,5 +595,15 @@
 
     .post-action i {
         font-size: 16px;
+    }
+
+    .card-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .card-footer .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
