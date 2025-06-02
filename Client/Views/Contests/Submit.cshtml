@@ -3,106 +3,206 @@
     ViewData["Title"] = "Submit Contest Entry";
 }
 
-<div class="container mt-4">
-    <h1>Submit Contest Entry</h1>
-    
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-    
-    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data">
-        <input type="hidden" asp-for="ContestID" />
-        <input type="hidden" asp-for="UserID" />
-        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video" />
-        
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-        
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Entry Details</h5>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h1 class="h3 mb-0">Submit Your Entry</h1>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Title *</label>
-                    <input type="text" class="form-control" asp-for="Title" placeholder="Enter a title for your entry">
-                    <span asp-validation-for="Title" class="text-danger"></span>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <div>@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Description</label>
-                    <textarea class="form-control" asp-for="Description" rows="3" placeholder="Tell us about your entry (optional)"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mb-4">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" id="mediaTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="video-tab" data-bs-toggle="tab" 
-                                data-bs-target="#videoTab" type="button" role="tab" aria-controls="video" 
-                                aria-selected="true" onclick="setMediaType('video')">
-                            <i class="bi bi-camera-video"></i> Video Entry
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="image-tab" data-bs-toggle="tab" 
-                                data-bs-target="#imageTab" type="button" role="tab" aria-controls="image" 
-                                aria-selected="false" onclick="setMediaType('image')">
-                            <i class="bi bi-image"></i> Image Entry
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content" id="mediaTabContent">
-                    <!-- Video Tab -->
-                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel" aria-labelledby="video-tab">
-                        <div class="mb-3">
-                            <label asp-for="VideoFile" class="form-label">Video File *</label>
-                            <input type="file" class="form-control" asp-for="VideoFile" accept="video/*">
-                            <span asp-validation-for="VideoFile" class="text-danger"></span>
-                            <div class="form-text">
-                                Supported formats: .mp4, .webm, .mov (Max 50MB)
+            }
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <input type="hidden" asp-for="ContestID" />
+                        <input type="hidden" asp-for="UserID" />
+                        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <div class="fw-medium">Please fix the following errors:</div>
+                        </div>
+                        
+                        <!-- Entry Details Card -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 d-flex align-items-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                                    <i class="bi bi-pencil-square"></i>
+                                </span>
+                                Entry Details
+                            </h5>
+                            
+                            <div class="ps-4">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label fw-medium">Title <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-card-heading text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control" asp-for="Title" placeholder="Enter a title for your entry" required>
+                                    </div>
+                                    <span asp-validation-for="Title" class="text-danger small d-block mt-1"></span>
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label asp-for="Description" class="form-label fw-medium">Description</label>
+                                    <div class="position-relative">
+                                        <textarea class="form-control" asp-for="Description" rows="4" 
+                                                  placeholder="Tell us about your entry (optional)" 
+                                                  style="resize: none;"></textarea>
+                                        <div class="form-text text-end small">
+                                            <span id="charCount">0</span>/500 characters
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="Description" class="text-danger small d-block mt-1"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> Your video will be processed after submission.
-                        </div>
-                    </div>
-                    
-                    <!-- Image Tab -->
-                    <div class="tab-pane fade" id="imageTab" role="tabpanel" aria-labelledby="image-tab">
-                        <div class="mb-3">
-                            <label asp-for="ImageFile" class="form-label">Image File *</label>
-                            <input type="file" class="form-control" asp-for="ImageFile" accept="image/*">
-                            <span asp-validation-for="ImageFile" class="text-danger"></span>
-                            <div class="form-text">
-                                Supported formats: .jpg, .jpeg, .png, .gif (Max 10MB)
+                        
+                        <!-- Media Upload Card -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 d-flex align-items-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                                    <i class="bi bi-upload"></i>
+                                </span>
+                                Media Upload
+                            </h5>
+                            
+                            <div class="ps-4">
+                                <ul class="nav nav-tabs nav-fill border-bottom mb-3" id="mediaTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="video-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#videoTab" type="button" role="tab" aria-controls="video" 
+                                                aria-selected="true" onclick="setMediaType('video')">
+                                            <i class="bi bi-camera-video me-2"></i> Video Entry
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="image-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#imageTab" type="button" role="tab" aria-controls="image" 
+                                                aria-selected="false" onclick="setMediaType('image')">
+                                            <i class="bi bi-image me-2"></i> Image Entry
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="mediaTabContent">
+                                    <!-- Video Tab -->
+                                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel" aria-labelledby="video-tab">
+                                        <div class="upload-area p-4 text-center border rounded-3 mb-3" id="videoUploadArea">
+                                            <div class="py-4">
+                                                <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                                <h5 class="mb-2">Upload Your Video</h5>
+                                                <p class="text-muted small mb-0">Drag & drop your video file here or click to browse</p>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Supported formats: .mp4, .webm, .mov (Max 50MB)
+                                                </p>
+                                            </div>
+                                            <input type="file" class="d-none" asp-for="VideoFile" accept="video/*" id="videoFileInput">
+                                        </div>
+                                        <div id="videoPreview" class="text-center mb-3 d-none">
+                                            <video id="videoPlayer" controls class="img-fluid rounded-3 border" style="max-height: 300px;">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="changeVideoBtn">
+                                                    <i class="bi bi-x-lg me-1"></i> Change Video
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info d-flex align-items-center">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            <div class="small">Your video will be processed after submission. This may take a few moments.</div>
+                                        </div>
+                                        <span asp-validation-for="VideoFile" class="text-danger small d-block mt-1"></span>
+                                    </div>
+                                    
+                                    <!-- Image Tab -->
+                                    <div class="tab-pane fade" id="imageTab" role="tabpanel" aria-labelledby="image-tab">
+                                        <div class="upload-area p-4 text-center border rounded-3 mb-3" id="imageUploadArea">
+                                            <div class="py-4">
+                                                <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                                <h5 class="mb-2">Upload Your Image</h5>
+                                                <p class="text-muted small mb-0">Drag & drop your image file here or click to browse</p>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Supported formats: .jpg, .jpeg, .png, .gif (Max 10MB)
+                                                </p>
+                                            </div>
+                                            <input type="file" class="d-none" asp-for="ImageFile" accept="image/*" id="imageFileInput">
+                                        </div>
+                                        <div id="imagePreview" class="text-center mb-3 d-none">
+                                            <img id="imagePreviewElement" src="#" alt="Preview" class="img-fluid rounded-3 border" style="max-height: 300px;">
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="changeImageBtn">
+                                                    <i class="bi bi-x-lg me-1"></i> Change Image
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info d-flex align-items-center">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            <div class="small">Your image will be processed after submission.</div>
+                                        </div>
+                                        <span asp-validation-for="ImageFile" class="text-danger small d-block mt-1"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> Your image will be processed after submission.
+                        
+                        <!-- Submission Buttons -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-send me-2"></i>Submit Entry
+                            </button>
                         </div>
-                    </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Contest Guidelines -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3 d-flex align-items-center">
+                        <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                            <i class="bi bi-lightbulb"></i>
+                        </span>
+                        Submission Guidelines
+                    </h5>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Make sure your content is original and doesn't violate any copyrights
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Follow the contest theme and guidelines
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Ensure your files meet the size and format requirements
+                        </li>
+                        <li class="mb-0">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Be respectful and appropriate in your submission
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
-        
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-            <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary me-md-2">
-                <i class="bi bi-x-circle"></i> Cancel
-            </a>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-send"></i> Submit Entry
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
 @section Styles {
