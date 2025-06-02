@@ -1,19 +1,256 @@
-﻿@model SubmitContestEntryViewModel
+@model SubmitContestEntryViewModel
 @{
     ViewData["Title"] = "Submit Contest Entry";
 }
 
-<h1>Submit Contest Entry</h1>
-<form asp-action="Submit" method="post">
-    <input type="hidden" asp-for="ContestID" />
-    <input type="hidden" asp-for="UserID" />
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="form-group">
-        <p>Note: Submission logic is simplified. In a full implementation, select a video to submit.</p>
-    </div>
-    <button type="submit" class="btn btn-primary">Submit Entry</button>
-</form>
+<div class="container mt-4">
+    <h1>Submit Contest Entry</h1>
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data">
+        <input type="hidden" asp-for="ContestID" />
+        <input type="hidden" asp-for="UserID" />
+        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video" />
+        
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Entry Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Title *</label>
+                    <input type="text" class="form-control" asp-for="Title" placeholder="Enter a title for your entry">
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Description</label>
+                    <textarea class="form-control" asp-for="Description" rows="3" placeholder="Tell us about your entry (optional)"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="mediaTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="video-tab" data-bs-toggle="tab" 
+                                data-bs-target="#videoTab" type="button" role="tab" aria-controls="video" 
+                                aria-selected="true" onclick="setMediaType('video')">
+                            <i class="bi bi-camera-video"></i> Video Entry
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="image-tab" data-bs-toggle="tab" 
+                                data-bs-target="#imageTab" type="button" role="tab" aria-controls="image" 
+                                aria-selected="false" onclick="setMediaType('image')">
+                            <i class="bi bi-image"></i> Image Entry
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="mediaTabContent">
+                    <!-- Video Tab -->
+                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel" aria-labelledby="video-tab">
+                        <div class="mb-3">
+                            <label asp-for="VideoFile" class="form-label">Video File *</label>
+                            <input type="file" class="form-control" asp-for="VideoFile" accept="video/*">
+                            <span asp-validation-for="VideoFile" class="text-danger"></span>
+                            <div class="form-text">
+                                Supported formats: .mp4, .webm, .mov (Max 50MB)
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Your video will be processed after submission.
+                        </div>
+                    </div>
+                    
+                    <!-- Image Tab -->
+                    <div class="tab-pane fade" id="imageTab" role="tabpanel" aria-labelledby="image-tab">
+                        <div class="mb-3">
+                            <label asp-for="ImageFile" class="form-label">Image File *</label>
+                            <input type="file" class="form-control" asp-for="ImageFile" accept="image/*">
+                            <span asp-validation-for="ImageFile" class="text-danger"></span>
+                            <div class="form-text">
+                                Supported formats: .jpg, .jpeg, .png, .gif (Max 10MB)
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Your image will be processed after submission.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary me-md-2">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send"></i> Submit Entry
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <style>
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+        }
+    </style>
+}
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    
+    <script>
+        // Set the media type when tabs are changed
+        function setMediaType(type) {
+            document.getElementById('mediaTypeInput').value = type;
+            
+            // Clear validation messages when switching tabs
+            const form = document.getElementById('entryForm');
+            const formValidator = window.bootstrap.ValidationForm(form);
+            if (formValidator) {
+                formValidator.resetForm();
+            }
+            
+            // Reset file input when switching tabs
+            const videoInput = document.querySelector('input[type="file"][accept="video/*"]');
+            const imageInput = document.querySelector('input[type="file"][accept="image/*"]');
+            
+            if (type === 'video') {
+                if (videoInput) videoInput.required = true;
+                if (imageInput) imageInput.required = false;
+                if (imageInput) imageInput.value = ''; // Clear the other input
+            } else {
+                if (videoInput) videoInput.required = false;
+                if (imageInput) imageInput.required = true;
+                if (videoInput) videoInput.value = ''; // Clear the other input
+            }
+        }
+        
+        // Initialize form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('entryForm');
+            const mediaTypeInput = document.getElementById('mediaTypeInput');
+            const videoInput = document.querySelector('input[type="file"][accept="video/*"]');
+            const imageInput = document.querySelector('input[type="file"][accept="image/*"]');
+            
+            // Set initial required attribute based on default tab
+            if (mediaTypeInput && mediaTypeInput.value === 'video' && videoInput) {
+                videoInput.required = true;
+            } else if (imageInput) {
+                imageInput.required = true;
+            }
+            
+            // Handle form submission
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Client-side validation
+                    const title = document.querySelector('input[name="Title"]');
+                    const mediaType = mediaTypeInput ? mediaTypeInput.value : 'video';
+                    const fileInput = mediaType === 'video' ? videoInput : imageInput;
+                    
+                    // Reset previous error states
+                    [title, fileInput].forEach(input => {
+                        if (input) input.classList.remove('is-invalid');
+                    });
+                    
+                    let isValid = true;
+                    
+                    // Validate title
+                    if (!title || !title.value.trim()) {
+                        if (title) {
+                            title.classList.add('is-invalid');
+                            const errorSpan = title.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = 'Title is required.';
+                            }
+                        }
+                        isValid = false;
+                    }
+                    
+                    // Validate file
+                    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                        if (fileInput) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `Please select a ${mediaType} file.`;
+                            }
+                        }
+                        isValid = false;
+                    } else {
+                        // Validate file size and type
+                        const file = fileInput.files[0];
+                        const maxSize = mediaType === 'video' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+                        
+                        if (file.size > maxSize) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `File is too large. Maximum size is ${maxSize / (1024 * 1024)}MB.`;
+                            }
+                            isValid = false;
+                        }
+                        
+                        // Simple file type validation
+                        const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+                        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+                        
+                        if ((mediaType === 'video' && !validVideoTypes.includes(file.type)) ||
+                            (mediaType === 'image' && !validImageTypes.includes(file.type))) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `Invalid file type. Please select a valid ${mediaType} file.`;
+                            }
+                            isValid = false;
+                        }
+                    }
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } else {
+                        // Show loading state
+                        const submitButton = form.querySelector('button[type="submit"]');
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Initialize the form with the correct media type
+        document.addEventListener('DOMContentLoaded', function() {
+            const mediaType = '@Model.MediaType';
+            document.getElementById('mediaTypeInput').value = mediaType;
+            
+            // Activate the correct tab
+            if (mediaType === 'image') {
+                const imageTab = new bootstrap.Tab(document.getElementById('image-tab'));
+                imageTab.show();
+            }
+        });
+    </script>
 }

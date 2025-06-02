@@ -1,42 +1,279 @@
-﻿@model ContestViewModel
+@model ContestViewModel
 @{
     ViewData["Title"] = Model.Title;
-    var entries = ViewBag.Entries as List<ContestEntryViewModel>;
+    var entries = ViewBag.Entries as List<ContestEntryViewModel> ?? new List<ContestEntryViewModel>();
+    
+    // Check if user has already submitted to this contest
+    bool hasSubmitted = false;
+    if (User.Identity.IsAuthenticated)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+        hasSubmitted = entries.Any(e => e.UserID == userId);
+    }
 }
 
-<h1>@Model.Title</h1>
-<p>@Model.Description</p>
-<p><strong>Start:</strong> @Model.StartDate.ToString("MMM dd, yyyy")</p>
-<p><strong>End:</strong> @Model.EndDate.ToString("MMM dd, yyyy")</p>
-<p><strong>Status:</strong> @(Model.IsActive ? "Active" : "Inactive")</p>
-
-@if (Model.IsActive && User.Identity.IsAuthenticated)
-{
-    <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-success">Submit Entry</a>
-}
-
-<h2>Entries</h2>
-@if (entries.Any())
-{
-    <div class="row">
-        @foreach (var entry in entries)
-        {
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">@entry.VideoTitle</h5>
-                        <p><strong>By:</strong> @entry.UserName</p>
-                        <p><strong>Submitted:</strong> @entry.SubmissionDate.ToString("MMM dd, yyyy")</p>
-                        <video controls preload="metadata" class="w-100">
-                            <source src="@entry.VideoURL" type="video/mp4">
-                        </video>
-                    </div>
+<div class="container mt-4">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h1 class="card-title">@Model.Title</h1>
+            <p class="card-text">@Model.Description</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-calendar3"></i> Start:</strong> @Model.StartDate.ToString("MMM dd, yyyy")</p>
+                    <p><strong><i class="bi bi-calendar-check"></i> End:</strong> @Model.EndDate.ToString("MMM dd, yyyy")</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-info-circle"></i> Status:</strong> 
+                        <span class="badge bg-@(Model.IsActive ? "success" : "secondary")">
+                            @(Model.IsActive ? "Active" : "Ended")
+                        </span>
+                    </p>
+                    <p><strong><i class="bi bi-trophy"></i> Entries:</strong> @entries.Count</p>
                 </div>
             </div>
-        }
+            
+            @if (entries.Any() && Model.IsActive && User.Identity.IsAuthenticated)
+            {
+                <div class="mt-3">
+                    @if (hasSubmitted)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-check-circle"></i> You have already submitted an entry to this contest.
+                        </div>
+                    }
+                    else
+                    {
+                        <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Submit Entry
+                        </a>
+                    }
+                </div>
+            }
+        </div>
     </div>
+
+    <h2 class="mb-4">
+        <i class="bi bi-collection"></i> Entries
+        <span class="badge bg-secondary">@entries.Count</span>
+    </h2>
+    
+    @if (entries.Any())
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var entry in entries)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <!-- Media Section -->
+                        <div class="position-relative" style="padding-top: 56.25%;">
+                            @if (entry.MediaType == "video")
+                            {
+                                <video class="card-img-top position-absolute top-0 start-0 w-100 h-100" 
+                                       style="object-fit: cover;" 
+                                       controls 
+                                       preload="metadata"
+                                       poster="/images/video-thumbnail.jpg">
+                                    <source src="@entry.MediaUrl" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-dark"><i class="bi bi-play-circle"></i> Video</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="@entry.MediaUrl" 
+                                     class="card-img-top position-absolute top-0 start-0 w-100 h-100" 
+                                     style="object-fit: cover;" 
+                                     alt="@entry.Title"
+                                     onerror="this.onerror=null; this.src='/images/placeholder.png'">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-dark"><i class="bi bi-image"></i> Image</span>
+                                </div>
+                            }
+                            <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(entry.UserAvatar))
+                                    {
+                                        <img src="@entry.UserAvatar" 
+                                             class="rounded-circle me-2 border border-2 border-white" 
+                                             width="36" 
+                                             height="36" 
+                                             alt="@entry.UserName"
+                                             onerror="this.onerror=null; this.src='/images/avatar.png'"
+                                             style="object-fit: cover;">
+                                    }
+                                    <div class="text-white">
+                                        <div class="fw-bold">@entry.UserName</div>
+                                        <small>Submitted @entry.SubmissionDate.ToString("MMM d, yyyy")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Entry Details -->
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">@(string.IsNullOrEmpty(entry.Title) ? "Untitled" : entry.Title)</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Like">
+                                        <i class="bi bi-heart"></i> Like
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" title="Share">
+                                        <i class="bi bi-share"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(entry.Description))
+                            {
+                                <div class="card-text mb-3">
+                                    <div class="entry-description">
+                                        @if (entry.Description.Length > 150)
+                                        {
+                                            <div class="short-description">
+                                                @entry.Description.Substring(0, 150)...
+                                                <a href="#" class="read-more">Read more</a>
+                                            </div>
+                                            <div class="full-description d-none">
+                                                @entry.Description
+                                                <a href="#" class="read-less">Show less</a>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            @entry.Description
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <div>
+                                    <span class="me-2"><i class="bi bi-heart"></i> 0</span>
+                                    <span><i class="bi bi-chat"></i> 0</span>
+                                </div>
+                                <div>
+                                    <span>#contestentry</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5 bg-light rounded">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+            <h4 class="mt-3">No entries yet</h4>
+            <p class="text-muted">Be the first to submit an entry!</p>
+            @if (Model.IsActive && User.Identity.IsAuthenticated && !hasSubmitted)
+            {
+                <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-primary mt-2">
+                    <i class="bi bi-upload"></i> Submit Entry
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+        }
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            border-radius: 4px;
+        }
+        .entry-description {
+            line-height: 1.5;
+            color: #4a4a4a;
+        }
+        .entry-description .read-more,
+        .entry-description .read-less {
+            color: #0d6efd;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+        .entry-description .read-more:hover,
+        .entry-description .read-less:hover {
+            text-decoration: underline;
+        }
+        .card-title {
+            font-weight: 600;
+            color: #212529;
+        }
+        .btn-like.active {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        .btn-like.active i::before {
+            content: "\F415"; /* Filled heart icon */
+        }
+    </style>
 }
-else
-{
-    <p>No entries yet.</p>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Read more/less functionality
+            document.querySelectorAll('.read-more').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const container = this.closest('.entry-description');
+                    container.querySelector('.short-description').classList.add('d-none');
+                    container.querySelector('.full-description').classList.remove('d-none');
+                });
+            });
+
+            document.querySelectorAll('.read-less').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const container = this.closest('.entry-description');
+                    container.querySelector('.short-description').classList.remove('d-none');
+                    container.querySelector('.full-description').classList.add('d-none');
+                    // Scroll to the top of the description
+                    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+            });
+
+            // Like button functionality
+            document.querySelectorAll('.btn-like').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    // Here you would typically make an API call to like/unlike
+                });
+            });
+
+            // Share button functionality
+            document.querySelectorAll('.btn-share').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Basic Web Share API if available
+                    if (navigator.share) {
+                        navigator.share({
+                            title: document.title,
+                            text: 'Check out this contest entry!',
+                            url: window.location.href
+                        }).catch(console.error);
+                    } else {
+                        // Fallback for browsers that don't support Web Share API
+                        alert('Sharing is not supported in your browser');
+                    }
+                });
+            });
+        });
+    </script>
 }

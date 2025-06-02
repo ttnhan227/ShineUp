@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Client.Models;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -125,7 +125,12 @@ public class ContestsController : Controller
                 return View("Error");
             }
 
-            var model = new SubmitContestEntryViewModel { ContestID = id, UserID = userId };
+            var model = new SubmitContestEntryViewModel 
+            { 
+                ContestID = id, 
+                UserID = userId,
+                MediaType = "video" // Default to video
+            };
             return View(model);
         }
         catch (Exception ex)
@@ -138,6 +143,7 @@ public class ContestsController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
     public async Task<IActionResult> Submit(SubmitContestEntryViewModel model)
     {
         if (!ModelState.IsValid)
@@ -148,6 +154,13 @@ public class ContestsController : Controller
 
         try
         {
+            // Validate media file based on selected type
+            if (!model.HasValidMedia)
+            {
+                ModelState.AddModelError("", $"Please provide a valid {model.MediaType} file");
+                return View(model);
+            }
+
             var client = _clientFactory.CreateClient("API");
             var token = HttpContext.Request.Cookies["auth_token"];
             if (string.IsNullOrEmpty(token))
@@ -158,22 +171,118 @@ public class ContestsController : Controller
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.PostAsJsonAsync("api/ContestEntries", model);
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Contest entry submitted successfully for contest {ContestId}", model.ContestID);
-                return RedirectToAction("Details", new { id = model.ContestID });
-            }
+            // Log the start of file upload
+            _logger.LogInformation("Starting file upload for contest {ContestId}, file: {FileName}, size: {FileSize} bytes", 
+                model.ContestID, 
+                model.MediaType == "video" ? model.VideoFile?.FileName : model.ImageFile?.FileName,
+                model.MediaType == "video" ? model.VideoFile?.Length : model.ImageFile?.Length);
 
-            var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError("Failed to submit contest entry. Status: {StatusCode}, Error: {Error}", response.StatusCode, errorContent);
-            ModelState.AddModelError("", $"Failed to submit entry: {errorContent}");
+            // Create multipart form data with boundary
+            using var formData = new MultipartFormDataContent(Guid.NewGuid().ToString())
+            {
+                // Add basic fields
+                { new StringContent(model.ContestID.ToString()), "ContestID" },
+                { new StringContent(model.UserID.ToString()), "UserID" },
+                { new StringContent(model.MediaType), "MediaType" },
+                { new StringContent(model.Title ?? string.Empty), "Title" },
+                { new StringContent(model.Description ?? string.Empty), "Description" }
+            };
+            
+            try
+            {
+                // Add the appropriate file
+                IFormFile fileToUpload = model.MediaType == "video" ? model.VideoFile! : model.ImageFile!;
+                
+                using var fileStream = fileToUpload.OpenReadStream();
+                var fileContent = new StreamContent(fileStream);
+                fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(fileToUpload.ContentType);
+                
+                // Use a sanitized filename
+                var fileName = Path.GetFileName(fileToUpload.FileName);
+                formData.Add(fileContent, "file", fileName);
+                
+                // Log before sending the request
+                _logger.LogDebug("Sending file upload request to API");
+                
+                // Send the request to the API with a timeout
+                var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)); // 10 minute timeout
+                var response = await client.PostAsync("api/ContestEntries/upload", formData, cts.Token);
+                
+                // Log the response status
+                _logger.LogInformation("API response status: {StatusCode}", response.StatusCode);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation("Contest entry submitted successfully for contest {ContestId}", model.ContestID);
+                    
+                    TempData["SuccessMessage"] = "Your entry has been submitted successfully!";
+                    return RedirectToAction("Details", new { id = model.ContestID });
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Failed to submit contest entry. Status: {StatusCode}, Response: {Response}", 
+                        response.StatusCode, errorContent);
+                    
+                    ModelState.AddModelError("", "An error occurred while submitting your entry. Please try again.");
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
+                    }
+
+                    // Handle specific error cases
+                    if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        try
+                        {
+                            var errorObj = JsonDocument.Parse(errorContent, new JsonDocumentOptions());
+                            if (errorObj.RootElement.TryGetProperty("errors", out var errors))
+                            {
+                                foreach (var error in errors.EnumerateObject())
+                                {
+                                    foreach (var errorMessage in error.Value.EnumerateArray())
+                                    {
+                                        ModelState.AddModelError(error.Name, errorMessage.GetString());
+                                    }
+                                }
+                            }
+                            else if (errorObj.RootElement.TryGetProperty("title", out var title))
+                            {
+                                ModelState.AddModelError("", title.GetString());
+                            }
+                            else
+                            {
+                                ModelState.AddModelError("", "An error occurred while submitting the entry.");
+                            }
+                        }
+                        catch
+                        {
+                            ModelState.AddModelError("", errorContent);
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "An error occurred while submitting the entry. Please try again later.");
+                    }
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogError(ex, "File upload timed out for contest {ContestId}", model.ContestID);
+                ModelState.AddModelError("", "The upload took too long. Please try again with a smaller file.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading file for contest {ContestId}", model.ContestID);
+                ModelState.AddModelError("", "An error occurred while uploading your file. Please try again.");
+            }
             return View(model);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting contest entry for {ContestId}", model.ContestID);
-            ModelState.AddModelError("", "An error occurred while submitting the entry");
+            _logger.LogError(ex, "Error submitting contest entry for contest {ContestId}", model.ContestID);
+            ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
             return View(model);
         }
     }
