@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Server.Models;
 
@@ -9,26 +8,29 @@ public class Community
     public int CommunityID { get; set; }
 
     [Required]
-    [StringLength(100)]
-    public string Name { get; set; }
+    [MaxLength(100)]
+    public string Name { get; set; } = null!;
 
-    [StringLength(500)]
+    [MaxLength(500)]
     public string? Description { get; set; }
 
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     public DateTime? UpdatedAt { get; set; }
 
-
-    [ForeignKey("CreatedByUserID")]
+    [Required]
     public int CreatedByUserID { get; set; }
-    public User CreatedBy { get; set; }
+
+    public User CreatedBy { get; set; } = null!;
 
     public int? PrivacyID { get; set; }
-    [ForeignKey("PrivacyID")]
+
     public Privacy? Privacy { get; set; }
 
-    // Navigation properties
+    public string? CoverImageUrl { get; set; }
+
+    // Navigation
     public ICollection<Post> Posts { get; set; } = new List<Post>();
+
     public ICollection<CommunityMember> Members { get; set; } = new List<CommunityMember>();
 }

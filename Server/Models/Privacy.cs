@@ -12,4 +12,5 @@ public class Privacy
     public ICollection<Video> Videos { get; set; }
     public ICollection<Post> Posts { get; set; }
     public ICollection<Image> Images { get; set; }
+    public ICollection<Community> Communities { get; set; }
 }
