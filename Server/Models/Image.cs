@@ -9,8 +9,8 @@ public class Image
     public string ImageID { get; set; } // Using publicId from Cloudinary as primary key
 
     [ForeignKey("Post")]
-    public int PostID { get; set; }
-    public Post Post { get; set; }
+    public int? PostID { get; set; }
+    public Post? Post { get; set; }
 
     [ForeignKey("User")]
     public int UserID { get; set; }

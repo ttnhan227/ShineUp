@@ -1,0 +1,413 @@
+@model ContestViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var entries = ViewBag.Entries as List<ContestEntryViewModel> ?? new List<ContestEntryViewModel>();
+
+    // Check if user has already submitted to this contest
+    bool hasSubmitted = false;
+    if (User.Identity.IsAuthenticated)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+        hasSubmitted = entries.Any(e => e.UserID == userId);
+    }
+}
+
+<div class="container py-4">
+    <!-- Contest Header -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4">
+                <div class="mb-3 mb-md-0">
+                    <div class="d-flex align-items-center mb-2">
+                        <h1 class="h2 mb-0 me-3">@Model.Title</h1>
+                        <span class="badge bg-@(Model.IsActive ? "success" : "secondary") fs-6">
+                            @(Model.IsActive ? "Active" : "Ended")
+                        </span>
+                    </div>
+                    <p class="lead text-muted mb-0">@Model.Description</p>
+                </div>
+                
+                @if (Model.IsActive && User.Identity.IsAuthenticated)
+                {
+                    <div class="d-flex gap-2">
+                        @if (hasSubmitted)
+                        {
+                            <div class="alert alert-info mb-0 d-flex align-items-center py-2" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <div>You've already submitted an entry</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-primary">
+                                <i class="bi bi-upload me-2"></i>Submit Entry
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-container bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-calendar3 text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Start Date</div>
+                            <div class="fw-medium">@Model.StartDate.ToString("MMMM dd, yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-container bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-calendar-check text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">End Date</div>
+                            <div class="fw-medium">@Model.EndDate.ToString("MMMM dd, yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-container bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-trophy text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Total Entries</div>
+                            <div class="fw-medium">@entries.Count entries</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Rules section removed as Rules property is not available in the model -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Entries Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">
+            <i class="bi bi-collection me-2"></i>Entries
+            <span class="badge bg-secondary ms-2">@entries.Count</span>
+        </h2>
+        @if (entries.Any())
+        {
+            <div class="d-flex align-items-center">
+                <div class="input-group input-group-sm ms-3" style="max-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search entries...">
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (entries.Any())
+    {
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var entry in entries)
+        {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <!-- Media Section -->
+                <div class="position-relative" style="padding-top: 56.25%;">
+                    @if (entry.MediaType == "video")
+                    {
+                    <video class="card-img-top position-absolute top-0 start-0 w-100 h-100"
+                           style="object-fit: cover;"
+                           controls
+                           preload="metadata"
+                           poster="/images/video-thumbnail.jpg">
+                        <source src="@entry.MediaUrl" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-dark"><i class="bi bi-play-circle"></i> Video</span>
+                    </div>
+                    }
+                    else
+                    {
+                    <img src="@entry.MediaUrl"
+                         class="card-img-top position-absolute top-0 start-0 w-100 h-100"
+                         style="object-fit: cover;"
+                         alt="@entry.Title"
+                         onerror="this.onerror=null; this.src='/images/placeholder.png'">
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-dark"><i class="bi bi-image"></i> Image</span>
+                    </div>
+                    }
+                    <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(entry.UserAvatar))
+                            {
+                            <img src="@entry.UserAvatar"
+                                 class="rounded-circle me-2 border border-2 border-white"
+                                 width="36"
+                                 height="36"
+                                 alt="@entry.UserName"
+                                 onerror="this.onerror=null; this.src='/images/avatar.png'"
+                                 style="object-fit: cover;">
+                            }
+                            <div class="text-white">
+                                <div class="fw-bold">@entry.UserName</div>
+                                <small>Submitted @entry.SubmissionDate.ToString("MMM d, yyyy")</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entry Details -->
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">@(string.IsNullOrEmpty(entry.Title) ? "Untitled" : entry.Title)</h5>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm @(entry.HasVoted ? "btn-danger" : "btn-outline-secondary") vote-btn"
+                                    data-entry-id="@entry.EntryID"
+                                    title="@(entry.HasVoted ? "You've voted for this entry" : "Vote for this entry")">
+                                <i class="bi @(entry.HasVoted ? "bi-heart-fill" : "bi-heart") me-1"></i>
+                                <span class="vote-count">@entry.VoteCount</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(entry.Description))
+                    {
+                    <div class="card-text mb-3">
+                        <div class="entry-description">
+                            @if (entry.Description.Length > 150)
+                            {
+                            <div class="short-description">
+                                @entry.Description.Substring(0, 150)...
+                                <a href="#" class="read-more">Read more</a>
+                            </div>
+                            <div class="full-description d-none">
+                                @entry.Description
+                                <a href="#" class="read-less">Show less</a>
+                            </div>
+                            }
+                            else
+                            {
+                            @entry.Description
+                            }
+                        </div>
+                    </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <span class="me-2"><i class="bi bi-heart"></i> @entry.VoteCount</span>
+                            <span><i class="bi bi-chat"></i> 0</span>
+                        </div>
+                        <div>
+                            <span>#contestentry</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    }
+    else
+    {
+    <div class="text-center py-5 bg-light rounded">
+        <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d;"></i>
+        <h4 class="mt-3">No entries yet</h4>
+        <p class="text-muted">Be the first to submit an entry!</p>
+        @if (Model.IsActive && User.Identity.IsAuthenticated && !hasSubmitted)
+        {
+        <a asp-action="Submit" asp-route-id="@Model.ContestID" class="btn btn-primary mt-2">
+            <i class="bi bi-upload"></i> Submit Entry
+        </a>
+        }
+    </div>
+    }
+</div>
+
+@section Styles {
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        overflow: hidden;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+    }
+    .badge {
+        font-size: 0.75em;
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+        border-radius: 4px;
+    }
+    .entry-description {
+        line-height: 1.5;
+        color: #4a4a4a;
+    }
+    .entry-description .read-more,
+    .entry-description .read-less {
+        color: #0d6efd;
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 500;
+        margin-left: 4px;
+    }
+    .entry-description .read-more:hover,
+    .entry-description .read-less:hover {
+        text-decoration: underline;
+    }
+    .card-title {
+        font-weight: 600;
+        color: #212529;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle voting
+        document.querySelectorAll('.vote-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const entryId = this.dataset.entryId;
+                const voteCountEl = this.querySelector('.vote-count');
+                const icon = this.querySelector('i');
+                const isVoted = this.classList.contains('btn-danger');
+
+                // Show loading state
+                this.disabled = true;
+                const originalHtml = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                try {
+                    const response = await fetch('/Votes/Vote', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({
+                            entryId: parseInt(entryId)
+                        }),
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        let errorMessage = 'Error processing your vote';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.message || errorMessage;
+                            
+                            if (response.status === 401) {
+                                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                                return;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing error response:', e);
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.message || 'Error processing your vote');
+                    }
+
+                    // Update UI
+                    if (data.hasVoted) {
+                        this.classList.remove('btn-outline-secondary');
+                        this.classList.add('btn-danger');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        this.title = 'You\'ve voted for this entry';
+                    } else {
+                        this.classList.remove('btn-danger');
+                        this.classList.add('btn-outline-secondary');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                        this.title = 'Vote for this entry';
+                    }
+
+                    // Update vote count
+                    if (data.voteCount !== undefined) {
+                        voteCountEl.textContent = data.voteCount;
+                    }
+
+                    showToast(data.message || 'Vote recorded successfully', 'success');
+                } catch (error) {
+                    showToast(error.message || 'Error processing your vote', 'danger');
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            });
+        });
+
+// Read more/less functionality
+        document.querySelectorAll('.read-more, .read-less').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const card = this.closest('.card');
+                const shortDesc = card.querySelector('.short-description');
+                const fullDesc = card.querySelector('.full-description');
+                shortDesc.classList.toggle('d-none');
+                fullDesc.classList.toggle('d-none');
+            });
+        });
+
+        // Show toast function
+        function showToast(message, type = 'info') {
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+
+            const toastId = 'toast-' + Date.now();
+            const toast = document.createElement('div');
+            toast.className = `toast show align-items-center text-white bg-${type} border-0`;
+            toast.role = 'alert';
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.id = toastId;
+
+            toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                const toastElement = document.getElementById(toastId);
+                if (toastElement) {
+                    toastElement.classList.remove('show');
+                    setTimeout(() => toastElement.remove(), 150);
+                }
+            }, 5000);
+
+            const closeButton = toast.querySelector('[data-bs-dismiss="toast"]');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 150);
+                });
+            }
+        }
+
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(tooltipTriggerEl => {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+}

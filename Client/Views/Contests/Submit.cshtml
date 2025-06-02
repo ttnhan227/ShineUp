@@ -1,0 +1,356 @@
+@model SubmitContestEntryViewModel
+@{
+    ViewData["Title"] = "Submit Contest Entry";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h1 class="h3 mb-0">Submit Your Entry</h1>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <div>@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <input type="hidden" asp-for="ContestID" />
+                        <input type="hidden" asp-for="UserID" />
+                        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <div class="fw-medium">Please fix the following errors:</div>
+                        </div>
+                        
+                        <!-- Entry Details Card -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 d-flex align-items-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                                    <i class="bi bi-pencil-square"></i>
+                                </span>
+                                Entry Details
+                            </h5>
+                            
+                            <div class="ps-4">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label fw-medium">Title <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="bi bi-card-heading text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control" asp-for="Title" placeholder="Enter a title for your entry" required>
+                                    </div>
+                                    <span asp-validation-for="Title" class="text-danger small d-block mt-1"></span>
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label asp-for="Description" class="form-label fw-medium">Description</label>
+                                    <div class="position-relative">
+                                        <textarea class="form-control" asp-for="Description" rows="4" 
+                                                  placeholder="Tell us about your entry (optional)" 
+                                                  style="resize: none;"></textarea>
+                                        <div class="form-text text-end small">
+                                            <span id="charCount">0</span>/500 characters
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="Description" class="text-danger small d-block mt-1"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Media Upload Card -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 d-flex align-items-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                                    <i class="bi bi-upload"></i>
+                                </span>
+                                Media Upload
+                            </h5>
+                            
+                            <div class="ps-4">
+                                <ul class="nav nav-tabs nav-fill border-bottom mb-3" id="mediaTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="video-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#videoTab" type="button" role="tab" aria-controls="video" 
+                                                aria-selected="true" onclick="setMediaType('video')">
+                                            <i class="bi bi-camera-video me-2"></i> Video Entry
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="image-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#imageTab" type="button" role="tab" aria-controls="image" 
+                                                aria-selected="false" onclick="setMediaType('image')">
+                                            <i class="bi bi-image me-2"></i> Image Entry
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="mediaTabContent">
+                                    <!-- Video Tab -->
+                                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel" aria-labelledby="video-tab">
+                                        <div class="upload-area p-4 text-center border rounded-3 mb-3" id="videoUploadArea">
+                                            <div class="py-4">
+                                                <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                                <h5 class="mb-2">Upload Your Video</h5>
+                                                <p class="text-muted small mb-0">Drag & drop your video file here or click to browse</p>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Supported formats: .mp4, .webm, .mov (Max 50MB)
+                                                </p>
+                                            </div>
+                                            <input type="file" class="d-none" asp-for="VideoFile" accept="video/*" id="videoFileInput">
+                                        </div>
+                                        <div id="videoPreview" class="text-center mb-3 d-none">
+                                            <video id="videoPlayer" controls class="img-fluid rounded-3 border" style="max-height: 300px;">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="changeVideoBtn">
+                                                    <i class="bi bi-x-lg me-1"></i> Change Video
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info d-flex align-items-center">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            <div class="small">Your video will be processed after submission. This may take a few moments.</div>
+                                        </div>
+                                        <span asp-validation-for="VideoFile" class="text-danger small d-block mt-1"></span>
+                                    </div>
+                                    
+                                    <!-- Image Tab -->
+                                    <div class="tab-pane fade" id="imageTab" role="tabpanel" aria-labelledby="image-tab">
+                                        <div class="upload-area p-4 text-center border rounded-3 mb-3" id="imageUploadArea">
+                                            <div class="py-4">
+                                                <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                                <h5 class="mb-2">Upload Your Image</h5>
+                                                <p class="text-muted small mb-0">Drag & drop your image file here or click to browse</p>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Supported formats: .jpg, .jpeg, .png, .gif (Max 10MB)
+                                                </p>
+                                            </div>
+                                            <input type="file" class="d-none" asp-for="ImageFile" accept="image/*" id="imageFileInput">
+                                        </div>
+                                        <div id="imagePreview" class="text-center mb-3 d-none">
+                                            <img id="imagePreviewElement" src="#" alt="Preview" class="img-fluid rounded-3 border" style="max-height: 300px;">
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" id="changeImageBtn">
+                                                    <i class="bi bi-x-lg me-1"></i> Change Image
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info d-flex align-items-center">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            <div class="small">Your image will be processed after submission.</div>
+                                        </div>
+                                        <span asp-validation-for="ImageFile" class="text-danger small d-block mt-1"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submission Buttons -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-send me-2"></i>Submit Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Contest Guidelines -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-3 d-flex align-items-center">
+                        <span class="badge bg-primary bg-opacity-10 text-primary p-2 me-2 rounded-circle">
+                            <i class="bi bi-lightbulb"></i>
+                        </span>
+                        Submission Guidelines
+                    </h5>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Make sure your content is original and doesn't violate any copyrights
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Follow the contest theme and guidelines
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Ensure your files meet the size and format requirements
+                        </li>
+                        <li class="mb-0">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Be respectful and appropriate in your submission
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .nav-tabs .nav-link {
+            color: #495057;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+        }
+    </style>
+}
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    
+    <script>
+        // Set the media type when tabs are changed
+        function setMediaType(type) {
+            document.getElementById('mediaTypeInput').value = type;
+            
+            // Clear validation messages when switching tabs
+            const form = document.getElementById('entryForm');
+            const formValidator = window.bootstrap.ValidationForm(form);
+            if (formValidator) {
+                formValidator.resetForm();
+            }
+            
+            // Reset file input when switching tabs
+            const videoInput = document.querySelector('input[type="file"][accept="video/*"]');
+            const imageInput = document.querySelector('input[type="file"][accept="image/*"]');
+            
+            if (type === 'video') {
+                if (videoInput) videoInput.required = true;
+                if (imageInput) imageInput.required = false;
+                if (imageInput) imageInput.value = ''; // Clear the other input
+            } else {
+                if (videoInput) videoInput.required = false;
+                if (imageInput) imageInput.required = true;
+                if (videoInput) videoInput.value = ''; // Clear the other input
+            }
+        }
+        
+        // Initialize form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('entryForm');
+            const mediaTypeInput = document.getElementById('mediaTypeInput');
+            const videoInput = document.querySelector('input[type="file"][accept="video/*"]');
+            const imageInput = document.querySelector('input[type="file"][accept="image/*"]');
+            
+            // Set initial required attribute based on default tab
+            if (mediaTypeInput && mediaTypeInput.value === 'video' && videoInput) {
+                videoInput.required = true;
+            } else if (imageInput) {
+                imageInput.required = true;
+            }
+            
+            // Handle form submission
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Client-side validation
+                    const title = document.querySelector('input[name="Title"]');
+                    const mediaType = mediaTypeInput ? mediaTypeInput.value : 'video';
+                    const fileInput = mediaType === 'video' ? videoInput : imageInput;
+                    
+                    // Reset previous error states
+                    [title, fileInput].forEach(input => {
+                        if (input) input.classList.remove('is-invalid');
+                    });
+                    
+                    let isValid = true;
+                    
+                    // Validate title
+                    if (!title || !title.value.trim()) {
+                        if (title) {
+                            title.classList.add('is-invalid');
+                            const errorSpan = title.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = 'Title is required.';
+                            }
+                        }
+                        isValid = false;
+                    }
+                    
+                    // Validate file
+                    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                        if (fileInput) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `Please select a ${mediaType} file.`;
+                            }
+                        }
+                        isValid = false;
+                    } else {
+                        // Validate file size and type
+                        const file = fileInput.files[0];
+                        const maxSize = mediaType === 'video' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+                        
+                        if (file.size > maxSize) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `File is too large. Maximum size is ${maxSize / (1024 * 1024)}MB.`;
+                            }
+                            isValid = false;
+                        }
+                        
+                        // Simple file type validation
+                        const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+                        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+                        
+                        if ((mediaType === 'video' && !validVideoTypes.includes(file.type)) ||
+                            (mediaType === 'image' && !validImageTypes.includes(file.type))) {
+                            fileInput.classList.add('is-invalid');
+                            const errorSpan = fileInput.nextElementSibling;
+                            if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                                errorSpan.textContent = `Invalid file type. Please select a valid ${mediaType} file.`;
+                            }
+                            isValid = false;
+                        }
+                    }
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } else {
+                        // Show loading state
+                        const submitButton = form.querySelector('button[type="submit"]');
+                        if (submitButton) {
+                            submitButton.disabled = true;
+                            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Initialize the form with the correct media type
+        document.addEventListener('DOMContentLoaded', function() {
+            const mediaType = '@Model.MediaType';
+            document.getElementById('mediaTypeInput').value = mediaType;
+            
+            // Activate the correct tab
+            if (mediaType === 'image') {
+                const imageTab = new bootstrap.Tab(document.getElementById('image-tab'));
+                imageTab.show();
+            }
+        });
+    </script>
+}

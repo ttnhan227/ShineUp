@@ -100,6 +100,19 @@ public class DatabaseContext : DbContext
             .WithOne(c => c.Video)
             .HasForeignKey(c => c.VideoID);
 
+        // Configure Vote entity
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.ContestEntry)
+            .WithMany()
+            .HasForeignKey(v => v.EntryID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.User)
+            .WithMany()
+            .HasForeignKey(v => v.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.Video)
             .WithMany(v => v.Comments)
@@ -110,10 +123,49 @@ public class DatabaseContext : DbContext
             .WithMany(v => v.Likes)
             .HasForeignKey(l => l.VideoID);
 
-        modelBuilder.Entity<ContestEntry>()
-            .HasOne(ce => ce.Video)
-            .WithMany(v => v.ContestEntries)
-            .HasForeignKey(ce => ce.VideoID);
+        // ContestEntry configuration
+        modelBuilder.Entity<ContestEntry>(entity =>
+        {
+            entity.HasKey(e => e.EntryID);
+            entity.Property(e => e.SubmissionDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Contest relationship
+            entity.HasOne(e => e.Contest)
+                .WithMany(c => c.ContestEntries)
+                .HasForeignKey(e => e.ContestID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User relationship
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.ContestEntries)
+                .HasForeignKey(e => e.UserID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Video relationship (optional)
+            entity.HasOne(e => e.Video)
+                .WithMany(v => v.ContestEntries)
+                .HasForeignKey(e => e.VideoID)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            // Image relationship (optional)
+            entity.HasOne(e => e.Image)
+                .WithMany()
+                .HasForeignKey(e => e.ImageID)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            // Check constraint to ensure only one of VideoID or ImageID is set
+            entity.HasCheckConstraint(
+                "CK_ContestEntry_MediaCheck",
+                "(\"VideoID\" IS NOT NULL AND \"ImageID\" IS NULL) OR (\"VideoID\" IS NULL AND \"ImageID\" IS NOT NULL)");
+
+            // Indexes
+            entity.HasIndex(e => e.VideoID);
+            entity.HasIndex(e => e.ImageID);
+            entity.HasIndex(e => e.ContestID);
+            entity.HasIndex(e => e.UserID);
+        });
 
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.Post)
@@ -183,8 +235,6 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<Like>()
             .HasIndex(l => l.VideoID);
 
-        // Create a unique constraint for likes to prevent duplicates
-        // PostgreSQL uses a different syntax for filtered indexes
         modelBuilder.Entity<Like>()
             .HasIndex(l => new { l.UserID, l.PostID, l.VideoID })
             .IsUnique()
@@ -195,7 +245,6 @@ public class DatabaseContext : DbContext
             .WithOne(u => u.Role)
             .HasForeignKey(u => u.RoleID);
 
-        // Configure the one-to-many relationship between Privacy and Video
         modelBuilder.Entity<Privacy>()
             .HasMany(p => p.Videos)
             .WithOne(v => v.Privacy)
@@ -211,7 +260,6 @@ public class DatabaseContext : DbContext
             .WithMany()
             .HasForeignKey(v => v.UserID);
 
-        // Configure ForgetPasswordOTP
         modelBuilder.Entity<OTPs>()
             .HasOne(f => f.User)
             .WithMany()
@@ -221,56 +269,48 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<OTPs>()
             .HasIndex(f => f.Email);
 
-        // Configure User-Image relationship
         modelBuilder.Entity<Image>()
             .HasOne(i => i.User)
             .WithMany(u => u.Images)
             .HasForeignKey(i => i.UserID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure Privacy-Image relationship
         modelBuilder.Entity<Image>()
             .HasOne(i => i.Privacy)
             .WithMany(p => p.Images)
             .HasForeignKey(i => i.PrivacyID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Category-Image relationship
         modelBuilder.Entity<Image>()
             .HasOne(i => i.Category)
             .WithMany(c => c.Images)
             .HasForeignKey(i => i.CategoryID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Privacy-Video relationship
         modelBuilder.Entity<Video>()
             .HasOne(v => v.Privacy)
             .WithMany(p => p.Videos)
             .HasForeignKey(v => v.PrivacyID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Category-Video relationship
         modelBuilder.Entity<Video>()
             .HasOne(v => v.Category)
             .WithMany(c => c.Videos)
             .HasForeignKey(v => v.CategoryID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Privacy-Post relationship
         modelBuilder.Entity<Post>()
             .HasOne(p => p.Privacy)
             .WithMany(pr => pr.Posts)
             .HasForeignKey(p => p.PrivacyID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Category-Post relationship
         modelBuilder.Entity<Post>()
             .HasOne(p => p.Category)
             .WithMany(c => c.Posts)
             .HasForeignKey(p => p.CategoryID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Community relationships
         modelBuilder.Entity<Community>()
             .HasOne(c => c.CreatedBy)
             .WithMany(u => u.CreatedCommunities)
@@ -283,7 +323,6 @@ public class DatabaseContext : DbContext
             .HasForeignKey(c => c.PrivacyID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure CommunityMember composite key and relationships
         modelBuilder.Entity<CommunityMember>()
             .HasKey(cm => new { cm.UserID, cm.CommunityID });
 
@@ -299,91 +338,54 @@ public class DatabaseContext : DbContext
             .HasForeignKey(cm => cm.CommunityID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure Post-Community relationship
         modelBuilder.Entity<Post>()
             .HasOne(p => p.Community)
             .WithMany(c => c.Posts)
             .HasForeignKey(p => p.CommunityID)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure Post-Image relationship
         modelBuilder.Entity<Post>()
             .HasMany(p => p.Images)
             .WithOne(i => i.Post)
             .HasForeignKey(i => i.PostID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Configure Post-Video relationship
         modelBuilder.Entity<Post>()
             .HasMany(p => p.Videos)
             .WithOne(v => v.Post)
             .HasForeignKey(v => v.PostID)
             .OnDelete(DeleteBehavior.Cascade);
-          // OpportunityApplication configuration
+
         modelBuilder.Entity<OpportunityApplication>()
             .HasKey(oa => oa.ApplicationID);
+
         modelBuilder.Entity<OpportunityApplication>()
             .HasOne(oa => oa.User)
             .WithMany()
             .HasForeignKey(oa => oa.UserID)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Notification configuration
         modelBuilder.Entity<Notification>()
             .HasKey(n => n.NotificationID);
+
         modelBuilder.Entity<Notification>()
             .HasOne(n => n.User)
             .WithMany()
             .HasForeignKey(n => n.UserID)
-            .OnDelete(DeleteBehavior.Cascade);    
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Seed Categories
         modelBuilder.Entity<Category>().HasData(
-            new Category
-            {
-                CategoryID = 1, CategoryName = "Dance",
-                Description = "Posts about dance performances, tutorials, and events"
-            },
-            new Category
-            {
-                CategoryID = 2, CategoryName = "Music",
-                Description = "Posts about music performances, covers, and events"
-            },
-            new Category
-            {
-                CategoryID = 3, CategoryName = "Art",
-                Description = "Posts about visual arts, exhibitions, and creative works"
-            },
-            new Category
-            {
-                CategoryID = 4, CategoryName = "Photography",
-                Description = "Posts about photography, photo shoots, and visual stories"
-            },
-            new Category
-            {
-                CategoryID = 5, CategoryName = "Fashion",
-                Description = "Posts about fashion shows, style tips, and trends"
-            },
-            new Category
-            {
-                CategoryID = 6, CategoryName = "Theater",
-                Description = "Posts about theater performances, acting, and drama"
-            },
-            new Category
-            {
-                CategoryID = 7, CategoryName = "Comedy", Description = "Posts about comedy shows, stand-up, and humor"
-            },
-            new Category
-            {
-                CategoryID = 8, CategoryName = "Poetry",
-                Description = "Posts about poetry readings, spoken word, and literary works"
-            },
-            new Category
-            {
-                CategoryID = 9, CategoryName = "Film", Description = "Posts about filmmaking, short films, and cinema"
-            },
-            new Category
-                { CategoryID = 10, CategoryName = "Other", Description = "Other creative content and performances" }
+            new Category { CategoryID = 1, CategoryName = "Dance", Description = "Posts about dance performances, tutorials, and events" },
+            new Category { CategoryID = 2, CategoryName = "Music", Description = "Posts about music performances, covers, and events" },
+            new Category { CategoryID = 3, CategoryName = "Art", Description = "Posts about visual arts, exhibitions, and creative works" },
+            new Category { CategoryID = 4, CategoryName = "Photography", Description = "Posts about photography, photo shoots, and visual stories" },
+            new Category { CategoryID = 5, CategoryName = "Fashion", Description = "Posts about fashion shows, style tips, and trends" },
+            new Category { CategoryID = 6, CategoryName = "Theater", Description = "Posts about theater performances, acting, and drama" },
+            new Category { CategoryID = 7, CategoryName = "Comedy", Description = "Posts about comedy shows, stand-up, and humor" },
+            new Category { CategoryID = 8, CategoryName = "Poetry", Description = "Posts about poetry readings, spoken word, and literary works" },
+            new Category { CategoryID = 9, CategoryName = "Film", Description = "Posts about filmmaking, short films, and cinema" },
+            new Category { CategoryID = 10, CategoryName = "Other", Description = "Other creative content and performances" }
         );
 
         // Seed Privacy Settings
@@ -391,6 +393,51 @@ public class DatabaseContext : DbContext
             new Privacy { PrivacyID = 1, Name = "Public" },
             new Privacy { PrivacyID = 2, Name = "Friends Only" },
             new Privacy { PrivacyID = 3, Name = "Private" }
+        );
+
+        // Seed Contests
+        var now = DateTime.UtcNow;
+        modelBuilder.Entity<Contest>().HasData(
+            new Contest
+            {
+                ContestID = 1,
+                Title = "Summer Photography Challenge",
+                Description = "Capture the essence of summer in your best photos. Open to all photography enthusiasts!",
+                StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 8, 31, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 2,
+                Title = "Short Film Festival",
+                Description = "Submit your best short films under 5 minutes. All genres welcome!",
+                StartDate = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 9, 30, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 3,
+                Title = "Urban Art Competition",
+                Description = "Showcase your street art and urban photography skills.",
+                StartDate = now.AddDays(-7),
+                EndDate = now.AddDays(21)
+            },
+            new Contest
+            {
+                ContestID = 4,
+                Title = "Portrait Photography Contest",
+                Description = "Capture the human essence in your portraits. Professional and amateur photographers welcome!",
+                StartDate = now.AddDays(7),
+                EndDate = now.AddDays(60)
+            },
+            new Contest
+            {
+                ContestID = 5,
+                Title = "Nature's Beauty Video Contest",
+                Description = "Create stunning videos showcasing the beauty of nature. Maximum 3 minutes.",
+                StartDate = now.AddDays(14),
+                EndDate = now.AddDays(75)
+            }
         );
 
         modelBuilder.Entity<Role>().HasData(
