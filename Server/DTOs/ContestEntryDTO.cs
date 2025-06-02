@@ -21,4 +21,8 @@ public class ContestEntryDTO
     
     [StringLength(500)]
     public string? Description { get; set; }
+    
+    // Voting properties
+    public int VoteCount { get; set; }
+    public bool HasVoted { get; set; }
 }

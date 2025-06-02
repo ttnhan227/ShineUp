@@ -100,6 +100,19 @@ public class DatabaseContext : DbContext
             .WithOne(c => c.Video)
             .HasForeignKey(c => c.VideoID);
 
+        // Configure Vote entity
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.ContestEntry)
+            .WithMany()
+            .HasForeignKey(v => v.EntryID)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Vote>()
+            .HasOne(v => v.User)
+            .WithMany()
+            .HasForeignKey(v => v.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Comment>()
             .HasOne(c => c.Video)
             .WithMany(v => v.Comments)

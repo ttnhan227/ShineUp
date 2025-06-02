@@ -256,25 +256,46 @@ public class ContestEntriesController : ControllerBase
     [HttpGet("contest/{contestId}")]
     public async Task<IActionResult> GetByContest(int contestId)
     {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
         var entries = await _repository.GetEntriesByContestAsync(contestId);
         
-        // Map to DTOs with media info
-        var dtos = entries.Select(e => new ContestEntryDTO
+        // Get all entry IDs for batch voting check
+        var entryIds = entries.Select(e => e.EntryID).ToList();
+        var userVotes = await _context.Votes
+            .Where(v => v.UserID == userId && entryIds.Contains(v.EntryID))
+            .Select(v => v.EntryID)
+            .ToListAsync();
+            
+        // Get vote counts for all entries
+        var voteCounts = await _context.Votes
+            .Where(v => entryIds.Contains(v.EntryID))
+            .GroupBy(v => v.EntryID)
+            .Select(g => new { EntryID = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.EntryID, x => x.Count);
+        
+        // Map to DTOs with media info and voting data
+        var dtos = entries.Select(e => 
         {
-            EntryID = e.EntryID,
-            ContestID = e.ContestID,
-            UserID = e.UserID,
-            UserName = e.User?.Username ?? "Unknown User",
-            UserAvatar = e.User?.ProfileImageURL,
-            VideoID = e.VideoID,
-            ImageID = e.ImageID,
-            SubmissionDate = e.SubmissionDate,
-            MediaUrl = e.MediaUrl ?? (e.Video != null ? e.Video.VideoURL : e.Image?.ImageURL),
-            MediaType = e.MediaType ?? (e.VideoID != null ? "video" : "image"),
-            Title = !string.IsNullOrEmpty(e.Title) ? e.Title : 
-                   (e.Video != null ? e.Video.Title : e.Image?.Title) ?? "Untitled",
-            Description = !string.IsNullOrEmpty(e.Description) ? e.Description : 
-                         (e.Video != null ? e.Video.Description : e.Image?.Description)
+            var dto = new ContestEntryDTO
+            {
+                EntryID = e.EntryID,
+                ContestID = e.ContestID,
+                UserID = e.UserID,
+                UserName = e.User?.Username ?? "Unknown User",
+                UserAvatar = e.User?.ProfileImageURL,
+                VideoID = e.VideoID,
+                ImageID = e.ImageID,
+                SubmissionDate = e.SubmissionDate,
+                MediaUrl = e.MediaUrl ?? (e.Video != null ? e.Video.VideoURL : e.Image?.ImageURL),
+                MediaType = e.MediaType ?? (e.VideoID != null ? "video" : "image"),
+                Title = !string.IsNullOrEmpty(e.Title) ? e.Title : 
+                       (e.Video != null ? e.Video.Title : e.Image?.Title) ?? "Untitled",
+                Description = !string.IsNullOrEmpty(e.Description) ? e.Description : 
+                             (e.Video != null ? e.Video.Description : e.Image?.Description),
+                VoteCount = voteCounts.GetValueOrDefault(e.EntryID, 0),
+                HasVoted = userVotes.Contains(e.EntryID)
+            };
+            return dto;
         });
         
         return Ok(dtos);

@@ -37,6 +37,10 @@ public class ContestEntryViewModel
     [StringLength(500, ErrorMessage = "Description cannot be longer than 500 characters.")]
     public string? Description { get; set; }
     
+    // Voting properties
+    public int VoteCount { get; set; }
+    public bool HasVoted { get; set; }
+    
     // Validation method to ensure only one file is uploaded
     public bool HasValidMedia()
     {
