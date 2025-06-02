@@ -396,49 +396,48 @@ public class DatabaseContext : DbContext
         );
 
         // Seed Contests
-        var now = DateTime.UtcNow;
         modelBuilder.Entity<Contest>().HasData(
-            new Contest
-            {
-                ContestID = 1,
-                Title = "Summer Photography Challenge",
-                Description = "Capture the essence of summer in your best photos. Open to all photography enthusiasts!",
-                StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
-                EndDate = new DateTime(2025, 8, 31, 23, 59, 59, DateTimeKind.Utc)
-            },
-            new Contest
-            {
-                ContestID = 2,
-                Title = "Short Film Festival",
-                Description = "Submit your best short films under 5 minutes. All genres welcome!",
-                StartDate = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc),
-                EndDate = new DateTime(2025, 9, 30, 23, 59, 59, DateTimeKind.Utc)
-            },
-            new Contest
-            {
-                ContestID = 3,
-                Title = "Urban Art Competition",
-                Description = "Showcase your street art and urban photography skills.",
-                StartDate = now.AddDays(-7),
-                EndDate = now.AddDays(21)
-            },
-            new Contest
-            {
-                ContestID = 4,
-                Title = "Portrait Photography Contest",
-                Description = "Capture the human essence in your portraits. Professional and amateur photographers welcome!",
-                StartDate = now.AddDays(7),
-                EndDate = now.AddDays(60)
-            },
-            new Contest
-            {
-                ContestID = 5,
-                Title = "Nature's Beauty Video Contest",
-                Description = "Create stunning videos showcasing the beauty of nature. Maximum 3 minutes.",
-                StartDate = now.AddDays(14),
-                EndDate = now.AddDays(75)
-            }
-        );
+    new Contest
+    {
+        ContestID = 1,
+        Title = "Summer Photography Challenge",
+        Description = "Capture the essence of summer in your best photos. Open to all photography enthusiasts!",
+        StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+        EndDate = new DateTime(2025, 8, 31, 23, 59, 59, DateTimeKind.Utc)
+    },
+    new Contest
+    {
+        ContestID = 2,
+        Title = "Short Film Festival",
+        Description = "Submit your best short films under 5 minutes. All genres welcome!",
+        StartDate = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+        EndDate = new DateTime(2025, 9, 30, 23, 59, 59, DateTimeKind.Utc)
+    },
+    new Contest
+    {
+        ContestID = 3,
+        Title = "Urban Art Competition",
+        Description = "Showcase your street art and urban photography skills.",
+        StartDate = new DateTime(2025, 5, 26, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(-7)
+        EndDate = new DateTime(2025, 6, 23, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(21)
+    },
+    new Contest
+    {
+        ContestID = 4,
+        Title = "Portrait Photography Contest",
+        Description = "Capture the human essence in your portraits. Professional and amateur photographers welcome!",
+        StartDate = new DateTime(2025, 6, 9, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(7)
+        EndDate = new DateTime(2025, 8, 2, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(60)
+    },
+    new Contest
+    {
+        ContestID = 5,
+        Title = "Nature's Beauty Video Contest",
+        Description = "Create stunning videos showcasing the beauty of nature. Maximum 3 minutes.",
+        StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(14)
+        EndDate = new DateTime(2025, 8, 17, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(75)
+    }
+);
 
         modelBuilder.Entity<Role>().HasData(
             new Role { RoleID = 1, Name = "User" },
