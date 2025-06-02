@@ -162,18 +162,11 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title mb-0">@(string.IsNullOrEmpty(entry.Title) ? "Untitled" : entry.Title)</h5>
                         <div class="d-flex align-items-center">
-                            <div class="me-2">
-                                <button class="btn btn-sm @(entry.HasVoted ? "btn-danger" : "btn-outline-secondary") vote-btn"
-                                        data-entry-id="@entry.EntryID"
-                                        title="@(entry.HasVoted ? "You've voted for this entry" : "Vote for this entry")">
-                                    <i class="bi @(entry.HasVoted ? "bi-heart-fill" : "bi-heart") me-1"></i>
-                                    <span class="vote-count">@entry.VoteCount</span>
-                                </button>
-                            </div>
-                            <button class="btn btn-sm btn-outline-secondary share-btn"
+                            <button class="btn btn-sm @(entry.HasVoted ? "btn-danger" : "btn-outline-secondary") vote-btn"
                                     data-entry-id="@entry.EntryID"
-                                    title="Share">
-                                <i class="bi bi-share"></i>
+                                    title="@(entry.HasVoted ? "You've voted for this entry" : "Vote for this entry")">
+                                <i class="bi @(entry.HasVoted ? "bi-heart-fill" : "bi-heart") me-1"></i>
+                                <span class="vote-count">@entry.VoteCount</span>
                             </button>
                         </div>
                     </div>
@@ -353,27 +346,7 @@
             });
         });
 
-        // Share functionality
-        document.querySelectorAll('.share-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const entryId = this.dataset.entryId;
-                const shareUrl = `${window.location.origin}/contests/entry/${entryId}`;
-                const title = 'Check out this contest entry!';
-
-                if (navigator.share) {
-                    navigator.share({
-                        title: title,
-                        url: shareUrl
-                    }).catch(console.error);
-                } else {
-                    navigator.clipboard.writeText(shareUrl).then(() => {
-                        showToast('Link copied to clipboard!', 'success');
-                    });
-                }
-            });
-        });
-
-        // Read more/less functionality
+// Read more/less functionality
         document.querySelectorAll('.read-more, .read-less').forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
