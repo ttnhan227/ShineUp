@@ -400,6 +400,75 @@ public class DatabaseContext : DbContext
             .HasForeignKey(n => n.UserID)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // First, ensure we have the necessary users
+        modelBuilder.Entity<User>().HasData(
+            // Admin user (ID: 1)
+            new User 
+            { 
+                UserID = 1, 
+                Username = "admin",
+                Email = "admin@example.com",
+                FullName = "Admin User",
+                RoleID = 2, // Admin role
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Administration"
+            },
+            // Talent scout/recruiter (ID: 2)
+            new User 
+            { 
+                UserID = 2, 
+                Username = "recruiter1",
+                Email = "recruiter@example.com",
+                FullName = "Sarah Johnson",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Talent Acquisition"
+            },
+            // Talent user 1 (ID: 3)
+            new User 
+            { 
+                UserID = 3, 
+                Username = "artist1",
+                Email = "artist1@example.com",
+                FullName = "Alex Chen",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Graphic Design"
+            },
+            // Talent user 2 (ID: 4)
+            new User 
+            { 
+                UserID = 4, 
+                Username = "dancer1",
+                Email = "dancer1@example.com",
+                FullName = "Jamal Williams",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Hip Hop Dance"
+            },
+            // Talent user 3 (ID: 5)
+            new User 
+            { 
+                UserID = 5, 
+                Username = "creator1",
+                Email = "creator@example.com",
+                FullName = "Taylor Smith",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Content Creation"
+            }
+        );
+
         // Seed Categories
         modelBuilder.Entity<Category>().HasData(
             new Category { CategoryID = 1, CategoryName = "Dance", Description = "Posts about dance performances, tutorials, and events" },
@@ -490,7 +559,7 @@ public class DatabaseContext : DbContext
                 Status = OpportunityStatus.Open,
                 ApplicationDeadline = DateTime.UtcNow.AddDays(30),
                 StartDate = DateTime.UtcNow.AddDays(7),
-                PostedByUserId = 1, // Assuming user with ID 1 exists
+                PostedByUserId = 2, // Posted by recruiter1 (ID: 2)
                 CategoryId = 3, // Art
                 TalentArea = "Graphic Design"
             },
@@ -545,7 +614,7 @@ public class DatabaseContext : DbContext
             new OpportunityApplication
             {
                 ApplicationID = 1,
-                UserID = 2, // Assuming user with ID 2 exists
+                UserID = 3, // artist1 (ID: 3) applying for the position
                 TalentOpportunityID = 1,
                 CoverLetter = "I'm a passionate graphic designer with 4 years of experience...",
                 PortfolioLink = "https://example.com/portfolio/johndoe",
@@ -555,7 +624,7 @@ public class DatabaseContext : DbContext
             new OpportunityApplication
             {
                 ApplicationID = 2,
-                UserID = 3, // Assuming user with ID 3 exists
+                UserID = 4, // dancer1 (ID: 4) applying for the position
                 TalentOpportunityID = 2,
                 CoverLetter = "Professional dancer with 5+ years of experience in hip hop...",
                 Status = ApplicationStatus.UnderReview,
@@ -568,7 +637,7 @@ public class DatabaseContext : DbContext
             new Notification
             {
                 NotificationID = 1,
-                UserID = 2, // User who applied
+                UserID = 3, // artist1 (ID: 3) who applied
                 Title = "Application Received",
                 Message = "Your application for 'Freelance Graphic Designer' has been received.",
                 Type = NotificationType.ApplicationUpdate,
@@ -580,7 +649,7 @@ public class DatabaseContext : DbContext
             new Notification
             {
                 NotificationID = 2,
-                UserID = 3, // User who applied
+                UserID = 4, // dancer1 (ID: 4) who applied
                 Title = "Application Under Review",
                 Message = "Your application for 'Music Video Dancers' is now under review.",
                 Type = NotificationType.ApplicationUpdate,
