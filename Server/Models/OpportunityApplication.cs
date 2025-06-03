@@ -20,8 +20,6 @@ public class OpportunityApplication
     public int? TalentOpportunityID { get; set; }
     public TalentOpportunity? TalentOpportunity { get; set; } // Optional link to opportunity
     public string CoverLetter { get; set; } = string.Empty;
-    public string? PortfolioLink { get; set; }
-    public string? ResumeLink { get; set; }
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ReviewedAt { get; set; }
