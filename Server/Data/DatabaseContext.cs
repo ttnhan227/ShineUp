@@ -483,6 +483,55 @@ public class DatabaseContext : DbContext
             new Category { CategoryID = 10, CategoryName = "Other", Description = "Other creative content and performances" }
         );
 
+        // Seed Talent Opportunities
+        modelBuilder.Entity<TalentOpportunity>().HasData(
+            new TalentOpportunity
+            {
+                Id = 1,
+                Title = "Lead Dancer for Music Video",
+                Description = "Looking for a talented hip hop dancer to feature in an upcoming music video. Must be available for 3 days of shooting in July.",
+                Location = "Ho Chi Minh City",
+                IsRemote = false,
+                Type = OpportunityType.CastingCall,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(14),
+                CreatedAt = DateTime.UtcNow,
+                PostedByUserId = 2, // recruiter1
+                CategoryId = 1, // Dance
+                TalentArea = "Hip Hop Dance"
+            },
+            new TalentOpportunity
+            {
+                Id = 2,
+                Title = "Freelance Graphic Designer Needed",
+                Description = "Seeking a creative graphic designer to create social media assets for a new brand launch. Remote work available.",
+                Location = "Remote",
+                IsRemote = true,
+                Type = OpportunityType.Freelance,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(30),
+                CreatedAt = DateTime.UtcNow,
+                PostedByUserId = 2, // recruiter1
+                CategoryId = 3, // Art
+                TalentArea = "Graphic Design"
+            },
+            new TalentOpportunity
+            {
+                Id = 3,
+                Title = "Summer Art Exhibit - Call for Submissions",
+                Description = "Local gallery seeking emerging artists to showcase their work in our summer exhibition. All mediums welcome.",
+                Location = "Hanoi",
+                IsRemote = false,
+                Type = OpportunityType.Collaboration,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(45),
+                CreatedAt = DateTime.UtcNow,
+                PostedByUserId = 5, // creator1
+                CategoryId = 3, // Art
+                TalentArea = "Visual Arts"
+            }
+        );
+
         // Seed Privacy Settings
         modelBuilder.Entity<Privacy>().HasData(
             new Privacy { PrivacyID = 1, Name = "Public" },
@@ -539,6 +588,47 @@ public class DatabaseContext : DbContext
             new Role { RoleID = 2, Name = "Admin" }
         );
 
-    
+        modelBuilder.Entity<OpportunityApplication>().HasData(
+            new OpportunityApplication
+            {
+                ApplicationID = 1,
+                UserID = 4, // dancer1 (ID: 4) applying for the position
+                TalentOpportunityID = 1, // Lead Dancer for Music Video
+                CoverLetter = "Professional dancer with 5+ years of experience in hip hop...",
+                Status = ApplicationStatus.UnderReview,
+                AppliedAt = DateTime.UtcNow.AddDays(-1)
+            },
+            new OpportunityApplication
+            {
+                ApplicationID = 2,
+                UserID = 3, // artist1 (ID: 3) applying for the position
+                TalentOpportunityID = 2, // Freelance Graphic Designer Needed
+                CoverLetter = "I'm a passionate graphic designer with 4 years of experience...",
+                Status = ApplicationStatus.Pending,
+                AppliedAt = DateTime.UtcNow
+            }
+        );
+
+        // Seed some Notifications
+        modelBuilder.Entity<Notification>().HasData(
+            new Notification
+            {
+                NotificationID = 1,
+                UserID = 3, // artist1 (ID: 3) who applied
+                Message = "Your application for 'Lead Dancer for Music Video' has been received.",
+                Type = NotificationType.ApplicationUpdate,
+                Status = NotificationStatus.Unread,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Notification
+            {
+                NotificationID = 2,
+                UserID = 4, // dancer1 (ID: 4) who applied
+                Message = "Your application for 'Freelance Graphic Designer' is now under review.",
+                Type = NotificationType.ApplicationUpdate,
+                Status = NotificationStatus.Unread,
+                CreatedAt = DateTime.UtcNow.AddDays(-1)
+            }
+        );
     }
 }
