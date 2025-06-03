@@ -406,19 +406,6 @@ public class DatabaseContext : DbContext
             new User 
             { 
                 UserID = 1, 
-                Username = "admin",
-                Email = "admin@example.com",
-                FullName = "Admin User",
-                RoleID = 2, // Admin role
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Administration"
-            },
-            // Talent scout/recruiter (ID: 2)
-            new User 
-            { 
-                UserID = 2, 
                 Username = "recruiter1",
                 Email = "recruiter@example.com",
                 FullName = "Sarah Johnson",
@@ -431,7 +418,7 @@ public class DatabaseContext : DbContext
             // Talent user 1 (ID: 3)
             new User 
             { 
-                UserID = 3, 
+                UserID = 2, 
                 Username = "artist1",
                 Email = "artist1@example.com",
                 FullName = "Alex Chen",
@@ -444,7 +431,7 @@ public class DatabaseContext : DbContext
             // Talent user 2 (ID: 4)
             new User 
             { 
-                UserID = 4, 
+                UserID = 3, 
                 Username = "dancer1",
                 Email = "dancer1@example.com",
                 FullName = "Jamal Williams",
@@ -457,10 +444,22 @@ public class DatabaseContext : DbContext
             // Talent user 3 (ID: 5)
             new User 
             { 
-                UserID = 5, 
+                UserID = 4, 
                 Username = "creator1",
                 Email = "creator@example.com",
                 FullName = "Taylor Smith",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Content Creation"
+            },
+               new User 
+            { 
+                UserID = 5, 
+                Username = "creator2",
+                Email = "creator2@example.com",
+                FullName = "Tom Hiddleson",
                 RoleID = 1,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,
