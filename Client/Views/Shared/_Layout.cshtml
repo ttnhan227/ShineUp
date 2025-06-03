@@ -162,8 +162,11 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Opportunities" asp-action="Index">Opportunities</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Notifications" asp-action="Index">Notifications</a>
+                    <li class="nav-item position-relative">
+                        <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Notifications" asp-action="Index">
+                            Notifications
+                            <span id="unread-notifications-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                        </a>
                     </li>
                     @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
                     {
@@ -238,6 +241,33 @@
         "positionClass": "toast-top-right",
         "timeOut": "5000"
     };
+
+    // Update notification count when the page loads
+    $(document).ready(function() {
+        updateNotificationCount();
+    });
+
+    // Function to update the notification count
+    function updateNotificationCount() {
+        $.get('/Notifications/GetUnreadCount')
+            .done(function(data) {
+                var count = data.count || 0;
+                var badge = $('#unread-notifications-count');
+                
+                if (count > 0) {
+                    badge.text(count);
+                    badge.show();
+                } else {
+                    badge.hide();
+                }
+            })
+            .fail(function(xhr, status, error) {
+                console.error('Failed to fetch unread notifications count:', error);
+            });
+    }
+
+    // Make the function available globally so it can be called from other scripts
+    window.updateNotificationCount = updateNotificationCount;
 </script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

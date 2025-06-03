@@ -130,38 +130,32 @@ public class DatabaseContext : DbContext
             entity.HasKey(e => e.EntryID);
             entity.Property(e => e.SubmissionDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            // Contest relationship
             entity.HasOne(e => e.Contest)
                 .WithMany(c => c.ContestEntries)
                 .HasForeignKey(e => e.ContestID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // User relationship
             entity.HasOne(e => e.User)
                 .WithMany(u => u.ContestEntries)
                 .HasForeignKey(e => e.UserID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Video relationship (optional)
             entity.HasOne(e => e.Video)
                 .WithMany(v => v.ContestEntries)
                 .HasForeignKey(e => e.VideoID)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 
-            // Image relationship (optional)
             entity.HasOne(e => e.Image)
                 .WithMany()
                 .HasForeignKey(e => e.ImageID)
                 .OnDelete(DeleteBehavior.SetNull)
                 .IsRequired(false);
 
-            // Check constraint to ensure only one of VideoID or ImageID is set
             entity.HasCheckConstraint(
                 "CK_ContestEntry_MediaCheck",
                 "(\"VideoID\" IS NOT NULL AND \"ImageID\" IS NULL) OR (\"VideoID\" IS NULL AND \"ImageID\" IS NOT NULL)");
 
-            // Indexes
             entity.HasIndex(e => e.VideoID);
             entity.HasIndex(e => e.ImageID);
             entity.HasIndex(e => e.ContestID);
@@ -324,10 +318,9 @@ public class DatabaseContext : DbContext
             .HasForeignKey(to => to.CategoryId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Add index for better query performance
         modelBuilder.Entity<TalentOpportunity>()
             .HasIndex(to => to.TalentArea);
-            
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.TalentArea);
 
@@ -389,86 +382,58 @@ public class DatabaseContext : DbContext
             .HasOne(oa => oa.TalentOpportunity)
             .WithMany(to => to.Applications)
             .HasForeignKey(oa => oa.TalentOpportunityID)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
 
         modelBuilder.Entity<Notification>()
             .HasKey(n => n.NotificationID);
 
         modelBuilder.Entity<Notification>()
             .HasOne(n => n.User)
-            .WithMany()
+            .WithMany(u => u.Notifications)
             .HasForeignKey(n => n.UserID)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // First, ensure we have the necessary users
-        modelBuilder.Entity<User>().HasData(
-            // Admin user (ID: 1)
-            new User 
-            { 
-                UserID = 1, 
-                Username = "recruiter1",
-                Email = "recruiter@example.com",
-                FullName = "Sarah Johnson",
-                RoleID = 1,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Talent Acquisition"
-            },
-            // Talent user 1 (ID: 3)
-            new User 
-            { 
-                UserID = 2, 
-                Username = "artist1",
-                Email = "artist1@example.com",
-                FullName = "Alex Chen",
-                RoleID = 1,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Graphic Design"
-            },
-            // Talent user 2 (ID: 4)
-            new User 
-            { 
-                UserID = 3, 
-                Username = "dancer1",
-                Email = "dancer1@example.com",
-                FullName = "Jamal Williams",
-                RoleID = 1,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Hip Hop Dance"
-            },
-            // Talent user 3 (ID: 5)
-            new User 
-            { 
-                UserID = 4, 
-                Username = "creator1",
-                Email = "creator@example.com",
-                FullName = "Taylor Smith",
-                RoleID = 1,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Content Creation"
-            },
-               new User 
-            { 
-                UserID = 5, 
-                Username = "creator2",
-                Email = "creator2@example.com",
-                FullName = "Tom Hiddleson",
-                RoleID = 1,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true,
-                Verified = true,
-                TalentArea = "Content Creation"
-            }
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserID);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.Status);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.CreatedAt);
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .Property(oa => oa.TalentOpportunityID)
+            .IsRequired();
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasIndex(oa => oa.UserID);
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasIndex(oa => oa.TalentOpportunityID);
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasIndex(oa => oa.Status);
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasIndex(oa => oa.AppliedAt);
+
+        // Seed Roles
+        modelBuilder.Entity<Role>().HasData(
+            new Role { RoleID = 1, Name = "User" },
+            new Role { RoleID = 2, Name = "Admin" },
+            new Role { RoleID = 3, Name = "Recruiter" }
         );
 
-        // Seed Categories
+        // Seed Privacy Settings
+        modelBuilder.Entity<Privacy>().HasData(
+            new Privacy { PrivacyID = 1, Name = "Public" },
+            new Privacy { PrivacyID = 2, Name = "Friends Only" },
+            new Privacy { PrivacyID = 3, Name = "Private" }
+        );
+
+        // Seed Categories (Consolidated unique entries)
         modelBuilder.Entity<Category>().HasData(
             new Category { CategoryID = 1, CategoryName = "Dance", Description = "Posts about dance performances, tutorials, and events" },
             new Category { CategoryID = 2, CategoryName = "Music", Description = "Posts about music performances, covers, and events" },
@@ -482,26 +447,167 @@ public class DatabaseContext : DbContext
             new Category { CategoryID = 10, CategoryName = "Other", Description = "Other creative content and performances" }
         );
 
-        // Seed Talent Opportunities
+        // Seed Users (Consolidated unique entries)
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                UserID = 1,
+                Username = "recruiter1",
+                Email = "recruiter@example.com",
+                FullName = "Sarah Johnson",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                RoleID = 3,
+                CreatedAt = DateTime.UtcNow.AddDays(-30),
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Talent Acquisition"
+            },
+            new User
+            {
+                UserID = 2,
+                Username = "dancer1",
+                Email = "dancer@example.com",
+                FullName = "Alex Chen",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-15),
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Hip Hop Dance"
+            },
+            new User
+            {
+                UserID = 3,
+                Username = "musician1",
+                Email = "musician@example.com",
+                FullName = "Jamal Williams",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-10),
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Music Production"
+            },
+            new User
+            {
+                UserID = 4,
+                Username = "creator1",
+                Email = "creator@example.com",
+                FullName = "Taylor Smith",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Content Creation"
+            },
+            new User
+            {
+                UserID = 5,
+                Username = "creator2",
+                Email = "creator2@example.com",
+                FullName = "Tom Hiddleston",
+                RoleID = 1,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true,
+                Verified = true,
+                TalentArea = "Content Creation"
+            }
+        );
+
+        // Seed Contests
+        modelBuilder.Entity<Contest>().HasData(
+            new Contest
+            {
+                ContestID = 1,
+                Title = "Summer Photography Challenge",
+                Description = "Capture the essence of summer in your best photos. Open to all photography enthusiasts!",
+                StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 8, 31, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 2,
+                Title = "Short Film Festival",
+                Description = "Submit your best short films under 5 minutes. All genres welcome!",
+                StartDate = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 9, 30, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 3,
+                Title = "Urban Art Competition",
+                Description = "Showcase your street art and urban photography skills.",
+                StartDate = new DateTime(2025, 5, 26, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 6, 23, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 4,
+                Title = "Portrait Photography Contest",
+                Description = "Capture the human essence in your portraits. Professional and amateur photographers welcome!",
+                StartDate = new DateTime(2025, 6, 9, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 8, 2, 23, 59, 59, DateTimeKind.Utc)
+            },
+            new Contest
+            {
+                ContestID = 5,
+                Title = "Nature's Beauty Video Contest",
+                Description = "Create stunning videos showcasing the beauty of nature. Maximum 3 minutes.",
+                StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc),
+                EndDate = new DateTime(2025, 8, 17, 23, 59, 59, DateTimeKind.Utc)
+            }
+        );
+
+        // Seed Talent Opportunities (Consolidated unique entries)
         modelBuilder.Entity<TalentOpportunity>().HasData(
             new TalentOpportunity
             {
                 Id = 1,
-                Title = "Lead Dancer for Music Video",
-                Description = "Looking for a talented hip hop dancer to feature in an upcoming music video. Must be available for 3 days of shooting in July.",
-                Location = "Ho Chi Minh City",
+                Title = "Lead Dancer for Summer Festival",
+                Description = "Looking for an experienced hip hop dancer to perform at our annual summer festival.",
+                Location = "New York, NY",
                 IsRemote = false,
-                Type = OpportunityType.CastingCall,
+                Type = OpportunityType.Gig,
                 Status = OpportunityStatus.Open,
                 ApplicationDeadline = DateTime.UtcNow.AddDays(14),
-                CreatedAt = DateTime.UtcNow,
-                PostedByUserId = 2, // recruiter1
-                CategoryId = 1, // Dance
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                PostedByUserId = 1,
+                CategoryId = 1,
                 TalentArea = "Hip Hop Dance"
             },
             new TalentOpportunity
             {
                 Id = 2,
+                Title = "Music Producer for Indie Game",
+                Description = "Seeking a music producer to create an original soundtrack for an upcoming indie game.",
+                Location = "Remote",
+                IsRemote = true,
+                Type = OpportunityType.Freelance,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(30),
+                CreatedAt = DateTime.UtcNow.AddDays(-3),
+                PostedByUserId = 1,
+                CategoryId = 2,
+                TalentArea = "Music Production"
+            },
+            new TalentOpportunity
+            {
+                Id = 3,
+                Title = "Street Performer for Downtown District",
+                Description = "Looking for talented street performers to entertain visitors in our downtown district.",
+                Location = "Chicago, IL",
+                IsRemote = false,
+                Type = OpportunityType.Gig,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(21),
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                PostedByUserId = 1,
+                CategoryId = 1,
+                TalentArea = "Hip Hop Dance"
+            },
+            new TalentOpportunity
+            {
+                Id = 4,
                 Title = "Freelance Graphic Designer Needed",
                 Description = "Seeking a creative graphic designer to create social media assets for a new brand launch. Remote work available.",
                 Location = "Remote",
@@ -510,13 +616,13 @@ public class DatabaseContext : DbContext
                 Status = OpportunityStatus.Open,
                 ApplicationDeadline = DateTime.UtcNow.AddDays(30),
                 CreatedAt = DateTime.UtcNow,
-                PostedByUserId = 2, // recruiter1
-                CategoryId = 3, // Art
+                PostedByUserId = 1,
+                CategoryId = 3,
                 TalentArea = "Graphic Design"
             },
             new TalentOpportunity
             {
-                Id = 3,
+                Id = 5,
                 Title = "Summer Art Exhibit - Call for Submissions",
                 Description = "Local gallery seeking emerging artists to showcase their work in our summer exhibition. All mediums welcome.",
                 Location = "Hanoi",
@@ -525,108 +631,77 @@ public class DatabaseContext : DbContext
                 Status = OpportunityStatus.Open,
                 ApplicationDeadline = DateTime.UtcNow.AddDays(45),
                 CreatedAt = DateTime.UtcNow,
-                PostedByUserId = 5, // creator1
-                CategoryId = 3, // Art
+                PostedByUserId = 4,
+                CategoryId = 3,
                 TalentArea = "Visual Arts"
             }
         );
 
-        // Seed Privacy Settings
-        modelBuilder.Entity<Privacy>().HasData(
-            new Privacy { PrivacyID = 1, Name = "Public" },
-            new Privacy { PrivacyID = 2, Name = "Friends Only" },
-            new Privacy { PrivacyID = 3, Name = "Private" }
-        );
-
-        // Seed Contests
-        modelBuilder.Entity<Contest>().HasData(
-    new Contest
-    {
-        ContestID = 1,
-        Title = "Summer Photography Challenge",
-        Description = "Capture the essence of summer in your best photos. Open to all photography enthusiasts!",
-        StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
-        EndDate = new DateTime(2025, 8, 31, 23, 59, 59, DateTimeKind.Utc)
-    },
-    new Contest
-    {
-        ContestID = 2,
-        Title = "Short Film Festival",
-        Description = "Submit your best short films under 5 minutes. All genres welcome!",
-        StartDate = new DateTime(2025, 7, 1, 0, 0, 0, DateTimeKind.Utc),
-        EndDate = new DateTime(2025, 9, 30, 23, 59, 59, DateTimeKind.Utc)
-    },
-    new Contest
-    {
-        ContestID = 3,
-        Title = "Urban Art Competition",
-        Description = "Showcase your street art and urban photography skills.",
-        StartDate = new DateTime(2025, 5, 26, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(-7)
-        EndDate = new DateTime(2025, 6, 23, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(21)
-    },
-    new Contest
-    {
-        ContestID = 4,
-        Title = "Portrait Photography Contest",
-        Description = "Capture the human essence in your portraits. Professional and amateur photographers welcome!",
-        StartDate = new DateTime(2025, 6, 9, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(7)
-        EndDate = new DateTime(2025, 8, 2, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(60)
-    },
-    new Contest
-    {
-        ContestID = 5,
-        Title = "Nature's Beauty Video Contest",
-        Description = "Create stunning videos showcasing the beauty of nature. Maximum 3 minutes.",
-        StartDate = new DateTime(2025, 6, 16, 0, 0, 0, DateTimeKind.Utc), // Hardcoded instead of now.AddDays(14)
-        EndDate = new DateTime(2025, 8, 17, 23, 59, 59, DateTimeKind.Utc) // Hardcoded instead of now.AddDays(75)
-    }
-);
-
-        modelBuilder.Entity<Role>().HasData(
-            new Role { RoleID = 1, Name = "User" },
-            new Role { RoleID = 2, Name = "Admin" }
-        );
-
+        // Seed Opportunity Applications
         modelBuilder.Entity<OpportunityApplication>().HasData(
             new OpportunityApplication
             {
                 ApplicationID = 1,
-                UserID = 4, // dancer1 (ID: 4) applying for the position
-                TalentOpportunityID = 1, // Lead Dancer for Music Video
-                CoverLetter = "Professional dancer with 5+ years of experience in hip hop...",
+                UserID = 2,
+                TalentOpportunityID = 1,
+                CoverLetter = "I have 5 years of experience in hip hop dance and have performed at multiple festivals.",
                 Status = ApplicationStatus.UnderReview,
-                AppliedAt = DateTime.UtcNow.AddDays(-1)
+                AppliedAt = DateTime.UtcNow.AddDays(-2),
+                ReviewedAt = null,
+                ReviewNotes = null
             },
             new OpportunityApplication
             {
                 ApplicationID = 2,
-                UserID = 3, // artist1 (ID: 3) applying for the position
-                TalentOpportunityID = 2, // Freelance Graphic Designer Needed
-                CoverLetter = "I'm a passionate graphic designer with 4 years of experience...",
+                UserID = 3,
+                TalentOpportunityID = 2,
+                CoverLetter = "I specialize in creating atmospheric electronic music perfect for games.",
                 Status = ApplicationStatus.Pending,
-                AppliedAt = DateTime.UtcNow
+                AppliedAt = DateTime.UtcNow.AddDays(-1),
+                ReviewedAt = null,
+                ReviewNotes = null
+            },
+            new OpportunityApplication
+            {
+                ApplicationID = 3,
+                UserID = 2,
+                TalentOpportunityID = 3,
+                CoverLetter = "I'd love to bring my unique style to your downtown district!",
+                Status = ApplicationStatus.Pending,
+                AppliedAt = DateTime.UtcNow,
+                ReviewedAt = null,
+                ReviewNotes = null
             }
         );
 
-        // Seed some Notifications
+        // Seed Notifications
         modelBuilder.Entity<Notification>().HasData(
             new Notification
             {
                 NotificationID = 1,
-                UserID = 3, // artist1 (ID: 3) who applied
-                Message = "Your application for 'Lead Dancer for Music Video' has been received.",
+                UserID = 1,
+                Message = "New application received for Lead Dancer position",
                 Type = NotificationType.ApplicationUpdate,
                 Status = NotificationStatus.Unread,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow.AddHours(-2)
             },
             new Notification
             {
                 NotificationID = 2,
-                UserID = 4, // dancer1 (ID: 4) who applied
-                Message = "Your application for 'Freelance Graphic Designer' is now under review.",
+                UserID = 2,
+                Message = "Your application for Lead Dancer is under review",
                 Type = NotificationType.ApplicationUpdate,
-                Status = NotificationStatus.Unread,
+                Status = NotificationStatus.Read,
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
+            },
+            new Notification
+            {
+                NotificationID = 3,
+                UserID = 3,
+                Message = "New music production opportunity matches your profile",
+                Type = NotificationType.OpportunityPosted,
+                Status = NotificationStatus.Unread,
+                CreatedAt = DateTime.UtcNow.AddHours(-4)
             }
         );
     }

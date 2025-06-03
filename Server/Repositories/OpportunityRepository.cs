@@ -72,9 +72,9 @@ public class OpportunityRepository : IOpportunityRepository
         {
             ApplicationID = application.ApplicationID,
             UserID = application.UserID,
-            OpportunityTitle = application.OpportunityTitle,
-            OpportunityDescription = application.OpportunityDescription,
             TalentOpportunityID = application.TalentOpportunityID,
+            TalentOpportunityTitle = application.TalentOpportunity?.Title ?? "Opportunity not found",
+            TalentOpportunityDescription = application.TalentOpportunity?.Description ?? string.Empty,
             CoverLetter = application.CoverLetter,
             Status = application.Status,
             AppliedAt = application.AppliedAt,
@@ -207,8 +207,6 @@ public class OpportunityRepository : IOpportunityRepository
         {
             UserID = userId,
             TalentOpportunityID = applicationDto.TalentOpportunityID,
-            OpportunityTitle = opportunity.Title,
-            OpportunityDescription = opportunity.Description,
             CoverLetter = applicationDto.CoverLetter,
             Status = ApplicationStatus.Pending,
             AppliedAt = DateTime.UtcNow

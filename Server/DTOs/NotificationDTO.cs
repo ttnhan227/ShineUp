@@ -16,13 +16,14 @@ public class NotificationDTO
 
 public class CreateNotificationDTO
 {
-    [JsonPropertyName("UserID")]
+    [JsonPropertyName("userID")]
     public int UserID { get; set; }
     
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
     
     [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]  // This enables string serialization
     public NotificationType Type { get; set; } = NotificationType.Generic;
     
     [JsonPropertyName("relatedEntityId")]

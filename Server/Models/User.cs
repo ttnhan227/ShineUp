@@ -51,4 +51,5 @@ public class User
     public ICollection<CommunityMember> CommunityMemberships { get; set; }
     public ICollection<TalentOpportunity> PostedOpportunities { get; set; }
     public ICollection<OpportunityApplication> OpportunityApplications { get; set; }
+    public ICollection<Notification> Notifications { get; set; }
 }

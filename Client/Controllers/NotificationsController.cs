@@ -1,257 +1,213 @@
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Client.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Client.Models;
-using System.Text.Json;
-using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
-namespace Client.Controllers;
-
-[Authorize]
-[Route("notifications")]
-public class NotificationsController : Controller
+namespace Client.Controllers
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<NotificationsController> _logger;
-    private readonly IConfiguration _configuration;
-
-    public NotificationsController(
-        IHttpClientFactory httpClientFactory,
-        ILogger<NotificationsController> logger,
-        IConfiguration configuration)
+    [Authorize]
+    public class NotificationsController : Controller
     {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-        _configuration = configuration;
-    }
+        private readonly IHttpClientFactory _clientFactory;
+        private readonly IConfiguration _configuration;
+        private readonly JsonSerializerOptions _jsonOptions;
+        private readonly ILogger<NotificationsController> _logger;
 
-    private HttpClient CreateAuthenticatedClient()
-    {
-        var client = _httpClientFactory.CreateClient("API");
-        var token = HttpContext.Request.Cookies["auth_token"];
-        if (!string.IsNullOrEmpty(token))
+        public NotificationsController(
+            IHttpClientFactory clientFactory,
+            IConfiguration configuration,
+            ILogger<NotificationsController> logger)
         {
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            _clientFactory = clientFactory;
+            _configuration = configuration;
+            _logger = logger;
+            _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
-        return client;
-    }
 
-    [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] bool unreadOnly = false)
-    {
-        try
+        private async Task<HttpClient> GetAuthenticatedClient()
         {
-            var client = CreateAuthenticatedClient();
-            var response = await client.GetAsync($"api/notifications?unreadOnly={unreadOnly}");
+            var client = _clientFactory.CreateClient("API");
             
-            if (!response.IsSuccessStatusCode)
+            // Check if user is authenticated
+            if (!User.Identity.IsAuthenticated)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Failed to fetch notifications. Status: {response.StatusCode}, Response: {errorContent}");
-                return View("Error");
+                _logger.LogWarning("User is not authenticated");
+                return null;
+            }
+            
+            // Get the JWT token from the claims
+            var token = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogWarning("JWT token not found in claims");
+                return null;
             }
 
-            var content = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation($"Received notifications: {content}");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _logger.LogInformation("JWT token added to request");
             
-            var notifications = JsonSerializer.Deserialize<List<NotificationViewModel>>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new List<NotificationViewModel>();
-
-            _logger.LogInformation($"Deserialized {notifications.Count} notifications");
-            
-            ViewBag.UnreadCount = notifications.Count(n => n.Status == NotificationStatus.Unread);
-            ViewBag.TotalCount = notifications.Count;
-            ViewBag.ShowUnreadOnly = unreadOnly;
-
-            return View(notifications);
+            return client;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in Notifications/Index");
-            return View("Error");
-        }
-    }
 
-    // GET: /notifications/5
-    [HttpGet("{id}")]
-    public async Task<IActionResult> Details(int id)
-    {
-        try
+        // GET: Notifications
+        [HttpGet]
+        public async Task<IActionResult> Index(bool unreadOnly = false)
         {
-            var client = CreateAuthenticatedClient();
-            var response = await client.GetAsync($"api/notifications/{id}");
-            
-            if (!response.IsSuccessStatusCode)
+            var client = await GetAuthenticatedClient();
+            if (client == null)
             {
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            var apiUrl = $"api/notifications?unreadOnly={unreadOnly}";
+            
+            try
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
                 {
-                    return NotFound();
+                    var content = await response.Content.ReadAsStringAsync();
+                    var notifications = JsonSerializer.Deserialize<List<NotificationViewModel>>(content, _jsonOptions);
+                    return View(notifications);
                 }
-                return View("Error");
+                return HandleError(response.StatusCode);
             }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var notification = JsonSerializer.Deserialize<NotificationViewModel>(content, new JsonSerializerOptions
+            catch (HttpRequestException)
             {
-                PropertyNameCaseInsensitive = true
-            });
-
-            // Mark as read when viewing details
-            if (notification.Status == NotificationStatus.Unread)
-            {
-                await MarkAsRead(id);
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
             }
-
-            return View(notification);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error fetching notification with ID {id}");
-            return View("Error");
-        }
-    }
 
-    // POST: /notifications/5/read
-    [HttpPost("{id}/read")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkAsRead(int id)
-    {
-        try
+        // GET: Notifications/Details/5
+        [HttpGet("details/{id}")]
+        public async Task<IActionResult> Details(int id)
         {
-            var client = CreateAuthenticatedClient();
-            var response = await client.PutAsync($"api/notifications/{id}/read", null);
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
             
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError($"Failed to mark notification {id} as read. Status: {response.StatusCode}");
-                return Json(new { success = false });
-            }
-
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error marking notification {id} as read");
-            return Json(new { success = false });
-        }
-    }
-
-    // POST: /notifications/read-all
-    [HttpPost("read-all")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkAllAsRead()
-    {
-        try
-        {
-            var client = CreateAuthenticatedClient();
-            var response = await client.PutAsync("api/notifications/read-all", null);
+            var apiUrl = $"api/notifications/{id}";
             
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                _logger.LogError($"Failed to mark all notifications as read. Status: {response.StatusCode}");
-                TempData["ErrorMessage"] = "Failed to mark all notifications as read.";
-                return RedirectToAction(nameof(Index));
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var notification = JsonSerializer.Deserialize<NotificationViewModel>(content, _jsonOptions);
+                    return View(notification);
+                }
+                return HandleError(response.StatusCode);
             }
-
-            TempData["SuccessMessage"] = "All notifications marked as read.";
-            return RedirectToAction(nameof(Index));
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error marking all notifications as read");
-            TempData["ErrorMessage"] = "An error occurred while marking notifications as read.";
-            return RedirectToAction(nameof(Index));
-        }
-    }
 
-    // DELETE: /notifications/5
-    [HttpDelete("{id}")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
-    {
-        try
+        // POST: Notifications/MarkAsRead/5
+        [HttpPost("mark-as-read/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(int id)
         {
-            var client = CreateAuthenticatedClient();
-            var response = await client.DeleteAsync($"api/notifications/{id}");
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
             
-            if (!response.IsSuccessStatusCode)
+            var apiUrl = $"api/notifications/{id}/read";
+            
+            try
             {
-                _logger.LogError($"Failed to delete notification {id}. Status: {response.StatusCode}");
-                return Json(new { success = false });
+                var response = await client.PutAsync(apiUrl, null);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                return HandleError(response.StatusCode);
             }
-
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error deleting notification {id}");
-            return Json(new { success = false });
-        }
-    }
-
-    [HttpGet("unread-count")]
-public async Task<IActionResult> GetUnreadCount()
-{
-    try
-    {
-        var client = CreateAuthenticatedClient();
-        var response = await client.GetAsync("api/notifications?unreadOnly=true");
-        
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError($"Failed to get unread notifications. Status: {response.StatusCode}");
-            return Json(new { count = 0 });
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
         }
 
-        var content = await response.Content.ReadAsStringAsync();
-        _logger.LogInformation($"Unread notifications response: {content}"); // Add this line
-        
-        var unreadNotifications = JsonSerializer.Deserialize<List<NotificationViewModel>>(content, new JsonSerializerOptions
+        // POST: Notifications/MarkAllAsRead
+        [HttpPost("mark-all-read")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllAsRead()
         {
-            PropertyNameCaseInsensitive = true
-        });
-        
-        return Json(new { count = unreadNotifications?.Count ?? 0 });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error getting unread notification count");
-        return Json(new { count = 0 });
-    }
-}
-
-    // GET: /notifications/preferences
-    [HttpGet("preferences")]
-    public IActionResult Preferences()
-    {
-        // In a real app, you would fetch these from the user's profile
-        var model = new NotificationPreferencesViewModel();
-        return View(model);
-    }
-
-    // POST: /notifications/preferences
-    [HttpPost("preferences")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SavePreferences(NotificationPreferencesViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View("Preferences", model);
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            var apiUrl = "api/notifications/read-all";
+            
+            try
+            {
+                var response = await client.PutAsync(apiUrl, null);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
         }
 
-        try
+        // GET: Notifications/UnreadCount
+        [HttpGet("unread-count")]
+        public async Task<IActionResult> GetUnreadCount()
         {
-            // In a real app, you would save these preferences to the user's profile
-            TempData["SuccessMessage"] = "Notification preferences updated successfully!";
-            return RedirectToAction(nameof(Preferences));
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return Json(new { count = 0 });
+            }
+            
+            var apiUrl = "api/notifications/unread-count";
+            
+            try
+            {
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var count = JsonSerializer.Deserialize<int>(content, _jsonOptions);
+                    return Json(new { count });
+                }
+                return Json(new { count = 0 });
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error getting unread count");
+                return Json(new { count = 0 });
+            }
         }
-        catch (Exception ex)
+
+        private IActionResult HandleError(System.Net.HttpStatusCode statusCode)
         {
-            _logger.LogError(ex, "Error saving notification preferences");
-            ModelState.AddModelError(string.Empty, "An error occurred while saving your preferences.");
-            return View("Preferences", model);
+            return statusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized => RedirectToAction("Login", "Auth"),
+                System.Net.HttpStatusCode.NotFound => View("NotFound"),
+                _ => View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier })
+            };
         }
     }
 }

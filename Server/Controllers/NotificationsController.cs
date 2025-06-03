@@ -175,25 +175,5 @@ public async Task<ActionResult<NotificationDTO>> CreateNotification(CreateNotifi
         return Ok(count);
     }
     
-    // Debug endpoint to check current user identity
-    [HttpGet("debug/user-info")]
-    public IActionResult GetUserDebugInfo()
-    {
-        var user = _httpContextAccessor.HttpContext?.User;
-        if (user == null)
-        {
-            return BadRequest("No user information available");
-        }
-        
-        var claims = user.Claims.Select(c => new { Type = c.Type, Value = c.Value });
-        
-        return Ok(new
-        {
-            UserId = GetCurrentUserId(),
-            UserName = user.Identity?.Name,
-            IsAuthenticated = user.Identity?.IsAuthenticated,
-            AuthenticationType = user.Identity?.AuthenticationType,
-            Claims = claims
-        });
-    }
+
 }
