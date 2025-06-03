@@ -168,8 +168,7 @@ builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<IOpportunityApplicationRepository, OpportunityApplicationRepository>();
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
 
 // Add Cloudinary Service
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
