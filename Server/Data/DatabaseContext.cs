@@ -25,6 +25,7 @@ public class DatabaseContext : DbContext
     public DbSet<Image> Images { get; set; }
     public DbSet<Community> Communities { get; set; }
     public DbSet<CommunityMember> CommunityMembers { get; set; }
+    public DbSet<TalentOpportunity> TalentOpportunities { get; set; }
     public DbSet<OpportunityApplication> OpportunityApplications { get; set; }
     public DbSet<Notification> Notifications { get; set; }
 
@@ -311,6 +312,25 @@ public class DatabaseContext : DbContext
             .HasForeignKey(p => p.CategoryID)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<TalentOpportunity>()
+            .HasOne(to => to.PostedByUser)
+            .WithMany(u => u.PostedOpportunities)
+            .HasForeignKey(to => to.PostedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<TalentOpportunity>()
+            .HasOne(to => to.Category)
+            .WithMany(c => c.TalentOpportunities)
+            .HasForeignKey(to => to.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Add index for better query performance
+        modelBuilder.Entity<TalentOpportunity>()
+            .HasIndex(to => to.TalentArea);
+            
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.TalentArea);
+
         modelBuilder.Entity<Community>()
             .HasOne(c => c.CreatedBy)
             .WithMany(u => u.CreatedCommunities)
@@ -361,9 +381,15 @@ public class DatabaseContext : DbContext
 
         modelBuilder.Entity<OpportunityApplication>()
             .HasOne(oa => oa.User)
-            .WithMany()
+            .WithMany(u => u.OpportunityApplications)
             .HasForeignKey(oa => oa.UserID)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OpportunityApplication>()
+            .HasOne(oa => oa.TalentOpportunity)
+            .WithMany(to => to.Applications)
+            .HasForeignKey(oa => oa.TalentOpportunityID)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Notification>()
             .HasKey(n => n.NotificationID);
@@ -442,6 +468,127 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<Role>().HasData(
             new Role { RoleID = 1, Name = "User" },
             new Role { RoleID = 2, Name = "Admin" }
+        );
+
+        // Seed Talent Opportunities
+        modelBuilder.Entity<TalentOpportunity>().HasData(
+            new TalentOpportunity
+            {
+                Id = 1,
+                Title = "Freelance Graphic Designer Needed",
+                Description = "Looking for a creative graphic designer to help with branding and marketing materials.",
+                Requirements = "- 3+ years of experience in graphic design\n- Proficiency in Adobe Creative Suite\n- Strong portfolio showcasing design work",
+                Responsibilities = "- Create brand assets\n- Design marketing materials\n- Collaborate with marketing team",
+                Benefits = "- Flexible hours\n- Remote work\n- Competitive pay",
+                Location = "Remote",
+                IsRemote = true,
+                SalaryMin = 25,
+                SalaryMax = 45,
+                SalaryCurrency = "USD",
+                SalaryPeriod = "per hour",
+                Type = OpportunityType.Freelance,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(30),
+                StartDate = DateTime.UtcNow.AddDays(7),
+                PostedByUserId = 1, // Assuming user with ID 1 exists
+                CategoryId = 3, // Art
+                TalentArea = "Graphic Design"
+            },
+            new TalentOpportunity
+            {
+                Id = 2,
+                Title = "Music Video Dancers (Hip Hop)",
+                Description = "Casting professional hip hop dancers for an upcoming music video shoot.",
+                Requirements = "- Strong hip hop dance background\n- Performance experience\n- Available for full day shoot",
+                Responsibilities = "- Attend rehearsals\n- Perform in music video\n- Follow choreography",
+                Benefits = "- Paid gig\n- Meals provided\n- Credit in video",
+                Location = "Los Angeles, CA",
+                IsRemote = false,
+                SalaryMin = 300,
+                SalaryMax = 500,
+                SalaryCurrency = "USD",
+                SalaryPeriod = "per day",
+                Type = OpportunityType.Gig,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(14),
+                StartDate = DateTime.UtcNow.AddDays(21),
+                PostedByUserId = 1,
+                CategoryId = 1, // Dance
+                TalentArea = "Hip Hop Dance"
+            },
+            new TalentOpportunity
+            {
+                Id = 3,
+                Title = "Social Media Content Creator",
+                Description = "Looking for a creative content creator to manage our social media presence.",
+                Requirements = "- Experience in social media management\n- Content creation skills\n- Understanding of current trends",
+                Responsibilities = "- Create engaging content\n- Schedule posts\n- Engage with audience",
+                Benefits = "- Remote work\n- Flexible schedule\n- Creative freedom",
+                Location = "Remote",
+                IsRemote = true,
+                SalaryMin = 2000,
+                SalaryMax = 3500,
+                SalaryCurrency = "USD",
+                SalaryPeriod = "per month",
+                Type = OpportunityType.Job,
+                Status = OpportunityStatus.Open,
+                ApplicationDeadline = DateTime.UtcNow.AddDays(21),
+                StartDate = DateTime.UtcNow.AddDays(30),
+                PostedByUserId = 1,
+                CategoryId = 10, // Other
+                TalentArea = "Content Creation"
+            }
+        );
+
+        // Seed some Opportunity Applications
+        modelBuilder.Entity<OpportunityApplication>().HasData(
+            new OpportunityApplication
+            {
+                ApplicationID = 1,
+                UserID = 2, // Assuming user with ID 2 exists
+                TalentOpportunityID = 1,
+                CoverLetter = "I'm a passionate graphic designer with 4 years of experience...",
+                PortfolioLink = "https://example.com/portfolio/johndoe",
+                Status = ApplicationStatus.Pending,
+                AppliedAt = DateTime.UtcNow
+            },
+            new OpportunityApplication
+            {
+                ApplicationID = 2,
+                UserID = 3, // Assuming user with ID 3 exists
+                TalentOpportunityID = 2,
+                CoverLetter = "Professional dancer with 5+ years of experience in hip hop...",
+                Status = ApplicationStatus.UnderReview,
+                AppliedAt = DateTime.UtcNow.AddDays(-1)
+            }
+        );
+
+        // Seed some Notifications
+        modelBuilder.Entity<Notification>().HasData(
+            new Notification
+            {
+                NotificationID = 1,
+                UserID = 2, // User who applied
+                Title = "Application Received",
+                Message = "Your application for 'Freelance Graphic Designer' has been received.",
+                Type = NotificationType.ApplicationUpdate,
+                Status = NotificationStatus.Unread,
+                RelatedEntityID = 1, // Application ID
+                RelatedEntityType = "Application",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Notification
+            {
+                NotificationID = 2,
+                UserID = 3, // User who applied
+                Title = "Application Under Review",
+                Message = "Your application for 'Music Video Dancers' is now under review.",
+                Type = NotificationType.ApplicationUpdate,
+                Status = NotificationStatus.Unread,
+                RelatedEntityID = 2, // Application ID
+                RelatedEntityType = "Application",
+                CreatedAt = DateTime.UtcNow.AddDays(-1)
+            }
         );
     }
 }
