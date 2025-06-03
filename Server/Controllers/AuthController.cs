@@ -392,6 +392,8 @@ public class AuthController : ControllerBase
 
     private string GenerateToken(User user)
     {
+        _logger.LogInformation($"[AuthController] Generating token for user ID: {user.UserID}, Email: {user.Email}, Username: {user.Username}");
+        
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
@@ -403,9 +405,11 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
             new Claim("Username", user.Username),
             new Claim("Email", user.Email),
-            new Claim(ClaimTypes.Role, user.Role.Name),
+            new Claim(ClaimTypes.Role, user.Role?.Name ?? "User"),
             new Claim("RoleID", user.RoleID.ToString())
         };
+
+        _logger.LogInformation($"[AuthController] Token claims: {string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}"))}");
 
         var token = new JwtSecurityToken(
             _configuration["Jwt:Issuer"],
@@ -414,7 +418,11 @@ public class AuthController : ControllerBase
             expires: DateTime.Now.AddDays(7), // Changed from 30 minutes to 7 days
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        _logger.LogInformation($"[AuthController] Token generated successfully for user ID: {user.UserID}");
+        
+        return tokenString;
     }
 
 }

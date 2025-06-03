@@ -1,0 +1,346 @@
+@model IEnumerable<Client.Models.NotificationViewModel>
+
+@{
+    ViewData["Title"] = "My Notifications";
+    var unreadCount = Model?.Count(n => n.Status == NotificationStatus.Unread) ?? 0;
+    var totalCount = Model?.Count() ?? 0;
+}
+
+<div class="main-content-container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Notifications</h1>
+                    <p class="text-muted mb-0">
+                        @if (ViewBag.ShowUnreadOnly)
+                        {
+                            <span>Showing @unreadCount unread @(unreadCount == 1 ? "notification" : "notifications")</span>
+                        }
+                        else
+                        {
+                            <span>Showing @totalCount @(totalCount == 1 ? "notification" : "notifications")</span>
+                            @if (unreadCount > 0)
+                            {
+                                <span class="ms-2">(@unreadCount unread)</span>
+                            }
+                        }
+                    </p>
+                </div>
+                <div class="d-flex">
+                    @if (unreadCount > 0)
+                    {
+                        <button id="markAllReadBtn" class="btn btn-sm btn-outline-primary me-2" 
+                                data-url="@Url.Action("MarkAllAsRead", "Notifications")">
+                            <i class='bx bx-check-double'></i> Mark all as read
+                        </button>
+                    }
+                    <div class="btn-group" role="group">
+                        <a href="?unreadOnly=true" class="btn btn-sm @(ViewBag.ShowUnreadOnly ? "btn-primary" : "btn-outline-primary")">
+                            <i class='bx bx-envelope me-1'></i> Unread
+                        </a>
+                        <a href="?unreadOnly=false" class="btn btn-sm @(!ViewBag.ShowUnreadOnly ? "btn-primary" : "btn-outline-primary")">
+                            <i class='bx bx-list-ul me-1'></i> All
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class='bx bx-bell-off text-muted' style="font-size: 4rem; opacity: 0.5;"></i>
+                    </div>
+                    <h5>No notifications yet</h5>
+                    <p class="text-muted">When you get notifications, they'll appear here.</p>
+                    @if (ViewBag.ShowUnreadOnly)
+                    {
+                        <a href="?unreadOnly=false" class="btn btn-sm btn-outline-primary mt-2">
+                            <i class='bx bx-list-ul me-1'></i> View all notifications
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var notification in Model)
+                    {
+                        <div class="list-group-item list-group-item-action border-0 py-3 @(notification.Status == NotificationStatus.Unread ? "unread" : "")"
+                             data-notification-id="@notification.NotificationID"
+                             data-read-status="@(notification.Status == NotificationStatus.Unread ? "unread" : "read")">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background-color: #e9ecef;">
+                                        <i class='bx bx-bell fs-4'></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="mb-1">
+                                            @if (notification.Status == NotificationStatus.Unread)
+                                            {
+                                                <span class="badge bg-primary rounded-pill me-1">New</span>
+                                            }
+                                            @(notification.SenderName ?? "System")
+                                        </h6>
+                                        <small class="text-muted" data-bs-toggle="tooltip" title="@notification.CreatedAt.ToString("f")">
+                                            @GetRelativeTime(notification.CreatedAt)
+                                        </small>
+                                    </div>
+                                    <p class="mb-2">@Html.Raw(notification.Message)</p>
+                                    <div class="d-flex mt-2">
+                                        @if (notification.RelatedEntityId.HasValue)
+                                        {
+                                            <a href="@GetActionUrl(notification)" class="btn btn-sm btn-outline-primary me-2">
+                                                <i class='bx bx-show me-1'></i>View
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="#" class="btn btn-sm btn-outline-primary me-2">
+                                                <i class='bx bx-show me-1'></i>View
+                                            </a>
+                                        }
+                                        @if (notification.Status == NotificationStatus.Unread)
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary mark-as-read me-2" 
+                                                    data-notification-id="@notification.NotificationID">
+                                                <i class='bx bx-check me-1'></i>Mark as read
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-danger delete-notification"
+                                                data-notification-id="@notification.NotificationID">
+                                            <i class='bx bx-trash me-1'></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this notification? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetRelativeTime(DateTime date)
+    {
+        const int SECOND = 1;
+        const int MINUTE = 60 * SECOND;
+        const int HOUR = 60 * MINUTE;
+        const int DAY = 24 * HOUR;
+        const int MONTH = 30 * DAY;
+
+        var ts = new TimeSpan(DateTime.UtcNow.Ticks - date.ToUniversalTime().Ticks);
+        double delta = Math.Abs(ts.TotalSeconds);
+
+        if (delta < 1 * MINUTE)
+            return ts.Seconds == 1 ? "one second ago" : ts.Seconds + " seconds ago";
+
+        if (delta < 2 * MINUTE)
+            return "a minute ago";
+
+        if (delta < 45 * MINUTE)
+            return ts.Minutes + " minutes ago";
+
+        if (delta < 90 * MINUTE)
+            return "an hour ago";
+
+        if (delta < 24 * HOUR)
+            return ts.Hours + " hours ago";
+
+        if (delta < 48 * HOUR)
+            return "yesterday";
+
+        if (delta < 30 * DAY)
+            return ts.Days + " days ago";
+
+        if (delta < 12 * MONTH)
+        {
+            int months = Convert.ToInt32(Math.Floor((double)ts.Days / 30));
+            return months <= 1 ? "one month ago" : months + " months ago";
+        }
+        else
+        {
+            int years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
+            return years <= 1 ? "one year ago" : years + " years ago";
+        }
+    }
+
+    public string GetActionUrl(NotificationViewModel notification)
+    {
+        if (!notification.RelatedEntityId.HasValue)
+            return "#";
+
+        return notification.RelatedEntityType?.ToLower() switch
+        {
+            "opportunity" => $"/opportunities/{notification.RelatedEntityId}",
+            "application" => $"/applications/{notification.RelatedEntityId}",
+            "message" => $"/messages/{notification.RelatedEntityId}",
+            _ => "#"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Mark as read
+            document.querySelectorAll('.mark-as-read').forEach(button => {
+                button.addEventListener('click', function() {
+                    const notificationId = this.dataset.notificationId;
+                    markAsRead(notificationId);
+                });
+            });
+
+            // Mark all as read
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function() {
+                    const url = this.dataset.url;
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to mark all as read');
+                        window.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to mark all notifications as read');
+                    });
+                });
+            }
+
+            // Delete notification
+            const deleteButtons = document.querySelectorAll('.delete-notification');
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+            let notificationIdToDelete = null;
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    notificationIdToDelete = this.dataset.notificationId;
+                    deleteModal.show();
+                });
+            });
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                if (!notificationIdToDelete) return;
+                
+                fetch(`/notifications/${notificationIdToDelete}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to delete notification');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete notification');
+                    deleteModal.hide();
+                });
+            });
+
+            // Handle notification click
+            document.querySelectorAll('.list-group-item[data-notification-id]').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on action buttons
+                    if (e.target.closest('button, a[href!="#"]')) return;
+                    
+                    const notificationId = this.dataset.notificationId;
+                    const isUnread = this.dataset.readStatus === 'unread';
+                    
+                    if (isUnread) {
+                        markAsRead(notificationId);
+                    }
+                });
+            });
+
+            function markAsRead(notificationId) {
+                fetch(`/notifications/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to mark as read');
+                    
+                    // Update UI
+                    const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                    if (notificationItem) {
+                        notificationItem.classList.remove('unread');
+                        notificationItem.dataset.readStatus = 'read';
+                        
+                        const badge = notificationItem.querySelector('.badge');
+                        if (badge) {
+                            badge.remove();
+                        }
+                        
+                        const markAsReadBtn = notificationItem.querySelector('.mark-as-read');
+                        if (markAsReadBtn) {
+                            markAsReadBtn.remove();
+                        }
+                        
+                        // Update unread count
+                        updateUnreadCount(-1);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+
+            function updateUnreadCount(change) {
+                const countElement = document.getElementById('notificationCount');
+                if (!countElement) return;
+                
+                let currentCount = parseInt(countElement.textContent) || 0;
+                const newCount = Math.max(0, currentCount + change);
+                
+                if (newCount > 0) {
+                    countElement.textContent = newCount > 9 ? '9+' : newCount.toString();
+                    countElement.style.display = 'flex';
+                } else {
+                    countElement.style.display = 'none';
+                }
+            }
+        });
+    </script>
+}

@@ -10,11 +10,13 @@ public class GoogleAuthService : IGoogleAuthService
 {
     private readonly DatabaseContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<GoogleAuthService> _logger;
 
-    public GoogleAuthService(DatabaseContext context, IConfiguration configuration)
+    public GoogleAuthService(DatabaseContext context, IConfiguration configuration, ILogger<GoogleAuthService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<GoogleJsonWebSignature.Payload> VerifyGoogleToken(string idToken)
@@ -29,12 +31,28 @@ public class GoogleAuthService : IGoogleAuthService
 
     public async Task<User> HandleGoogleUser(GoogleJsonWebSignature.Payload payload)
     {
+        _logger.LogInformation($"[GoogleAuthService] Handling Google user with email: {payload.Email}, Subject: {payload.Subject}");
+        
+        // First try to find by Google ID
         var user = await _context.Users
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(x => x.GoogleId == payload.Subject || x.Email == payload.Email);
+            .FirstOrDefaultAsync(x => x.GoogleId == payload.Subject);
+            
+        _logger.LogInformation($"[GoogleAuthService] User found by Google ID: {user != null}");
+
+        // If not found by Google ID, try by email
+        if (user == null && !string.IsNullOrEmpty(payload.Email))
+        {
+            user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(x => x.Email == payload.Email);
+                
+            _logger.LogInformation($"[GoogleAuthService] User found by email: {user != null}");
+        }
 
         if (user == null)
         {
+            _logger.LogInformation("[GoogleAuthService] Creating new user");
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             string uniqueUsername = await GenerateUniqueUsername(payload.Name);
             
@@ -56,19 +74,28 @@ public class GoogleAuthService : IGoogleAuthService
         }
         else
         {
+            _logger.LogInformation($"[GoogleAuthService] Updating existing user with ID: {user.UserID}");
+            
             // Check if the account is active
             if (!user.IsActive)
             {
+                _logger.LogWarning($"[GoogleAuthService] User account is inactive: {user.UserID}");
                 throw new InvalidOperationException("Your account is inactive. Please contact support for assistance.");
             }
 
-            // Update user information from Google
-            user.GoogleId = payload.Subject;
+            // Update Google ID if not set
+            if (string.IsNullOrEmpty(user.GoogleId))
+            {
+                _logger.LogInformation($"[GoogleAuthService] Adding Google ID to existing user");
+                user.GoogleId = payload.Subject;
+            }
+            
             // Only update FullName if it's not already set
             if (string.IsNullOrEmpty(user.FullName))
             {
                 user.FullName = payload.Name;
             }
+            
             // Always update the profile picture from Google
             user.ProfileImageURL = payload.Picture;
             user.Verified = true;
@@ -76,6 +103,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
 
         await _context.SaveChangesAsync();
+        _logger.LogInformation($"[GoogleAuthService] User handled successfully. UserID: {user.UserID}, Email: {user.Email}");
         return user;
     }
 

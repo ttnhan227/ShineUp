@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Server.DTOs;
 using Server.Interfaces;
+using System.Text.Json;
 
 namespace Server.Controllers;
 
@@ -14,36 +15,80 @@ public class NotificationsController : ControllerBase
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<NotificationsController> _logger;
 
     public NotificationsController(
         INotificationRepository notificationRepository,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<NotificationsController> logger)
     {
         _notificationRepository = notificationRepository;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     private int GetCurrentUserId()
-{
-    var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                    ?? _httpContextAccessor.HttpContext?.User.FindFirst("id")?.Value
-                    ?? throw new UnauthorizedAccessException("User ID claim not found");
-    
-    if (!int.TryParse(userIdClaim, out int userId))
     {
-        throw new UnauthorizedAccessException("Invalid user ID format");
+        if (!User.Identity.IsAuthenticated)
+        {
+            _logger.LogWarning("User is not authenticated");
+            throw new UnauthorizedAccessException("User is not authenticated");
+        }
+
+        // Log all claims for debugging
+        var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}");
+        _logger.LogInformation($"User claims: {string.Join(", ", claims)}");
+
+        // Try different claim types
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("sub")?.Value
+                           ?? User.FindFirst("id")?.Value
+                           ?? User.FindFirst("userid")?.Value
+                           ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            _logger.LogError("No valid user ID claim found in token");
+            throw new UnauthorizedAccessException("No valid user ID claim found in token");
+        }
+
+        if (!int.TryParse(userIdClaim, out int userId))
+        {
+            _logger.LogError($"Invalid user ID format in token: {userIdClaim}");
+            throw new UnauthorizedAccessException("Invalid user ID format in token");
+        }
+
+        _logger.LogInformation($"Successfully extracted user ID: {userId}");
+        return userId;
     }
-    
-    return userId;
-}
 
     // GET: api/notifications
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NotificationDTO>>> GetNotifications([FromQuery] bool unreadOnly = false)
     {
-        var userId = GetCurrentUserId();
-        var notifications = await _notificationRepository.GetUserNotificationsAsync(userId, unreadOnly);
-        return Ok(notifications);
+        try
+        {
+            _logger.LogInformation($"[NotificationsController] Starting GetNotifications. User authenticated: {User.Identity.IsAuthenticated}");
+            
+            var userId = GetCurrentUserId();
+            _logger.LogInformation($"[NotificationsController] Getting notifications for user ID: {userId}, unreadOnly: {unreadOnly}");
+            
+            var notifications = await _notificationRepository.GetUserNotificationsAsync(userId, unreadOnly);
+            _logger.LogInformation($"[NotificationsController] Found {notifications.Count()} notifications for user {userId}");
+
+            // Log the first few notifications for debugging
+            foreach (var notification in notifications.Take(3))
+            {
+                _logger.LogInformation($"[NotificationsController] Notification {notification.NotificationID} - Type: {notification.Type}, Status: {notification.Status}, Message: {notification.Message}");
+            }
+            
+            return Ok(notifications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"[NotificationsController] Error in GetNotifications: {ex.Message}");
+            return StatusCode(500, new { message = "An error occurred while retrieving notifications" });
+        }
     }
 
     // GET: api/notifications/5
@@ -61,14 +106,26 @@ public class NotificationsController : ControllerBase
         return Ok(notification);
     }
 
-    // POST: api/notifications
     [HttpPost]
-    [Authorize(Roles = "Admin")] // Only admins can create notifications directly
-    public async Task<ActionResult<NotificationDTO>> CreateNotification(CreateNotificationDTO notificationDto)
+[Authorize(Roles = "Admin")]
+public async Task<ActionResult<NotificationDTO>> CreateNotification(CreateNotificationDTO notificationDto)
+{
+    // Add this logging
+    Console.WriteLine("=== Incoming Request ===");
+    Console.WriteLine($"Raw notificationDto: {JsonSerializer.Serialize(notificationDto)}");
+    Console.WriteLine($"UserID: {notificationDto?.UserID}");
+    Console.WriteLine("=======================");
+    
+    // Add logging
+    Console.WriteLine("User claims:");
+    foreach (var claim in User.Claims)
     {
-        var notification = await _notificationRepository.CreateNotificationAsync(notificationDto);
-        return CreatedAtAction(nameof(GetNotification), new { id = notification.NotificationID }, notification);
+        Console.WriteLine($"{claim.Type}: {claim.Value}");
     }
+    
+    var notification = await _notificationRepository.CreateNotificationAsync(notificationDto);
+    return CreatedAtAction(nameof(GetNotification), new { id = notification.NotificationID }, notification);
+}
 
     // PUT: api/notifications/5/read
     [HttpPut("{id}/read")]
@@ -116,5 +173,27 @@ public class NotificationsController : ControllerBase
         var userId = GetCurrentUserId();
         var count = await _notificationRepository.GetUnreadCountAsync(userId);
         return Ok(count);
+    }
+    
+    // Debug endpoint to check current user identity
+    [HttpGet("debug/user-info")]
+    public IActionResult GetUserDebugInfo()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user == null)
+        {
+            return BadRequest("No user information available");
+        }
+        
+        var claims = user.Claims.Select(c => new { Type = c.Type, Value = c.Value });
+        
+        return Ok(new
+        {
+            UserId = GetCurrentUserId(),
+            UserName = user.Identity?.Name,
+            IsAuthenticated = user.Identity?.IsAuthenticated,
+            AuthenticationType = user.Identity?.AuthenticationType,
+            Claims = claims
+        });
     }
 }

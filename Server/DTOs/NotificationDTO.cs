@@ -1,4 +1,5 @@
 using Server.Models;
+using System.Text.Json.Serialization;
 
 namespace Server.DTOs;
 
@@ -15,13 +16,21 @@ public class NotificationDTO
 
 public class CreateNotificationDTO
 {
+    [JsonPropertyName("UserID")]
     public int UserID { get; set; }
+    
+    [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
+    
+    [JsonPropertyName("type")]
     public NotificationType Type { get; set; } = NotificationType.Generic;
+    
+    [JsonPropertyName("relatedEntityId")]
     public int? RelatedEntityId { get; set; }
-    public string? RelatedEntityType { get; set; } // "Opportunity", "Application", etc.
+    
+    [JsonPropertyName("relatedEntityType")]
+    public string? RelatedEntityType { get; set; }
 }
-
 public class UpdateNotificationDTO
 {
     public NotificationStatus Status { get; set; } = NotificationStatus.Read;
