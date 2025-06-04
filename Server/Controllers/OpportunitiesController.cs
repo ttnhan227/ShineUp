@@ -44,6 +44,15 @@ public class OpportunitiesController : ControllerBase
         var opportunities = await _opportunityRepository.GetAllOpportunitiesAsync();
         return Ok(opportunities);
     }
+    
+    // GET: api/opportunities/category/5
+    [HttpGet("category/{categoryId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<OpportunityDTO>>> GetOpportunitiesByCategory(int categoryId)
+    {
+        var opportunities = await _opportunityRepository.GetOpportunitiesByCategoryAsync(categoryId);
+        return Ok(opportunities);
+    }
 
     // GET: api/opportunities/5
     [HttpGet("{id}")]

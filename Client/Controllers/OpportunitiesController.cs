@@ -11,11 +11,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace Client.Controllers
 {
     [Authorize]
-    [Route("opportunities")]
     public class OpportunitiesController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -62,12 +62,19 @@ namespace Client.Controllers
         // GET: Opportunities
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> Index(string talentArea = null)
+        public async Task<IActionResult> Index(int? id = null, int? categoryId = null)
         {
+            // If id is provided in the route, use it as categoryId
+            categoryId ??= id;
             var client = _clientFactory.CreateClient("API");
-            var apiUrl = talentArea != null 
-                ? $"api/opportunities/talent/{Uri.EscapeDataString(talentArea)}"
+            var apiUrl = categoryId.HasValue 
+                ? $"api/opportunities/category/{categoryId}"
                 : "api/opportunities";
+                
+            Console.WriteLine($"Fetching opportunities from: {apiUrl}");
+                
+            // Get categories for the filter dropdown
+            ViewBag.Categories = await GetCategories(client);
             
             try
             {
@@ -465,14 +472,32 @@ namespace Client.Controllers
             }
         }
 
+        private async Task<List<CategoryViewModel>> GetCategories(HttpClient client)
+        {
+            try
+            {
+                var response = await client.GetAsync("api/categories");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<List<CategoryViewModel>>(content, _jsonOptions) ?? new List<CategoryViewModel>();
+                }
+                return new List<CategoryViewModel>();
+            }
+            catch
+            {
+                return new List<CategoryViewModel>();
+            }
+        }
+
         private IActionResult HandleError(System.Net.HttpStatusCode statusCode)
         {
             return statusCode switch
             {
-                System.Net.HttpStatusCode.NotFound => View("NotFound"),
+                System.Net.HttpStatusCode.NotFound => NotFound(),
                 System.Net.HttpStatusCode.Unauthorized => RedirectToAction("Login", "Auth"),
-                System.Net.HttpStatusCode.Forbidden => View("Forbidden"),
-                _ => View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier })
+                System.Net.HttpStatusCode.Forbidden => Forbid(),
+                _ => StatusCode((int)statusCode)
             };
         }
     }

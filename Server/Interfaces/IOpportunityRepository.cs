@@ -7,6 +7,7 @@ public interface IOpportunityRepository
     Task<OpportunityDTO> GetOpportunityByIdAsync(int id);
     Task<IEnumerable<OpportunityDTO>> GetAllOpportunitiesAsync();
     Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByTalentAreaAsync(string talentArea);
+    Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByCategoryAsync(int categoryId);
     Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByUserAsync(int userId);
     Task<OpportunityDTO> CreateOpportunityAsync(CreateOpportunityDTO opportunityDto, int userId);
     Task<OpportunityDTO> UpdateOpportunityAsync(int id, UpdateOpportunityDTO opportunityDto, int userId);

@@ -1,12 +1,14 @@
 @model IEnumerable<Client.Models.OpportunityViewModel>
 @{
     ViewData["Title"] = "Opportunities";
-    var talentArea = ViewContext.RouteData.Values["talentArea"]?.ToString();
+    var categoryId = ViewContext.RouteData.Values["id"]?.ToString() ?? 
+                   Context.Request.Query["categoryId"].ToString();
+    var categories = ViewBag.Categories as List<CategoryViewModel> ?? new List<CategoryViewModel>();
 }
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>@(talentArea != null ? $"{talentArea} Opportunities" : "All Opportunities")</h2>
+        <h2>@(categoryId != null ? $"{categories.FirstOrDefault(c => c.CategoryID.ToString() == categoryId)?.CategoryName ?? "Category"} Opportunities" : "All Opportunities")</h2>
         <div>
             @if (User.Identity.IsAuthenticated)
             {
@@ -30,17 +32,17 @@
                     <h5 class="mb-0">Filter</h5>
                 </div>
                 <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Talent Areas</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">Categories</h6>
                     <div class="list-group list-group-flush">
-                        <a asp-action="Index" asp-route-talentArea="" 
-                           class="list-group-item list-group-item-action @(string.IsNullOrEmpty(talentArea) ? "active" : "")">
+                        <a asp-action="Index" asp-route-id="" 
+                           class="list-group-item list-group-item-action @(string.IsNullOrEmpty(categoryId) ? "active" : "")">
                             All Opportunities
                         </a>
-                        @foreach (var area in new[] { "Music", "Dance", "Acting", "Modeling", "Photography", "Videography", "Writing", "Design" })
+                        @foreach (var category in categories)
                         {
-                            <a asp-action="Index" asp-route-talentArea="@area" 
-                               class="list-group-item list-group-item-action @(talentArea == area ? "active" : "")">
-                                @area
+                            <a asp-action="Index" asp-route-id="@category.CategoryID" 
+                               class="list-group-item list-group-item-action @(categoryId == category.CategoryID.ToString() ? "active" : "")">
+                                @category.CategoryName
                             </a>
                         }
                     </div>
@@ -52,7 +54,7 @@
             @if (!Model.Any())
             {
                 <div class="alert alert-info">
-                    No opportunities found. @(string.IsNullOrEmpty(talentArea) ? "" : "Try a different talent area or check back later.")
+                    No opportunities found. @(string.IsNullOrEmpty(categoryId) ? "" : "Try a different category or check back later.")
                 </div>
             }
             else

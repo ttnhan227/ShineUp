@@ -105,6 +105,18 @@ public class OpportunityRepository : IOpportunityRepository
 
         return opportunities.Select(MapToOpportunityDTO);
     }
+    
+    public async Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByCategoryAsync(int categoryId)
+    {
+        var opportunities = await _context.TalentOpportunities
+            .Where(o => o.CategoryId == categoryId)
+            .Include(o => o.PostedByUser)
+            .Include(o => o.Category)
+            .Include(o => o.Applications)
+            .ToListAsync();
+
+        return opportunities.Select(MapToOpportunityDTO);
+    }
 
     public async Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByUserAsync(int userId)
     {
