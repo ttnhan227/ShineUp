@@ -14,11 +14,11 @@ public enum OpportunityType
 
 public enum OpportunityStatus
 {
-    Draft,
-    Open,
-    InProgress,
-    Closed,
-    Cancelled
+    Draft = 0,
+    Open = 1,
+    InProgress = 2,
+    Closed = 3,
+    Cancelled = 4
 }
 
 public class TalentOpportunity

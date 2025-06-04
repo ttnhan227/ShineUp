@@ -1,5 +1,6 @@
 using System;
 using Client.Models;
+using System.Text.Json.Serialization;
 
 namespace Client.Models
 {
@@ -18,7 +19,12 @@ namespace Client.Models
         public int PostedByUserId { get; set; }
         public string? PostedByUserName { get; set; }
         public int? CategoryId { get; set; }
-        public string? CategoryName { get; set; }
+        
+        [JsonPropertyName("categoryName")]
+        public string? CategoryName { get; set; } // For JSON deserialization
+        
+        [JsonIgnore]
+        public CategoryViewModel? Category { get; set; } // For view usage
         public string? TalentArea { get; set; }
         public int ApplicationCount { get; set; }
         public bool HasApplied { get; set; }
@@ -57,11 +63,21 @@ namespace Client.Models
         public string? UserName { get; set; }
         public int TalentOpportunityID { get; set; }
         public string TalentOpportunityTitle { get; set; } = string.Empty;
+        public string TalentOpportunityDescription { get; set; } = string.Empty;
+        public string? TalentArea { get; set; }
+        public string? Location { get; set; }
+        public bool IsRemote { get; set; }
         public string CoverLetter { get; set; } = string.Empty;
         public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
         public DateTime AppliedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public string? ReviewNotes { get; set; }
+        
+        // Navigation property for the related opportunity
+        public OpportunityViewModel? Opportunity { get; set; }
+        
+        // Computed property for backward compatibility
+        public string PostedByUserId => Opportunity?.PostedByUserId.ToString() ?? string.Empty;
     }
 
     public class CreateOpportunityApplicationViewModel

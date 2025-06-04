@@ -87,22 +87,26 @@
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
-                                        <select asp-for="CategoryId" class="form-select" required>
-                                            <option value="" disabled selected>Select Category</option>
-                                            <option value="Music">Music</option>
-                                            <option value="Dance">Dance</option>
-                                            <option value="Acting">Acting</option>
-                                            <option value="Modeling">Modeling</option>
-                                            <option value="Photography">Photography</option>
-                                            <option value="Videography">Videography</option>
-                                            <option value="Writing">Writing</option>
-                                            <option value="Design">Design</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            <select asp-for="CategoryId" class="form-select" required>
+                                                <option value="" disabled selected>-- Select Category --</option>
+                                                @foreach (var category in ViewBag.Categories)
+                                                {
+                                                    <option value="@category.CategoryID">@category.CategoryName</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <select asp-for="CategoryId" class="form-select" required>
+                                                <option value="" disabled selected>-- Loading Categories... --</option>
+                                            </select>
+                                        }
                                         <div class="invalid-feedback">
-                                            Please select a Category.
+                                            Please select a category.
                                         </div>
-                                        <span asp-validation-for="TalentArea" class="text-danger small"></span>
+                                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -110,7 +114,6 @@
                                         <label asp-for="TalentArea" class="form-label">Talent Area</label>
                                         <select asp-for="TalentArea" class="form-select">
                                             <option value="">Select Talent Area (optional)</option>
-                                            <!-- Talent Area would be populated from the database -->
                                             <option value="1">Performing Arts</option>
                                             <option value="2">Visual Arts</option>
                                             <option value="3">Media Production</option>

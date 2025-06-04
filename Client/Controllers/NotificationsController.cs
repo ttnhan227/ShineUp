@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 namespace Client.Controllers
 {
@@ -29,13 +30,15 @@ namespace Client.Controllers
             _clientFactory = clientFactory;
             _configuration = configuration;
             _logger = logger;
-            _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
         }
 
         private async Task<HttpClient> GetAuthenticatedClient()
         {
-            var client = _clientFactory.CreateClient("API");
-            
             // Check if user is authenticated
             if (!User.Identity.IsAuthenticated)
             {
@@ -51,6 +54,7 @@ namespace Client.Controllers
                 return null;
             }
 
+            var client = _clientFactory.CreateClient("API");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _logger.LogInformation("JWT token added to request");
             
@@ -181,11 +185,9 @@ namespace Client.Controllers
                 return Json(new { count = 0 });
             }
             
-            var apiUrl = "api/notifications/unread-count";
-            
             try
             {
-                var response = await client.GetAsync(apiUrl);
+                var response = await client.GetAsync("api/Notifications/unread-count");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Client.Controllers
 {
@@ -103,11 +104,41 @@ namespace Client.Controllers
             
             try
             {
+                // Load categories first
+                ViewBag.Categories = await GetCategories(client);
+                
                 var response = await client.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     var opportunity = JsonSerializer.Deserialize<OpportunityViewModel>(content, _jsonOptions);
+                    
+                    if (opportunity != null)
+                    {
+                        // The Category property is [JsonIgnore] so it won't be deserialized
+                        // We need to manually set it if we have the data
+                        if (opportunity.CategoryId.HasValue && !string.IsNullOrEmpty(opportunity.CategoryName))
+                        {
+                            opportunity.Category = new CategoryViewModel
+                            {
+                                CategoryID = opportunity.CategoryId.Value,
+                                CategoryName = opportunity.CategoryName
+                            };
+                        }
+                        
+                        // If we have a category but no name, try to get it from the ViewBag
+                        if (opportunity.CategoryId.HasValue && string.IsNullOrEmpty(opportunity.CategoryName))
+                        {
+                            var categories = await GetCategories(client);
+                            var category = categories?.FirstOrDefault(c => c.CategoryID == opportunity.CategoryId.Value);
+                            if (category != null)
+                            {
+                                opportunity.Category = category;
+                                opportunity.CategoryName = category.CategoryName;
+                            }
+                        }
+                    }
+                    
                     return View(opportunity);
                 }
                 return HandleError(response.StatusCode);
@@ -120,9 +151,14 @@ namespace Client.Controllers
 
         // GET: Opportunities/Create
         [HttpGet("create")]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            var client = _clientFactory.CreateClient("API");
+            ViewBag.Categories = await GetCategories(client);
+            return View(new CreateOpportunityViewModel 
+            { 
+                ApplicationDeadline = DateTime.Today.AddDays(30) // Default to 30 days from now
+            });
         }
 
         // POST: Opportunities/Create
@@ -132,6 +168,8 @@ namespace Client.Controllers
         {
             if (!ModelState.IsValid)
             {
+                var clientForCategories = _clientFactory.CreateClient("API");
+                ViewBag.Categories = await GetCategories(clientForCategories);
                 return View(model);
             }
 
@@ -151,7 +189,10 @@ namespace Client.Controllers
                     return RedirectToAction(nameof(Index));
                 }
                 
-                ModelState.AddModelError(string.Empty, "Error creating opportunity. Please try again.");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError(string.Empty, $"Error creating opportunity: {errorContent}");
+                var clientForCategories = _clientFactory.CreateClient("API");
+                ViewBag.Categories = await GetCategories(clientForCategories);
                 return View(model);
             }
             catch (HttpRequestException)
@@ -185,6 +226,9 @@ namespace Client.Controllers
                         return Forbid();
                     }
 
+                    // Load categories for the dropdown
+                    ViewBag.Categories = await GetCategories(client);
+                    
                     var updateModel = new UpdateOpportunityViewModel
                     {
                         Id = opportunity.Id,
@@ -194,7 +238,8 @@ namespace Client.Controllers
                         IsRemote = opportunity.IsRemote,
                         Type = opportunity.Type,
                         ApplicationDeadline = opportunity.ApplicationDeadline,
-                        TalentArea = opportunity.TalentArea
+                        TalentArea = opportunity.TalentArea,
+                        CategoryId = opportunity.CategoryId
                     };
 
                     return View(updateModel);
@@ -260,33 +305,64 @@ namespace Client.Controllers
 
             try
             {
-                var updateModel = new UpdateOpportunityViewModel();
                 
-                switch (status.ToLower())
+                // Normalize the status (map 'close' to 'Closed', 'publish' to 'Open')
+                var normalizedStatus = status.ToLower() switch
                 {
-                    case "pause":
-                        updateModel.Status = OpportunityStatus.Closed;
-                        break;
-                    case "publish":
-                        updateModel.Status = OpportunityStatus.Open;
-                        break;
-                    default:
-                        return BadRequest("Invalid status");
-                }
-
-
-                var content = new StringContent(JsonSerializer.Serialize(updateModel, _jsonOptions), 
-                    System.Text.Encoding.UTF8, "application/json");
-                    
-                var response = await client.PutAsync($"api/opportunities/{id}", content);
+                    "close" => "Closed",
+                    "publish" => "Open",
+                    _ => status
+                };
+                
+                // Log the status being sent
+                _logger.LogInformation($"Sending status update for opportunity {id}. Original status: {status}, Normalized status: {normalizedStatus}");
+                
+                // Send a POST request with status as a query parameter
+                var response = await client.PostAsync($"api/opportunities/{id}/update-status?status={Uri.EscapeDataString(normalizedStatus)}", null);
+                
+                // Log the response status
+                _logger.LogInformation($"Status update response: {response.StatusCode}");
                 
                 if (response.IsSuccessStatusCode)
                 {
+                    // If we're on the details page, redirect back to details with a success message
+                    if (Request.Headers["Referer"].ToString().Contains("Details"))
+                    {
+                        TempData["SuccessMessage"] = "Opportunity status updated successfully";
+                        return RedirectToAction(nameof(Details), new { id });
+                    }
+                    // Otherwise, go to MyOpportunities with success message
+                    TempData["SuccessMessage"] = "Opportunity status updated successfully";
                     return RedirectToAction(nameof(MyOpportunities));
                 }
                 
-                TempData["ErrorMessage"] = "Error updating opportunity status. Please try again.";
-                return RedirectToAction(nameof(Details), new { id });
+                // If we got here, something went wrong
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorMessage = "Error updating opportunity status";
+                
+                try
+                {
+                    // Try to parse the error message from the response
+                    var errorObj = JsonSerializer.Deserialize<JsonElement>(errorContent, _jsonOptions);
+                    if (errorObj.TryGetProperty("message", out var messageProp))
+                    {
+                        errorMessage = messageProp.GetString() ?? errorMessage;
+                    }
+                }
+                catch
+                {
+                    // If we can't parse the error, use the raw content
+                    errorMessage = $"Error: {errorContent}";
+                }
+                
+                TempData["ErrorMessage"] = errorMessage;
+                
+                // Try to return to the previous page
+                if (Request.Headers["Referer"].ToString().Contains("Details"))
+                {
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                return RedirectToAction(nameof(MyOpportunities));
             }
             catch (HttpRequestException)
             {
@@ -365,7 +441,14 @@ namespace Client.Controllers
             
             try
             {
-                var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
+                // Ensure the model has the correct opportunity ID
+                model.TalentOpportunityID = id;
+                
+                var content = new StringContent(
+                    JsonSerializer.Serialize(model, _jsonOptions), 
+                    System.Text.Encoding.UTF8, 
+                    "application/json");
+                    
                 var response = await client.PostAsync($"api/opportunities/{id}/apply", content);
                 
                 if (response.IsSuccessStatusCode)
@@ -373,12 +456,15 @@ namespace Client.Controllers
                     return RedirectToAction(nameof(MyApplications));
                 }
                 
-                TempData["ErrorMessage"] = "Error applying to opportunity. Please try again.";
+                // Try to read the error message from the response
+                var errorContent = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"Error applying to opportunity: {errorContent}";
                 return RedirectToAction(nameof(Details), new { id });
             }
-            catch (HttpRequestException)
+            catch (Exception ex)
             {
-                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                return RedirectToAction(nameof(Details), new { id });
             }
         }
 
@@ -421,19 +507,41 @@ namespace Client.Controllers
             
             try
             {
-                // This is a simplified version - you might need to adjust based on your API
+                // First get the application details
                 var response = await client.GetAsync($"api/opportunities/applications/{id}");
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var application = JsonSerializer.Deserialize<OpportunityApplicationViewModel>(content, _jsonOptions);
-                    return View(application);
+                    return HandleError(response.StatusCode);
                 }
-                return HandleError(response.StatusCode);
+                
+                var content = await response.Content.ReadAsStringAsync();
+                var application = JsonSerializer.Deserialize<OpportunityApplicationViewModel>(content, _jsonOptions);
+                
+                if (application == null)
+                {
+                    return NotFound();
+                }
+                
+                // Check if the current user is the opportunity owner or the applicant
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (application.UserID.ToString() != currentUserId && 
+                    application.Opportunity?.PostedByUserId.ToString() != currentUserId)
+                {
+                    return Forbid();
+                }
+                
+                var categories = await GetCategories(client);
+                
+                return View(application);
             }
-            catch (HttpRequestException)
+            catch (Exception ex)
             {
-                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+                _logger.LogError(ex, "Error getting application details");
+                return View("Error", new ErrorViewModel 
+                { 
+                    RequestId = HttpContext.TraceIdentifier,
+                    Message = "An error occurred while loading the application details." 
+                });
             }
         }
 
@@ -444,6 +552,7 @@ namespace Client.Controllers
         {
             if (!ModelState.IsValid)
             {
+                TempData["ErrorMessage"] = "Invalid form data. Please check your input.";
                 return RedirectToAction(nameof(ApplicationDetails), new { id });
             }
 
@@ -455,20 +564,33 @@ namespace Client.Controllers
             
             try
             {
-                var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
+                var content = new StringContent(
+                    JsonSerializer.Serialize(model, _jsonOptions), 
+                    System.Text.Encoding.UTF8, 
+                    "application/json");
+                    
                 var response = await client.PutAsync($"api/opportunities/applications/{id}/status", content);
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction(nameof(MyOpportunities));
+                    TempData["SuccessMessage"] = "Application status updated successfully.";
+                    return RedirectToAction(nameof(ApplicationDetails), new { id });
                 }
                 
-                TempData["ErrorMessage"] = "Error updating application status. Please try again.";
+                // Try to get error details from the response
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorMessage = !string.IsNullOrEmpty(errorContent) ? 
+                    $"Error: {errorContent}" : 
+                    "An error occurred while updating the application status.";
+                
+                TempData["ErrorMessage"] = errorMessage;
                 return RedirectToAction(nameof(ApplicationDetails), new { id });
             }
-            catch (HttpRequestException)
+            catch (Exception ex)
             {
-                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+                _logger.LogError(ex, "Error updating application status");
+                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                return RedirectToAction(nameof(ApplicationDetails), new { id });
             }
         }
 

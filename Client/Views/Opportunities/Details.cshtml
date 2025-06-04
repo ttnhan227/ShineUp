@@ -41,14 +41,38 @@
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="opportunityActions" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-three-dots"></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="opportunityActions">
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="opportunityActions">
                                 @if (isOwner)
                                 {
                                     <li>
-                                        <a class="dropdown-item" href="#">
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id">
                                             <i class="bi bi-pencil me-2"></i>Edit
                                         </a>
                                     </li>
+                                    @if (Model.Status == OpportunityStatus.Open)
+                                    {
+                                        <li>
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="status" value="close" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-x-circle me-2"></i>Close
+                                                </button>
+                                            </form>
+                                        </li>
+                                    }
+                                    else if (Model.Status == OpportunityStatus.Draft)
+                                    {
+                                        <li>
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="status" value="publish" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-check-circle me-2"></i>Publish
+                                                </button>
+                                            </form>
+                                        </li>
+                                    }
                                     <li>
                                         <form asp-action="Delete" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
@@ -81,7 +105,14 @@
                             </div>
                         }
 
-                        @if (Model.CategoryId.HasValue)
+                        @if (Model.Category != null)
+                        {
+                            <div class="mb-3">
+                                <h6>Category</h6>
+                                <span class="badge bg-secondary">@Model.Category.CategoryName</span>
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.CategoryName))
                         {
                             <div class="mb-3">
                                 <h6>Category</h6>

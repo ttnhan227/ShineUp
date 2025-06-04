@@ -569,8 +569,8 @@ public class DatabaseContext : DbContext
                 IsRemote = false,
                 Type = OpportunityType.Gig,
                 Status = OpportunityStatus.Open,
-                ApplicationDeadline = DateTime.UtcNow.AddDays(14),
-                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(14), DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-5), DateTimeKind.Utc),
                 PostedByUserId = 1,
                 CategoryId = 1,
                 TalentArea = "Hip Hop Dance"
@@ -584,8 +584,8 @@ public class DatabaseContext : DbContext
                 IsRemote = true,
                 Type = OpportunityType.Freelance,
                 Status = OpportunityStatus.Open,
-                ApplicationDeadline = DateTime.UtcNow.AddDays(30),
-                CreatedAt = DateTime.UtcNow.AddDays(-3),
+                  ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(30), DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-3), DateTimeKind.Utc),
                 PostedByUserId = 1,
                 CategoryId = 2,
                 TalentArea = "Music Production"
@@ -599,8 +599,8 @@ public class DatabaseContext : DbContext
                 IsRemote = false,
                 Type = OpportunityType.Gig,
                 Status = OpportunityStatus.Open,
-                ApplicationDeadline = DateTime.UtcNow.AddDays(21),
-                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                  ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(21), DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-1), DateTimeKind.Utc),
                 PostedByUserId = 1,
                 CategoryId = 1,
                 TalentArea = "Hip Hop Dance"

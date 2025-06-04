@@ -243,32 +243,6 @@
         "timeOut": "5000"
     };
 
-    // Update notification count when the page loads
-    $(document).ready(function() {
-        updateNotificationCount();
-    });
-
-    // Function to update the notification count
-    function updateNotificationCount() {
-        $.get('/Notifications/GetUnreadCount')
-            .done(function(data) {
-                var count = data.count || 0;
-                var badge = $('#unread-notifications-count');
-                
-                if (count > 0) {
-                    badge.text(count);
-                    badge.show();
-                } else {
-                    badge.hide();
-                }
-            })
-            .fail(function(xhr, status, error) {
-                console.error('Failed to fetch unread notifications count:', error);
-            });
-    }
-
-    // Make the function available globally so it can be called from other scripts
-    window.updateNotificationCount = updateNotificationCount;
 </script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

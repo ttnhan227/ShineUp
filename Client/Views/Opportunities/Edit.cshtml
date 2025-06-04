@@ -74,14 +74,43 @@
                                 <span asp-validation-for="Description" class="text-danger small"></span>
                             </div>
 
-                            <div class="row g-3 mt-2">
+                            <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label asp-for="TalentArea" class="form-label">Talent Area <span class="text-danger">*</span></label>
-                                        <input asp-for="TalentArea" class="form-control" placeholder="E.g., Music, Acting, Dance" required>
+                                    <div class="form-group mb-3">
+                                        <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            <select asp-for="CategoryId" class="form-select" required>
+                                                <option value="" disabled>-- Select Category --</option>
+                                                @foreach (var category in ViewBag.Categories)
+                                                {
+                                                    <option value="@category.CategoryID" selected="@(Model.CategoryId == category.CategoryID)">@category.CategoryName</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <select asp-for="CategoryId" class="form-select" required>
+                                                <option value="" disabled selected>-- Loading Categories... --</option>
+                                            </select>
+                                        }
                                         <div class="invalid-feedback">
-                                            Please specify the talent area.
+                                            Please select a category.
                                         </div>
+                                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="TalentArea" class="form-label">Talent Area</label>
+                                        <select asp-for="TalentArea" class="form-select">
+                                            <option value="">Select Talent Area (optional)</option>
+                                            <option value="Performing Arts">Performing Arts</option>
+                                            <option value="Visual Arts">Visual Arts</option>
+                                            <option value="Media Production">Media Production</option>
+                                            <option value="Design & Creative">Design & Creative</option>
+                                            <option value="Writing & Translation">Writing & Translation</option>
+                                        </select>
                                         <span asp-validation-for="TalentArea" class="text-danger small"></span>
                                     </div>
                                 </div>
@@ -97,7 +126,8 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mb-4">
-                                        <input class="form-check-input" type="checkbox" id="isRemote" asp-for="IsRemote">
+                                        <input class="form-check-input" type="checkbox" id="isRemote" checked="@(Model.IsRemote ?? false)" name="IsRemote" value="true">
+                                        <input type="hidden" name="IsRemote" value="false" />
                                         <label class="form-check-label" for="isRemote">This is a remote opportunity</label>
                                     </div>
                                     <div id="locationField" class="form-group">
