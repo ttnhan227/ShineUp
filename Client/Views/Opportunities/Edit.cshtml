@@ -1,0 +1,110 @@
+@model Client.Models.UpdateOpportunityViewModel
+@{
+    ViewData["Title"] = "Edit Opportunity";
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="MyOpportunities">My Opportunities</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Opportunity</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">Edit Opportunity</h2>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label asp-for="Title" class="form-label">Title *</label>
+                                <input asp-for="Title" class="form-control" required>
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Type" class="form-label">Type *</label>
+                                <select asp-for="Type" class="form-select" required>
+                                    <option value="">-- Select Type --</option>
+                                    @foreach (var type in Enum.GetValues(typeof(Client.Models.OpportunityType)))
+                                    {
+                                        <option value="@((int)type)">@type</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Type" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="8" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsRemote">
+                                    <label class="form-check-label" asp-for="IsRemote">This is a remote opportunity</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="locationField" class="mb-3">
+                                    <label asp-for="Location" class="form-label">Location</label>
+                                    <input asp-for="Location" class="form-control" id="locationInput">
+                                    <span asp-validation-for="Location" class="text-danger small"></span>
+                                    <div class="form-text">Leave empty if this is a remote opportunity</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="ApplicationDeadline" class="form-label">Application Deadline</label>
+                                <input asp-for="ApplicationDeadline" type="datetime-local" class="form-control">
+                                <span asp-validation-for="ApplicationDeadline" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TalentArea" class="form-label">Talent Area</label>
+                                <input asp-for="TalentArea" class="form-control" placeholder="E.g., Music, Acting, Dance">
+                                <span asp-validation-for="TalentArea" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="MyOpportunities" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Back to List
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Toggle location field based on remote checkbox
+            $('input[type="checkbox"][name="IsRemote"]').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#locationField').fadeOut(200);
+                } else {
+                    $('#locationField').fadeIn(200);
+                }
+            }).trigger('change');
+        });
+    </script>
+}

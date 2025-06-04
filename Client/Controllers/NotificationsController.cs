@@ -13,6 +13,7 @@ using System.Security.Claims;
 namespace Client.Controllers
 {
     [Authorize]
+    [Route("notifications")]
     public class NotificationsController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;

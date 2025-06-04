@@ -1,0 +1,136 @@
+@model IEnumerable<Client.Models.OpportunityApplicationViewModel>
+@{
+    ViewData["Title"] = "My Applications";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Applications</h2>
+        <a asp-action="Index" class="btn btn-outline-primary">
+            <i class="bi bi-search me-1"></i> Browse Opportunities
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card">
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-file-earmark-text text-muted" style="font-size: 3rem;"></i>
+                </div>
+                <h3 class="h5 mb-3">You haven't applied to any opportunities yet</h3>
+                <p class="text-muted mb-4">Browse opportunities and submit applications to get started.</p>
+                <a asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i> Browse Opportunities
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var application in Model)
+            {
+                <div class="list-group-item list-group-item-action p-4">
+                    <div class="d-flex w-100 justify-content-between">
+                        <div class="mb-2">
+                            <h5 class="mb-1">
+                                <a asp-action="Details" asp-route-id="@application.TalentOpportunityID" class="text-decoration-none">
+                                    @application.TalentOpportunityTitle
+                                </a>
+                            </h5>
+                            <p class="mb-1">
+                                <span class="me-3">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Applied on @application.AppliedAt.ToString("MMM d, yyyy")
+                                </span>
+                                @if (application.ReviewedAt.HasValue)
+                                {
+                                    <span>
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Reviewed on @application.ReviewedAt.Value.ToString("MMM d, yyyy")
+                                    </span>
+                                }
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            @if (application.Status == ApplicationStatus.Pending)
+                            {
+                                <span class="badge bg-warning text-dark">@application.Status.ToString()</span>
+                            }
+                            else if (application.Status == ApplicationStatus.Approved)
+                            {
+                                <span class="badge bg-success">@application.Status.ToString()</span>
+                            }
+                            else if (application.Status == ApplicationStatus.Rejected)
+                            {
+                                <span class="badge bg-danger">@application.Status.ToString()</span>
+                            }
+                            else if (application.Status == ApplicationStatus.Shortlisted)
+                            {
+                                <span class="badge bg-info">@application.Status.ToString()</span>
+                            }
+                            else if (application.Status == ApplicationStatus.Withdrawn)
+                            {
+                                <span class="badge bg-secondary">@application.Status.ToString()</span>
+                            }
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(application.CoverLetter))
+                    {
+                        <div class="mb-2">
+                            <h6 class="mb-1">Your Application:</h6>
+                            <p class="mb-0 text-muted">
+                                @(application.CoverLetter.Length > 250 ? application.CoverLetter.Substring(0, 250) + "..." : application.CoverLetter)
+                            </p>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(application.ReviewNotes))
+                    {
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <h6 class="mb-1">Reviewer's Notes:</h6>
+                            <p class="mb-0">@application.ReviewNotes</p>
+                        </div>
+                    }
+                    
+                    <div class="mt-3 d-flex justify-content-between align-items-center">
+                        <a asp-action="Details" asp-route-id="@application.TalentOpportunityID" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> View Opportunity
+                        </a>
+                        <small class="text-muted">
+                            Last updated: @(application.ReviewedAt?.ToString("MMM d, yyyy") ?? application.AppliedAt.ToString("MMM d, yyyy"))
+                        </small>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .list-group-item {
+            margin-bottom: 1rem;
+            border-radius: 0.5rem !important;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-in-out;
+        }
+        .list-group-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        }
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.75em;
+            font-size: 0.8rem;
+        }
+        .text-muted {
+            color: #6c757d !important;
+        }
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+    </style>
+}
