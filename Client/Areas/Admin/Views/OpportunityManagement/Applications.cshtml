@@ -1,0 +1,253 @@
+@model Client.Areas.Admin.Models.OpportunityApplicationsViewModel
+@{
+    ViewData["Title"] = $"Applications for {Model.OpportunityTitle}";
+    ViewData["ActiveMenu"] = "OpportunityManagement";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <a asp-action="Details" asp-route-id="@Model.OpportunityId" class="text-decoration-none text-dark">
+                            <i class='bx bx-arrow-back me-2'></i>
+                        </a>
+                        Applications for: @Model.OpportunityTitle
+                    </h2>
+                    <div>
+                        <a asp-action="Details" asp-route-id="@Model.OpportunityId" class="btn btn-outline-primary">
+                            <i class='bx bx-arrow-back'></i> Back to Opportunity
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="btn-group" role="group" aria-label="Application filters">
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" 
+                               class="btn @(string.IsNullOrEmpty(Context.Request.Query["status"]) ? "btn-primary" : "btn-outline-primary")">
+                                All (@Model.TotalApplications)
+                            </a>
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-status="Pending"
+                               class="btn @(Context.Request.Query["status"] == "Pending" ? "btn-primary" : "btn-outline-primary")">
+                                Pending (@Model.StatusCounts.GetValueOrDefault("Pending", 0))
+                            </a>
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-status="UnderReview"
+                               class="btn @(Context.Request.Query["status"] == "UnderReview" ? "btn-primary" : "btn-outline-primary")">
+                                Under Review (@Model.StatusCounts.GetValueOrDefault("UnderReview", 0))
+                            </a>
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-status="Shortlisted"
+                               class="btn @(Context.Request.Query["status"] == "Shortlisted" ? "btn-primary" : "btn-outline-primary")">
+                                Shortlisted (@Model.StatusCounts.GetValueOrDefault("Shortlisted", 0))
+                            </a>
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-status="Accepted"
+                               class="btn @(Context.Request.Query["status"] == "Accepted" ? "btn-primary" : "btn-outline-primary")">
+                                Accepted (@Model.StatusCounts.GetValueOrDefault("Accepted", 0))
+                            </a>
+                            <a asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-status="Rejected"
+                               class="btn @(Context.Request.Query["status"] == "Rejected" ? "btn-primary" : "btn-outline-primary")">
+                                Rejected (@Model.StatusCounts.GetValueOrDefault("Rejected", 0))
+                            </a>
+                        </div>
+                        
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class='bx bx-export'></i> Export
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="#"><i class='bx bxs-file-pdf me-2'></i>Export as PDF</a></li>
+                                <li><a class="dropdown-item" href="#"><i class='bx bxs-file-excel me-2'></i>Export as Excel</a></li>
+                                <li><a class="dropdown-item" href="#"><i class='bx bxs-file me-2'></i>Export as CSV</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Email</th>
+                                    <th>Applied On</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Applications != null && Model.Applications.Any())
+                                {
+                                    foreach (var application in Model.Applications)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar me-3">
+                                                        <span class="avatar-initial rounded-circle bg-primary text-white">
+                                                            @application.ApplicantName?[0].ToString().ToUpper()
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">@application.ApplicantName</h6>
+                                                        <small class="text-muted">@application.PhoneNumber</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@application.Email</td>
+                                            <td>@application.AppliedAt.ToString("d")</td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(application.Status)">@application.Status</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a asp-action="ApplicationDetails" asp-route-id="@application.ApplicationId" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
+                                                        <i class='bx bx-show'></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal" 
+                                                            data-id="@application.ApplicationId" data-status="@application.Status" data-bs-toggle="tooltip" title="Update Status">
+                                                        <i class='bx bx-edit-alt'></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center">No applications found.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-page="@(Model.CurrentPage - 1)" asp-route-status="@Context.Request.Query["status"]">Previous</a>
+                                </li>
+                                
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-page="@i" asp-route-status="@Context.Request.Query["status"]">@i</a>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Applications" asp-route-id="@Model.OpportunityId" asp-route-page="@(Model.CurrentPage + 1)" asp-route-status="@Context.Request.Query["status"]">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="UpdateApplicationStatus" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">Update Application Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="applicationId" />
+                    <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            @foreach (var status in Model.ApplicationStatuses)
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reviewNotes" class="form-label">Review Notes</label>
+                        <textarea class="form-control" id="reviewNotes" name="reviewNotes" rows="3"></textarea>
+                        <div class="form-text">Optional notes about this application.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle status modal
+            var statusModal = document.getElementById('statusModal');
+            if (statusModal) {
+                statusModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var applicationId = button.getAttribute('data-id');
+                    var currentStatus = button.getAttribute('data-status');
+                    
+                    var modal = this;
+                    modal.querySelector('#applicationId').value = applicationId;
+                    
+                    // Set the current status in the dropdown
+                    var statusSelect = modal.querySelector('#status');
+                    for (var i = 0; i < statusSelect.options.length; i++) {
+                        if (statusSelect.options[i].value === currentStatus) {
+                            statusSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-secondary",
+            "UnderReview" => "bg-info",
+            "Shortlisted" => "bg-primary",
+            "Accepted" => "bg-success",
+            "Rejected" => "bg-danger",
+            "Withdrawn" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

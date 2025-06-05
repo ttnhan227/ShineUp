@@ -1,0 +1,166 @@
+@model IEnumerable<Client.Areas.Admin.Models.OpportunityListViewModel>
+@{
+    ViewData["Title"] = "Opportunity Management";
+    ViewData["ActiveMenu"] = "OpportunityManagement";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Talent Opportunities</h2>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class='bx bx-plus'></i> Create New Opportunity
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Deadline</th>
+                                    <th>Applications</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model != null && Model.Any())
+                                {
+                                    foreach (var opportunity in Model)
+                                    {
+                                        <tr>
+                                            <td>@opportunity.Title</td>
+                                            <td>@opportunity.Type</td>
+                                            <td>@(opportunity.IsRemote ? "Remote" : opportunity.Location)</td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(opportunity.Status)">@opportunity.Status</span>
+                                            </td>
+                                            <td>@(opportunity.ApplicationDeadline?.ToString("d") ?? "-")</td>
+                                            <td>
+                                                @if (opportunity.ApplicationCount > 0)
+                                                {
+                                                    <a asp-action="Applications" asp-route-id="@opportunity.Id" class="text-primary">
+                                                        @opportunity.ApplicationCount
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span>@opportunity.ApplicationCount</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a asp-action="Details" asp-route-id="@opportunity.Id" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
+                                                        <i class='bx bx-show'></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@opportunity.Id" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                                        <i class='bx bx-edit'></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@opportunity.Id" data-name="@opportunity.Title" data-bs-toggle="tooltip" title="Delete">
+                                                        <i class='bx bx-trash'></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center">No opportunities found.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this opportunity: <strong id="deleteOpportunityName"></strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle delete modal
+            var deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var id = button.getAttribute('data-id');
+                    var name = button.getAttribute('data-name');
+                    
+                    var modalTitle = deleteModal.querySelector('.modal-title');
+                    var modalBody = deleteModal.querySelector('#deleteOpportunityName');
+                    var form = deleteModal.querySelector('form');
+                    
+                    modalBody.textContent = name;
+                    form.action = '/Admin/OpportunityManagement/Delete/' + id;
+                });
+            }
+        });
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Draft" => "bg-secondary",
+            "Open" => "bg-success",
+            "InProgress" => "bg-primary",
+            "Closed" => "bg-secondary",
+            "Cancelled" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

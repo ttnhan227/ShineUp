@@ -1,0 +1,279 @@
+@model Client.Areas.Admin.Models.ApplicationDetailViewModel
+@using Client.Extensions
+@{
+    ViewData["Title"] = "Application Details";
+    ViewData["ActiveMenu"] = "OpportunityManagement";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId" class="text-decoration-none text-dark">
+                            <i class='bx bx-arrow-back me-2'></i>
+                        </a>
+                        Application Details
+                    </h2>
+                    <div>
+                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId" class="btn btn-outline-primary">
+                            <i class='bx bx-arrow-back'></i> Back to Applications
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Applicant Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-3 text-center">
+                                            <div class="avatar avatar-xxl mb-3">
+                                                <span class="avatar-initial rounded-circle bg-primary text-white display-4">
+                                                    @Model.ApplicantName?[0].ToString().ToUpper()
+                                                </span>
+                                            </div>
+                                            <h5>@Model.ApplicantName</h5>
+                                            <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted small mb-1">Email</label>
+                                                        <p class="mb-0">@Model.Email</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted small mb-1">Phone</label>
+                                                        <p class="mb-0">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "-" : Model.PhoneNumber)</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted small mb-1">Applied On</label>
+                                                        <p class="mb-0">@Model.AppliedAt.ToString("f")</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted small mb-1">Last Updated</label>
+                                                        <p class="mb-0">@(Model.UpdatedAt?.ToString("f") ?? "-")</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(Model.PortfolioUrl) || !string.IsNullOrEmpty(Model.LinkedInUrl))
+                                            {
+                                                <div class="row">
+                                                    @if (!string.IsNullOrEmpty(Model.PortfolioUrl))
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label text-muted small mb-1">Portfolio</label>
+                                                                <p class="mb-0">
+                                                                    <a href="@Model.PortfolioUrl" target="_blank" class="text-primary">View Portfolio</a>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(Model.LinkedInUrl))
+                                                    {
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label text-muted small mb-1">LinkedIn</label>
+                                                                <p class="mb-0">
+                                                                    <a href="@Model.LinkedInUrl" target="_blank" class="text-primary">View Profile</a>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(Model.CoverLetter))
+                                    {
+                                        <div class="mb-4">
+                                            <h5>Cover Letter</h5>
+                                            <div class="border rounded p-3 bg-light">
+                                                @Html.Raw(Model.CoverLetter.Replace("\n", "<br />"))
+                                            </div>
+                                        </div>
+                                    }
+                                    
+                                    @if (Model.AdditionalQuestions != null && Model.AdditionalQuestions.Count > 0)
+                                    {
+                                        <div class="mb-4">
+                                            <h5>Additional Questions</h5>
+                                            <div class="accordion" id="questionsAccordion">
+                                                @for (int i = 0; i < Model.AdditionalQuestions.Count; i++)
+                                                {
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="heading@(i)">
+                                                            <button class="accordion-button @(i > 0 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" 
+                                                                    data-bs-target="#collapse@(i)" aria-expanded="@(i == 0 ? "true" : "false")" 
+                                                                    aria-controls="collapse@(i)">
+                                                                @Model.AdditionalQuestions[i].Question
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapse@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")" 
+                                                             aria-labelledby="heading@(i)" data-bs-parent="#questionsAccordion">
+                                                            <div class="accordion-body">
+                                                                @Model.AdditionalQuestions[i].Answer
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(Model.ReviewNotes))
+                            {
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Review Notes</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        @Html.Raw(Model.ReviewNotes.Replace("\n", "<br />"))
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Opportunity Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>@Model.OpportunityTitle</h6>
+                                    <p class="text-muted small mb-2">@Model.OpportunityType</p>
+                                    <p class="mb-3">@Model.OpportunityDescription.Truncate(100)</p>
+                                    <a asp-action="Details" asp-route-id="@Model.OpportunityId" class="btn btn-sm btn-outline-primary">
+                                        View Opportunity
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Update Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form asp-action="UpdateApplicationStatus" method="post" class="needs-validation" novalidate>
+                                        <input type="hidden" name="id" value="@Model.ApplicationId" />
+                                        <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
+                                        
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-select" id="status" name="status" required>
+                                                @foreach (var status in Model.AvailableStatuses)
+                                                {
+                                                    <option value="@status" selected="@(status == Model.Status)">@status</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="reviewNotes" class="form-label">Review Notes</label>
+                                            <textarea class="form-control" id="reviewNotes" name="reviewNotes" rows="4">@Model.ReviewNotes</textarea>
+                                            <div class="form-text">Add or update notes about this application.</div>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class='bx bx-save me-1'></i> Update Status
+                                        </button>
+                                    </form>
+                                    
+                                    <hr class="my-4" />
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a href="mailto:@Model.Email?subject=Regarding your application for @Model.OpportunityTitle" class="btn btn-outline-primary">
+                                            <i class='bx bx-envelope me-1'></i> Email Applicant
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                            <i class='bx bx-trash me-1'></i> Delete Application
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this application from <strong>@Model.ApplicantName</strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="DeleteApplication" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.ApplicationId" />
+                    <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "bg-secondary",
+            "UnderReview" => "bg-info",
+            "Shortlisted" => "bg-primary",
+            "Accepted" => "bg-success",
+            "Rejected" => "bg-danger",
+            "Withdrawn" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@* Using the StringExtensions from Client.Extensions namespace *@

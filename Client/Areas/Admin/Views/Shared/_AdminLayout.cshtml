@@ -104,6 +104,46 @@
                     </ul>
                 </li>
                 <li>
+                    <a href="#categoryManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-category'></i>
+                        <span>Category Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="categoryManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="CategoryManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Categories</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="CategoryManagement" asp-action="Create">
+                                <i class='bx bx-plus-circle'></i>
+                                <span>Create New</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#opportunityManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-briefcase-alt-2'></i>
+                        <span>Opportunities</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="opportunityManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="OpportunityManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Opportunities</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="OpportunityManagement" asp-action="Create">
+                                <i class='bx bx-plus-circle'></i>
+                                <span>Create New</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <a asp-area="Admin" asp-controller="Settings" asp-action="Index">
                         <i class='bx bxs-cog'></i>
                         <span>Settings</span>
