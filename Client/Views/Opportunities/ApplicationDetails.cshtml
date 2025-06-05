@@ -60,7 +60,7 @@
                                 {
                                     <span class="badge bg-warning text-dark">@Model.Status.ToString()</span>
                                 }
-                                else if (Model.Status == ApplicationStatus.Approved)
+                                else if (Model.Status == ApplicationStatus.Accepted)
                                 {
                                     <span class="badge bg-success">@Model.Status.ToString()</span>
                                 }
@@ -82,9 +82,9 @@
                                 {
                                     <text>Your application is under review by the opportunity poster.</text>
                                 }
-                                else if (Model.Status == ApplicationStatus.Approved)
+                                else if (Model.Status == ApplicationStatus.Accepted)
                                 {
-                                    <text>Congratulations! Your application has been approved.</text>
+                                    <text>Congratulations! Your application has been accepted.</text>
                                 }
                                 else if (Model.Status == ApplicationStatus.Rejected)
                                 {
@@ -143,14 +143,14 @@
                         @if (Model.ReviewedAt.HasValue)
                         {
                             <div class="timeline-item">
-                                <div class="timeline-marker @(Model.Status == ApplicationStatus.Approved ? "bg-success" : 
+                                <div class="timeline-marker @(Model.Status == ApplicationStatus.Accepted ? "bg-success" : 
                                                                Model.Status == ApplicationStatus.Rejected ? "bg-danger" : 
                                                                Model.Status == ApplicationStatus.Shortlisted ? "bg-info" : 
                                                                Model.Status == ApplicationStatus.Withdrawn ? "bg-secondary" : "bg-warning") ">
                                 </div>
                                 <div class="timeline-content">
                                     <h6 class="mb-1">
-                                        @if (Model.Status == ApplicationStatus.Approved)
+                                        @if (Model.Status == ApplicationStatus.Accepted)
                                         {
                                             <i class="bi bi-check-circle-fill text-success me-1"></i>
                                         }

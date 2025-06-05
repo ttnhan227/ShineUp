@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Client.Models;
@@ -17,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace Client.Controllers
 {
     [Authorize]
+    [Route("Opportunities")]
     public class OpportunitiesController : Controller
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -25,11 +27,11 @@ namespace Client.Controllers
         private readonly ILogger<OpportunitiesController> _logger;
 
         public OpportunitiesController(
-            IHttpClientFactory clientFactory,
+            IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
             ILogger<OpportunitiesController> logger)
         {
-            _clientFactory = clientFactory;
+            _clientFactory = httpClientFactory;
             _configuration = configuration;
             _logger = logger;
             _jsonOptions = new JsonSerializerOptions 
@@ -336,27 +338,28 @@ namespace Client.Controllers
                     return RedirectToAction(nameof(MyOpportunities));
                 }
                 
-                // If we got here, something went wrong
-                var errorContent = await response.Content.ReadAsStringAsync();
-                var errorMessage = "Error updating opportunity status";
-                
-                try
+                if (!response.IsSuccessStatusCode)
                 {
-                    // Try to parse the error message from the response
-                    var errorObj = JsonSerializer.Deserialize<JsonElement>(errorContent, _jsonOptions);
-                    if (errorObj.TryGetProperty("message", out var messageProp))
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorMessage = "An error occurred while updating the application status.";
+                    
+                    try
                     {
-                        errorMessage = messageProp.GetString() ?? errorMessage;
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(errorContent);
+                        if (errorResponse != null && errorResponse.ContainsKey("message"))
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        // If we can't parse the error message, include the raw content
+                        errorMessage = $"Error: {response.StatusCode} - {errorContent}";
+                        _logger.LogError(ex, "Error parsing error response: {ErrorContent}", errorContent);
+                    }
+                    
+                    return StatusCode((int)response.StatusCode, new { message = errorMessage });
                 }
-                catch
-                {
-                    // If we can't parse the error, use the raw content
-                    errorMessage = $"Error: {errorContent}";
-                }
-                
-                TempData["ErrorMessage"] = errorMessage;
-                
                 // Try to return to the previous page
                 if (Request.Headers["Referer"].ToString().Contains("Details"))
                 {
@@ -545,17 +548,10 @@ namespace Client.Controllers
             }
         }
 
-        // POST: Opportunities/UpdateApplicationStatus/5
-        [HttpPost("update-application-status/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateApplicationStatus(int id, UpdateOpportunityApplicationViewModel model)
+        // GET: Opportunities/ManageApplications/5
+        [HttpGet("manage-applications/{id}")]
+        public async Task<IActionResult> ManageApplications(int id)
         {
-            if (!ModelState.IsValid)
-            {
-                TempData["ErrorMessage"] = "Invalid form data. Please check your input.";
-                return RedirectToAction(nameof(ApplicationDetails), new { id });
-            }
-
             var client = await GetAuthenticatedClient();
             if (client == null)
             {
@@ -564,18 +560,116 @@ namespace Client.Controllers
             
             try
             {
-                var content = new StringContent(
-                    JsonSerializer.Serialize(model, _jsonOptions), 
-                    System.Text.Encoding.UTF8, 
-                    "application/json");
-                    
-                var response = await client.PutAsync($"api/opportunities/applications/{id}/status", content);
+                // Get the opportunity details
+                var opportunityResponse = await client.GetAsync($"api/opportunities/{id}");
+                if (!opportunityResponse.IsSuccessStatusCode)
+                {
+                    return HandleError(opportunityResponse.StatusCode);
+                }
                 
+                var opportunityContent = await opportunityResponse.Content.ReadAsStringAsync();
+                var opportunity = JsonSerializer.Deserialize<OpportunityViewModel>(opportunityContent, _jsonOptions);
+                
+                // Check if the current user is the owner of the opportunity
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (opportunity.PostedByUserId.ToString() != currentUserId)
+                {
+                    return Forbid();
+                }
+                
+                // Get applications for this opportunity with user data
+                var applicationsResponse = await client.GetAsync($"api/opportunities/{id}/applications");
+                if (!applicationsResponse.IsSuccessStatusCode)
+                {
+                    return HandleError(applicationsResponse.StatusCode);
+                }
+                
+                var applicationsContent = await applicationsResponse.Content.ReadAsStringAsync();
+                var applications = JsonSerializer.Deserialize<List<OpportunityApplicationViewModel>>(applicationsContent, _jsonOptions);
+                
+                // Map the data to the view model
+                foreach (var app in applications)
+                {
+                    app.TalentOpportunityTitle = opportunity.Title;
+                    app.TalentOpportunityID = opportunity.Id;
+                    
+                    // Set the UserName for backward compatibility
+                    if (app.User != null && string.IsNullOrEmpty(app.UserName))
+                    {
+                        app.UserName = app.User.FullName ?? app.User.Username;
+                    }
+                }
+                
+                // Create the view model with applications
+                var viewModel = new ManageApplicationsViewModel
+                {
+                    OpportunityId = opportunity.Id,
+                    OpportunityTitle = opportunity.Title,
+                    Applications = applications.OrderByDescending(a => a.AppliedAt).ToList()
+                };
+                
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading applications for management");
+                return View("Error", new ErrorViewModel 
+                { 
+                    RequestId = HttpContext.TraceIdentifier,
+                    Message = "An error occurred while loading applications." 
+                });
+            }
+        }
+
+        // PUT: Opportunities/UpdateApplicationStatus/5/5
+        [HttpPut("UpdateApplicationStatus/{opportunityId}/{applicationId}", Name = "UpdateApplicationStatus")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateApplicationStatus(int opportunityId, int applicationId, [FromBody] Client.Models.UpdateOpportunityApplicationViewModel model)
+        {
+            _logger.LogInformation($"UpdateApplicationStatus called with opportunityId: {opportunityId}, applicationId: {applicationId}");
+            _logger.LogInformation($"Model state is valid: {ModelState.IsValid}");
+            
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+                    
+                _logger.LogWarning($"Model validation failed: {string.Join(", ", errors)}");
+                return BadRequest(new { message = "Invalid form data. " + string.Join(", ", errors) });
+            }
+            
+            // Validate status value
+            if (!model.TryGetStatus(out var status))
+            {
+                _logger.LogWarning($"Invalid status value: {model.Status}");
+                return BadRequest(new { message = $"Invalid status value: {model.Status}" });
+            }
+
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return Unauthorized(new { message = "You must be logged in to perform this action." });
+            }
+            
+            try
+            {
+                var content = new StringContent(
+                    JsonSerializer.Serialize(new 
+                    { 
+                        status = model.Status, 
+                        reviewNotes = model.ReviewNotes 
+                    }),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var response = await client.PutAsync($"api/opportunities/{opportunityId}/applications/{applicationId}/status", content);
+
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["SuccessMessage"] = "Application status updated successfully.";
-                    return RedirectToAction(nameof(ApplicationDetails), new { id });
+                    return Json(new { success = true, message = "Application status updated successfully." });
                 }
+
                 
                 // Try to get error details from the response
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -584,13 +678,27 @@ namespace Client.Controllers
                     "An error occurred while updating the application status.";
                 
                 TempData["ErrorMessage"] = errorMessage;
-                return RedirectToAction(nameof(ApplicationDetails), new { id });
+                
+                // If coming from the manage applications page, return there
+                if (Request.Headers["Referer"].ToString().Contains("ManageApplications"))
+                {
+                    return RedirectToAction(nameof(ManageApplications));
+                }
+                
+                return RedirectToAction(nameof(ApplicationDetails), new { id = applicationId });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating application status");
                 TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
-                return RedirectToAction(nameof(ApplicationDetails), new { id });
+                
+                // If coming from the manage applications page, return there
+                if (Request.Headers["Referer"].ToString().Contains("ManageApplications"))
+                {
+                    return RedirectToAction(nameof(ManageApplications));
+                }
+                
+                return RedirectToAction(nameof(ApplicationDetails), new { id = applicationId });
             }
         }
 

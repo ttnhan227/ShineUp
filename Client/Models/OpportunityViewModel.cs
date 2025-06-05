@@ -1,6 +1,7 @@
 using System;
-using Client.Models;
 using System.Text.Json.Serialization;
+using Client.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace Client.Models
 {
@@ -58,19 +59,49 @@ namespace Client.Models
 
     public class OpportunityApplicationViewModel
     {
+        [JsonPropertyName("applicationID")]
         public int ApplicationID { get; set; }
+        
+        [JsonPropertyName("userID")]
         public int UserID { get; set; }
-        public string? UserName { get; set; }
+        
+        [JsonPropertyName("userName")]
+        public string? UserName { get; set; } // For backward compatibility
+        
+        [JsonPropertyName("user")]
+        public UserViewModel? User { get; set; }
+        
+        [JsonPropertyName("talentOpportunityID")]
         public int TalentOpportunityID { get; set; }
+        
+        [JsonPropertyName("talentOpportunityTitle")]
         public string TalentOpportunityTitle { get; set; } = string.Empty;
+        
+        [JsonPropertyName("talentOpportunityDescription")]
         public string TalentOpportunityDescription { get; set; } = string.Empty;
+        
+        [JsonPropertyName("talentArea")]
         public string? TalentArea { get; set; }
+        
+        [JsonPropertyName("location")]
         public string? Location { get; set; }
+        
+        [JsonPropertyName("isRemote")]
         public bool IsRemote { get; set; }
+        
+        [JsonPropertyName("coverLetter")]
         public string CoverLetter { get; set; } = string.Empty;
+        
+        [JsonPropertyName("status")]
         public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
+        
+        [JsonPropertyName("appliedAt")]
         public DateTime AppliedAt { get; set; }
+        
+        [JsonPropertyName("reviewedAt")]
         public DateTime? ReviewedAt { get; set; }
+        
+        [JsonPropertyName("reviewNotes")]
         public string? ReviewNotes { get; set; }
         
         // Navigation property for the related opportunity
@@ -88,7 +119,15 @@ namespace Client.Models
 
     public class UpdateOpportunityApplicationViewModel
     {
-        public ApplicationStatus Status { get; set; }
+        [Required(ErrorMessage = "Status is required")]
+        public string Status { get; set; } = string.Empty;
+        
         public string? ReviewNotes { get; set; }
+        
+        // Helper method to convert string to ApplicationStatus
+        public bool TryGetStatus(out ApplicationStatus status)
+        {
+            return Enum.TryParse(Status, true, out status);
+        }
     }
 }

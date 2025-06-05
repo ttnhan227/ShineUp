@@ -224,6 +224,15 @@ public class OpportunitiesController : ControllerBase
         try
         {
             var userId = GetCurrentUserId();
+            
+            // First verify the opportunity exists and user has access
+            var opportunity = await _opportunityRepository.GetOpportunityByIdAsync(opportunityId);
+            if (opportunity == null)
+            {
+                return NotFound(new { message = "Opportunity not found" });
+            }
+            
+            // Update the application status
             var application = await _opportunityRepository.UpdateApplicationStatusAsync(applicationId, updateDto, userId);
             
             if (application == null)

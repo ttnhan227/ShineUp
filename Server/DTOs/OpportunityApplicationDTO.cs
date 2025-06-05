@@ -25,6 +25,14 @@ public class CreateOpportunityApplicationDTO
 
 public class UpdateOpportunityApplicationDTO
 {
-    public ApplicationStatus Status { get; set; }
+    public string Status { get; set; }
     public string? ReviewNotes { get; set; }
+
+    public bool IsValidStatus()
+    {
+        if (string.IsNullOrEmpty(Status))
+            return false;
+            
+        return Enum.TryParse<ApplicationStatus>(Status, true, out _);
+    }
 }

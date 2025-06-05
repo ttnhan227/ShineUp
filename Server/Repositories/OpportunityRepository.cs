@@ -74,7 +74,7 @@ public class OpportunityRepository : IOpportunityRepository
 
     private OpportunityApplicationDTO MapToApplicationDTO(OpportunityApplication application)
     {
-        return new OpportunityApplicationDTO
+        var dto = new OpportunityApplicationDTO
         {
             ApplicationID = application.ApplicationID,
             UserID = application.UserID,
@@ -87,6 +87,26 @@ public class OpportunityRepository : IOpportunityRepository
             ReviewedAt = application.ReviewedAt,
             ReviewNotes = application.ReviewNotes
         };
+
+        // Map user data if available
+        if (application.User != null)
+        {
+            dto.User = new UserDTO
+            {
+                UserID = application.User.UserID,
+                Username = application.User.Username,
+                FullName = application.User.FullName,
+                Email = application.User.Email,
+                ProfileImageURL = application.User.ProfileImageURL,
+                // Map other user properties as needed
+                RoleID = application.User.RoleID,
+                CreatedAt = application.User.CreatedAt,
+                IsActive = application.User.IsActive,
+                Verified = application.User.Verified
+            };
+        }
+
+        return dto;
     }
 
     public async Task<IEnumerable<OpportunityDTO>> GetAllOpportunitiesAsync()
@@ -288,6 +308,12 @@ public class OpportunityRepository : IOpportunityRepository
 
     public async Task<OpportunityApplicationDTO> UpdateApplicationStatusAsync(int applicationId, UpdateOpportunityApplicationDTO updateDto, int userId)
     {
+        // Validate status
+        if (string.IsNullOrEmpty(updateDto.Status) || !updateDto.IsValidStatus())
+        {
+            throw new ArgumentException("Invalid status value");
+        }
+
         var application = await _context.OpportunityApplications
             .Include(a => a.TalentOpportunity)
                 .ThenInclude(o => o.PostedByUser)
@@ -311,8 +337,14 @@ public class OpportunityRepository : IOpportunityRepository
             throw new InvalidOperationException("Cannot update status of a withdrawn application");
         }
 
+        // Parse the status string to enum
+        if (!Enum.TryParse<ApplicationStatus>(updateDto.Status, true, out var newStatus))
+        {
+            throw new ArgumentException($"Invalid status value: {updateDto.Status}");
+        }
+
         // Update application
-        application.Status = updateDto.Status;
+        application.Status = newStatus;
         application.ReviewNotes = updateDto.ReviewNotes;
         application.ReviewedAt = DateTime.UtcNow;
 

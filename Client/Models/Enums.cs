@@ -24,9 +24,10 @@ namespace Client.Models
     public enum ApplicationStatus
     {
         Pending = 0,
-        Shortlisted = 1,
-        Approved = 2,
+        UnderReview = 1,
+        Shortlisted = 2,
         Rejected = 3,
-        Withdrawn = 4
+        Accepted = 4,
+        Withdrawn = 5
     }
 }
