@@ -2,72 +2,105 @@
 
 @{
     ViewData["Title"] = "Edit Contest";
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+    Layout = "_AdminLayout";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0">@ViewData["Title"]</h2>
-                    </div>
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">@ViewData["Title"]</h2>
+        <div class="button-group">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class='bx bx-arrow-back'></i> Back to List
+            </a>
+        </div>
+    </div>
 
-                    <form asp-action="Edit" method="post">
-                        <input type="hidden" asp-for="ContestID" />
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                        
-                        <div class="profile-details">
-                            <div class="profile-detail-item">
-                                <label asp-for="Title" class="form-label">
-                                    <i class='bx bx-text'></i> @Html.DisplayNameFor(model => model.Title)
-                                </label>
-                                <input asp-for="Title" class="form-control" />
-                                <span asp-validation-for="Title" class="text-danger"></span>
-                            </div>
-                            
-                            <div class="profile-detail-item">
-                                <label asp-for="Description" class="form-label">
-                                    <i class='bx bx-detail'></i> @Html.DisplayNameFor(model => model.Description)
-                                </label>
-                                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-                                <span asp-validation-for="Description" class="text-danger"></span>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="profile-detail-item">
-                                        <label asp-for="StartDate" class="form-label">
-                                            <i class='bx bx-calendar'></i> @Html.DisplayNameFor(model => model.StartDate)
-                                        </label>
-                                        <input asp-for="StartDate" type="datetime-local" class="form-control" />
-                                        <span asp-validation-for="StartDate" class="text-danger"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="profile-detail-item">
-                                        <label asp-for="EndDate" class="form-label">
-                                            <i class='bx bx-calendar-check'></i> @Html.DisplayNameFor(model => model.EndDate)
-                                        </label>
-                                        <input asp-for="EndDate" type="datetime-local" class="form-control" />
-                                        <span asp-validation-for="EndDate" class="text-danger"></span>
-                                    </div>
-                                </div>
-                            </div>
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ContestID" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
                 
-                            <div class="button-group mt-4">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class='bx bx-save'></i> Save Changes
-                                </button>
-                                <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary">
-                                    <i class='bx bx-x'></i> Cancel
-                                </a>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Contest Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="profile-detail-item">
+                                    <label asp-for="Title" class="form-label">
+                                        <i class='bx bx-text'></i> @Html.DisplayNameFor(model => model.Title)
+                                    </label>
+                                    <input asp-for="Title" class="form-control" />
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="profile-detail-item">
+                                    <label asp-for="Description" class="form-label">
+                                        <i class='bx bx-detail'></i> @Html.DisplayNameFor(model => model.Description)
+                                    </label>
+                                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="profile-detail-item">
+                                            <label asp-for="StartDate" class="form-label">
+                                                <i class='bx bx-calendar'></i> @Html.DisplayNameFor(model => model.StartDate)
+                                            </label>
+                                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="profile-detail-item">
+                                            <label asp-for="EndDate" class="form-label">
+                                                <i class='bx bx-calendar-check'></i> @Html.DisplayNameFor(model => model.EndDate)
+                                            </label>
+                                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="button-group">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class='bx bx-save'></i> Save Changes
+                                            </button>
+                                            <a asp-action="Details" asp-route-id="@Model.ContestID" class="btn btn-outline-secondary">
+                                                <i class='bx bx-x'></i> Cancel
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
