@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Client.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,7 +89,17 @@ builder.Services.AddHttpClient("BackendAPI", client =>
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
+// Cấu hình Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
+// Thay thế mặc định bằng Serilog
+builder.Host.UseSerilog();
+
+builder.Services.AddControllersWithViews(); // hoặc AddControllers cho Web API
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -98,7 +109,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
+app.UseSerilogRequestLogging(); // Middleware để log HTTP request
 app.UseHttpsRedirection();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -124,12 +135,12 @@ app.MapControllerRoute(
 // Default route
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Community}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Explicit route for google-auth
 app.MapControllerRoute(
     name: "googleAuth",
     pattern: "Auth/google-auth",
     defaults: new { controller = "Auth", action = "GoogleAuth" });
-
+app.MapControllers(); // hoặc app.MapDefaultControllerRoute() cho MVC
 app.Run();

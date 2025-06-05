@@ -1,3 +1,5 @@
+using Client.Models;
+
 namespace Client.DTOs;
 
 public class CommunityDTO
@@ -9,4 +11,5 @@ public class CommunityDTO
     public DateTime CreatedAt { get; set; }
     public int CreatedByUserID { get; set; }
     public int? PrivacyID { get; set; }
+
 }

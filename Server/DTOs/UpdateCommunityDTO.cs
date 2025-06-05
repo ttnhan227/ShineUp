@@ -5,8 +5,7 @@ namespace Server.DTOs;
 
 public class UpdateCommunityDTO
 {
-    [Required(ErrorMessage = "Community Id is required")]
-    public int Id { get; set; }
+
 
     [MaxLength(100, ErrorMessage = "Community name must not exceed 100 characters")]
     public string? Name { get; set; }

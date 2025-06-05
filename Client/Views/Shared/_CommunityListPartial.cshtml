@@ -1,0 +1,31 @@
+@model List<Client.DTOs.CommunityDTO>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Tên</th>
+        <th>Mô tả</th>
+        <th>Ngày tạo</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+   @if(Model != null && Model.Any()){    @foreach (var community in Model)
+    {
+
+        <tr>
+            <td>@community.Name</td>
+            <td>@community.Description</td>
+            <td>@community.CreatedAt.ToString("dd/MM/yyyy")</td>
+            <td>
+                <a class="btn btn-outline-primary btn-sm"
+                   href="@Url.Action("Details", "Community", new { communityId = community.CommunityID })">
+                    Chi tiết
+                </a>
+            </td>
+        </tr>
+
+
+    }}
+    </tbody>
+</table>

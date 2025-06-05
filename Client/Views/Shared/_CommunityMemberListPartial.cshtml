@@ -1,0 +1,50 @@
+@model List<Client.DTOs.CommunityMemberDTO>
+@{
+    string role = ViewBag.UserRole as string ?? "None";
+    int currentUserId = ViewBag.CurrentUserId != null ? (int)ViewBag.CurrentUserId : 0;
+}
+
+<table class="table table-bordered">
+    <thead class="thead-light">
+        <tr>
+            <th>Họ tên</th>
+            <th>Tên đăng nhập</th>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th>Ngày tham gia</th>
+            @if (role == "Admin")
+            {
+                <th>Hành động</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var member in Model)
+        {
+            <tr>
+                <td>@member.FullName</td>
+                <td>@member.Username</td>
+                <td>@member.Email</td>
+                <td>@member.Role</td>
+                <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
+                @if (role == "Admin")
+                {
+                    <td>
+                        @if (member.Role == "Member")
+                        {
+                            <form method="post" asp-action="RemoveMember" asp-route-communityId="@member.CommunityID" asp-route-userId="@member.UserID" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc muốn xoá thành viên này?');">Xoá</button>
+                            </form>
+                        }
+                        @if (member.UserID != currentUserId && member.Role != "Admin")
+                        {
+                            <form method="post" asp-action="TransferAdmin" asp-route-communityId="@member.CommunityID" asp-route-newAdminId="@member.UserID" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Bạn có chắc muốn chuyển quyền quản trị?');">Chuyển quyền</button>
+                            </form>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

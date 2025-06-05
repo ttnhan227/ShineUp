@@ -28,6 +28,10 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<CommunityMember>()
+            .Property(cm => cm.Role)
+            .HasConversion<string>();
+
         // Configure User entity
         modelBuilder.Entity<User>()
             .Property(u => u.IsActive)
