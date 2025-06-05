@@ -90,12 +90,34 @@
                     </ul>
                 </li>
                 <li>
+                    <a href="#postManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-news'></i>
+                        <span>Post Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="postManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="PostManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Posts</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <a asp-area="Admin" asp-controller="Settings" asp-action="Index">
                         <i class='bx bxs-cog'></i>
                         <span>Settings</span>
                     </a>
                 </li>
             </ul>
+
+            <!-- Back to Home Link -->
+            <div class="back-to-home p-3 border-top">
+                <a href="/" class="d-flex align-items-center text-decoration-none">
+                    <i class='bx bx-home-alt me-2'></i>
+                    <span>Back to Home</span>
+                </a>
+            </div>
 
             <div class="sidebar-footer">
                 <div class="user-info d-flex align-items-center">
