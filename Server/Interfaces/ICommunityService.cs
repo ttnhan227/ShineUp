@@ -19,4 +19,28 @@ public interface ICommunityService
     Task<List<CommunityMemberDTO>> GetCommunityMembersAsync(int communityId);
 
     Task<List<Post>> GetCommunityPostsAsync(int communityId);
+    
+    
+    Task<CommunityDTO> GetCommunityByIdAsync(int communityId);
+    
+    Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId);
+    
+    Task<string> CheckUserRoleAsync(int communityId, int userId);
+    
+    Task<bool> IsUserMemberAsync(int communityId, int userId);
+
+    
+    Task<List<CommunityDTO>> SearchCommunitiesAsync(string keyword);
+
+    
+    Task<List<CommunityMemberDTO>> GetCommunityAdminsAsync(int communityId);
+
+    
+    Task DeleteCommunityAsync(int communityId, int requesterId);
+    Task<bool> IsUserAdminAsync(int communityId, int userId);
+
+
+
+
+
 }

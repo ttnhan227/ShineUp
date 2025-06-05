@@ -1,0 +1,34 @@
+@* Views/Shared/_CommunityMembers.cshtml *@
+@model List<Client.DTOs.CommunityMemberDTO>
+
+<div class="members-list">
+    @foreach (var member in Model)
+    {
+        <div class="d-flex align-items-center mb-2">
+            <div class="me-3">
+                <img src="/images/default-avatar.png" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">@member.FullName</div>
+                        <small class="text-muted">@@@member.Username</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-@(member.Role.ToLower() == "admin" ? "danger" : "secondary")">
+                            @member.Role
+                        </span>
+                    </div>
+                </div>
+                <small class="text-muted">Joined @member.JoinedAt.ToString("MMM dd, yyyy")</small>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted">
+        <p>No members yet</p>
+    </div>
+}

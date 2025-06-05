@@ -17,14 +17,15 @@ public class CommunityController : ControllerBase
     private readonly ILogger<CommunityController> _logger;
     private readonly DatabaseContext _db;
 
-    public CommunityController(ICommunityService communityService, ILogger<CommunityController> logger, DatabaseContext _db)
+    public CommunityController(ICommunityService communityService, ILogger<CommunityController> logger,
+        DatabaseContext _db)
     {
         _communityService = communityService;
         _logger = logger;
         this._db = _db;
     }
 
-    
+
     [HttpGet("privacy-options")]
     public async Task<ActionResult<IEnumerable<Privacy>>> GetAllowedPrivacyOptions()
     {
@@ -34,7 +35,7 @@ public class CommunityController : ControllerBase
     }
 
 
-    
+
     [HttpPost]
     [Authorize]
     [Consumes("multipart/form-data")]
@@ -148,7 +149,7 @@ public class CommunityController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
-    
+
     [Authorize]
     [HttpDelete("{communityId}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(int communityId, int userId)
@@ -162,6 +163,44 @@ public class CommunityController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("{communityId}")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdateCommunity(int communityId, [FromForm] UpdateCommunityDTO dto)
+    {
+        try
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+
+            // Kiểm tra quyền admin trước khi cho phép update
+            bool isAdmin = await _communityService.IsUserAdminAsync(communityId, userId);
+            if (!isAdmin)
+            {
+                return Forbid("Only community admin can update community info.");
+            }
+
+            var updatedCommunity = await _communityService.UpdateCommunityAsync(communityId, dto, userId);
+            return Ok(updatedCommunity);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("Community not found.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid("You do not have permission to update this community.");
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update community");
+            return StatusCode(500, "Internal server error");
         }
     }
 

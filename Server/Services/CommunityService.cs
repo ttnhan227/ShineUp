@@ -247,4 +247,193 @@ public class CommunityService : ICommunityService
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
+    
+    public async Task<CommunityDTO> GetCommunityByIdAsync(int communityId)
+{
+    var community = await _db.Communities
+        .AsNoTracking()
+        .Include(c => c.Members)
+        .FirstOrDefaultAsync(c => c.CommunityID == communityId);
+
+    if (community == null)
+        throw new KeyNotFoundException("Community not found.");
+
+    return new CommunityDTO
+    {
+        CommunityID = community.CommunityID,
+        Name = community.Name,
+        Description = community.Description,
+        CoverImageUrl = community.CoverImageUrl,
+        CreatedAt = community.CreatedAt,
+        CreatedByUserID = community.CreatedByUserID,
+        PrivacyID = community.PrivacyID,
+        MemberUserIds = community.Members.Select(m => m.UserID).ToList()
+    };
+}
+
+public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
+{
+    var community = await _db.Communities
+        .Include(c => c.Members)
+        .FirstOrDefaultAsync(c => c.CommunityID == communityId);
+
+    if (community == null)
+        throw new KeyNotFoundException("Community not found.");
+
+    if (community.CreatedByUserID != requesterId)
+        throw new UnauthorizedAccessException("Only admin can update community.");
+
+    if (!string.IsNullOrWhiteSpace(dto.Name))
+    {
+        if (dto.Name.Length > 100)
+            throw new ArgumentException("Community name is too long.");
+        community.Name = dto.Name.Trim();
+    }
+
+    if (dto.Description != null)
+        community.Description = dto.Description.Trim();
+
+            if (dto.PrivacyID.HasValue)
+    {
+        var validPrivacy = await _db.Privacies.AnyAsync(p => p.PrivacyID == dto.PrivacyID.Value);
+        if (!validPrivacy)
+            throw new ArgumentException("Invalid PrivacyID.");
+        if (dto.PrivacyID != 1 && dto.PrivacyID != 3)
+            throw new ArgumentException("Only 'Public' (1) or 'Private' (3) privacy levels are allowed.");
+        community.PrivacyID = dto.PrivacyID.Value;
+    }
+
+    if (dto.CoverImage != null && dto.CoverImage.Length > 0)
+    {
+        var ext = Path.GetExtension(dto.CoverImage.FileName);
+        var allowed = new[] { ".jpg", ".jpeg", ".png" };
+        if (!allowed.Contains(ext.ToLower()))
+            throw new ArgumentException("Unsupported image format.");
+
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var uploadPath = Path.Combine(_env.WebRootPath, "uploads");
+
+        if (!Directory.Exists(uploadPath))
+            Directory.CreateDirectory(uploadPath);
+
+        var path = Path.Combine(uploadPath, fileName);
+        using var stream = new FileStream(path, FileMode.Create);
+        await dto.CoverImage.CopyToAsync(stream);
+
+        community.CoverImageUrl = $"/uploads/{fileName}";
+    }
+
+    await _db.SaveChangesAsync();
+
+    return new CommunityDTO
+    {
+        CommunityID = community.CommunityID,
+        Name = community.Name,
+        Description = community.Description,
+        CoverImageUrl = community.CoverImageUrl,
+        CreatedAt = community.CreatedAt,
+        CreatedByUserID = community.CreatedByUserID,
+        PrivacyID = community.PrivacyID,
+        MemberUserIds = community.Members.Select(m => m.UserID).ToList()
+    };
+}
+
+public async Task<string> CheckUserRoleAsync(int communityId, int userId)
+{
+    var member = await _db.CommunityMembers
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.CommunityID == communityId && m.UserID == userId);
+
+    if (member == null)
+        return "None";
+
+    return member.Role.ToString();
+}
+
+public async Task<bool> IsUserMemberAsync(int communityId, int userId)
+{
+    return await _db.CommunityMembers
+        .AsNoTracking()
+        .AnyAsync(m => m.CommunityID == communityId && m.UserID == userId);
+}
+
+public async Task<List<CommunityDTO>> SearchCommunitiesAsync(string keyword)
+{
+    if (string.IsNullOrWhiteSpace(keyword))
+        return new List<CommunityDTO>();
+
+    keyword = keyword.Trim().ToLower();
+
+    return await _db.Communities
+        .AsNoTracking()
+        .Where(c => c.Name.ToLower().Contains(keyword) || (c.Description != null && c.Description.ToLower().Contains(keyword)))
+        .Include(c => c.Members)
+        .OrderByDescending(c => c.CreatedAt)
+        .Select(c => new CommunityDTO
+        {
+            CommunityID = c.CommunityID,
+            Name = c.Name,
+            Description = c.Description,
+            CoverImageUrl = c.CoverImageUrl,
+            CreatedAt = c.CreatedAt,
+            CreatedByUserID = c.CreatedByUserID,
+            PrivacyID = c.PrivacyID,
+            MemberUserIds = c.Members.Select(m => m.UserID).ToList()
+        })
+        .ToListAsync();
+}
+
+public async Task<List<CommunityMemberDTO>> GetCommunityAdminsAsync(int communityId)
+{
+    var admins = await _db.CommunityMembers
+        .AsNoTracking()
+        .Where(m => m.CommunityID == communityId && m.Role == CommunityRole.Admin)
+        .Include(m => m.User)
+        .Select(m => new CommunityMemberDTO
+        {
+            UserID = m.UserID,
+            FullName = m.User.FullName,
+            Username = m.User.Username,
+            Email = m.User.Email,
+            Role = m.Role.ToString(),
+            JoinedAt = m.JoinedAt
+        })
+        .ToListAsync();
+
+    return admins;
+}
+
+public async Task DeleteCommunityAsync(int communityId, int requesterId)
+{
+    var community = await _db.Communities
+        .Include(c => c.Members)
+        .FirstOrDefaultAsync(c => c.CommunityID == communityId);
+
+    if (community == null)
+        throw new KeyNotFoundException("Community not found.");
+
+    if (community.CreatedByUserID != requesterId)
+        throw new UnauthorizedAccessException("Only admin can delete the community.");
+
+    // Remove members first due to foreign key constraints
+    _db.CommunityMembers.RemoveRange(community.Members);
+    _db.Communities.Remove(community);
+
+    await _db.SaveChangesAsync();
+}
+
+public async Task<bool> IsUserAdminAsync(int communityId, int userId)
+{
+    var member = await _db.CommunityMembers
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.CommunityID == communityId && m.UserID == userId);
+
+    if (member == null)
+        return false;
+
+    return member.Role == CommunityRole.Admin;
+}
+
+
+
 }

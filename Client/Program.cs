@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -81,6 +82,12 @@ builder.Services.AddSingleton(provider =>
 });
 
 builder.Services.AddHttpContextAccessor();
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];   
+builder.Services.AddHttpClient("BackendAPI", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]);
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+});
 
 var app = builder.Build();
 
@@ -117,7 +124,7 @@ app.MapControllerRoute(
 // Default route
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Community}/{action=Index}/{id?}");
 
 // Explicit route for google-auth
 app.MapControllerRoute(

@@ -1,0 +1,33 @@
+@model List<CommunityViewModel>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Communities</h2>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-action="Create" class="btn btn-primary">Create Community</a>
+        }
+    </div>
+
+    <div class="row">
+        @foreach (var community in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(community.CoverImageUrl))
+                    {
+                        <img src="@community.CoverImageUrl" class="card-img-top" alt="@community.Name cover" style="height: 200px; object-fit: cover;">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@community.Name</h5>
+                        <p class="card-text text-muted">@(community.Description?.Length > 100 ? community.Description.Substring(0, 97) + "..." : community.Description)</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Members: @community.MemberCount</small>
+                            <a asp-action="Details" asp-route-id="@community.CommunityID" class="btn btn-outline-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

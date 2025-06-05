@@ -1,0 +1,113 @@
+@model CommunityDetailsViewModel
+
+<div class="container mt-4">
+    <div class="card mb-4">
+        <div class="position-relative">
+            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl" class="card-img-top" alt="Community cover" style="height: 300px; object-fit: cover;">
+            }
+            <div class="card-body">
+                <h2 class="card-title">@Model.Name</h2>
+                <p class="card-text">@Model.Description</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary">@Model.PrivacyName</span>
+                        <span class="badge bg-secondary">Created @Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            if (!Model.IsCurrentUserMember)
+                            {
+                                <form asp-action="Join" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.CommunityID" />
+                                    <button type="submit" class="btn btn-success">Join Community</button>
+                                </form>
+                            }
+                            else if (!Model.IsCurrentUserAdmin)
+                            {
+                                <form asp-action="Leave" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@Model.CommunityID" />
+                                    <button type="submit" class="btn btn-warning">Leave Community</button>
+                                </form>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            @if (Model.IsCurrentUserMember)
+            {
+                <div class="mb-4">
+                    <a asp-action="CreatePost" asp-route-communityId="@Model.CommunityID" class="btn btn-primary">Create Post</a>
+                </div>
+            }
+            <div id="communityPosts">
+                <partial name="_CommunityPosts" model="Model.Posts" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Members (@Model.MemberCount)</h5>
+                    @if (Model.IsCurrentUserAdmin)
+                    {
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#manageMembersModal">
+                            Manage Members
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    <partial name="_CommunityMembers" model="Model.Members" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.IsCurrentUserAdmin)
+{
+    <partial name="_ManageMembersModal" model="Model" />
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Refresh posts periodically
+            function refreshPosts() {
+                $.get('@Url.Action("GetCommunityPostsPartial", new { communityId = Model.CommunityID })', function (data) {
+                    $('#communityPosts').html(data);
+                });
+            }
+
+            // Refresh members periodically
+            function refreshMembers() {
+                $.get('@Url.Action("GetMembers", new { communityId = Model.CommunityID })', function (data) {
+                    // Update members list
+                    let membersList = $('.members-list');
+                    membersList.empty();
+                    data.forEach(function(member) {
+                        membersList.append(`
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="${member.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                                <div>
+                                    <div>${member.fullName}</div>
+                                    <small class="text-muted">${member.username}</small>
+                                </div>
+                            </div>
+                        `);
+                    });
+                });
+            }
+
+            // Refresh data every 30 seconds
+            setInterval(refreshPosts, 30000);
+            setInterval(refreshMembers, 30000);
+        });
+    </script>
+}

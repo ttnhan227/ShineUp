@@ -16,7 +16,7 @@ public class CreatePostDto
     public string Content { get; set; }
 
     public int? CategoryID { get; set; }
-
+    public int? CommunityID { get; set; } 
     public int? PrivacyID { get; set; }
 
     public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();

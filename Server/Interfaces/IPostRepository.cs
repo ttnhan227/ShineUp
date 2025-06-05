@@ -38,4 +38,8 @@ public interface IPostRepository
     Task<Image> AddImageAsync(Image image);
     Task<Video> AddVideoAsync(Video video);
     Task RemoveAllMediaFromPostAsync(int postId);
+    
+    //Hoang Community features
+    Task<List<Post>> GetPostsByCommunityIdAsync(int communityId);
+
 }

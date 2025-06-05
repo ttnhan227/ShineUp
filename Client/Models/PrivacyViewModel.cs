@@ -5,7 +5,10 @@ namespace Client.Models;
 public class PrivacyViewModel
 {
     public int PrivacyID { get; set; }
-    
-    [Display(Name = "Privacy Level")]
-    public string Name { get; set; }
-} 
+
+    [Required(ErrorMessage = "Privacy name is required")]
+    [StringLength(50, ErrorMessage = "Privacy name cannot exceed 50 characters")]
+    [Display(Name = "Privacy Name")]
+    public string Name { get; set; } = string.Empty;
+
+}
