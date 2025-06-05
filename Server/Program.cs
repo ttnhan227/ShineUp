@@ -187,6 +187,7 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Admin Repositories
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
+builder.Services.AddScoped<IContestManagementRepository, ContestManagementRepository>();
 
 // Update CORS configuration
 builder.Services.AddCors(options =>

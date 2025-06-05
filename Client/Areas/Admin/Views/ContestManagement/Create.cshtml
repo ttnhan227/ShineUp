@@ -1,0 +1,113 @@
+@model Client.Areas.Admin.Models.CreateContestViewModel
+
+@{
+    ViewData["Title"] = "Create New Contest";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">@ViewData["Title"]</h2>
+                    </div>
+
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        
+                        <div class="profile-details">
+                            <div class="profile-detail-item">
+                                <label asp-for="Title" class="form-label">
+                                    <i class='bx bx-text'></i> @Html.DisplayNameFor(model => model.Title)
+                                </label>
+                                <input asp-for="Title" class="form-control" />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="profile-detail-item">
+                                <label asp-for="Description" class="form-label">
+                                    <i class='bx bx-detail'></i> @Html.DisplayNameFor(model => model.Description)
+                                </label>
+                                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="profile-detail-item">
+                                        <label asp-for="StartDate" class="form-label">
+                                            <i class='bx bx-calendar'></i> @Html.DisplayNameFor(model => model.StartDate)
+                                        </label>
+                                        <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="profile-detail-item">
+                                        <label asp-for="EndDate" class="form-label">
+                                            <i class='bx bx-calendar-check'></i> @Html.DisplayNameFor(model => model.EndDate)
+                                        </label>
+                                        <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                
+                            <div class="button-group mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class='bx bx-plus'></i> Create Contest
+                                </button>
+                                <a asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class='bx bx-x'></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set minimum dates
+            const today = new Date();
+            const startDateInput = document.getElementById('StartDate');
+            const endDateInput = document.getElementById('EndDate');
+            
+            // Format date to YYYY-MM-DDTHH:MM
+            const formatDate = (date) => {
+                const pad = (num) => num.toString().padStart(2, '0');
+                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+            };
+            
+            // Set minimum start date to now
+            startDateInput.min = formatDate(today);
+            
+            // Set initial end date minimum to start date
+            if (!startDateInput.value) {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                startDateInput.value = formatDate(tomorrow);
+            }
+            
+            // Update end date minimum when start date changes
+            startDateInput.addEventListener('change', function() {
+                endDateInput.min = this.value;
+                if (new Date(endDateInput.value) < new Date(this.value)) {
+                    endDateInput.value = this.value;
+                }
+            });
+            
+            // Set initial end date minimum on page load
+            if (startDateInput.value) {
+                endDateInput.min = startDateInput.value;
+            }
+        });
+    </script>
+}

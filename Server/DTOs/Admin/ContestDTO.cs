@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Server.Models;
 
-namespace Server.DTOs;
+namespace Server.DTOs.Admin;
 
-public class ContestDTO
+public class AdminContestDTO
 {
     public int ContestID { get; set; }
 
@@ -16,11 +16,17 @@ public class ContestDTO
     [Required]
     public string Description { get; set; }
 
+    
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime StartDate { get; set; }
-
+    
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
+    
+  
+    
+    // Navigation property
+    public ICollection<ContestEntry> ContestEntries { get; set; }
 }
