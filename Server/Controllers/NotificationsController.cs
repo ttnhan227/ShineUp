@@ -106,6 +106,32 @@ public class NotificationsController : ControllerBase
         return Ok(notification);
     }
 
+    // GET: api/notifications/recent
+    [HttpGet("recent")]
+    public async Task<ActionResult<IEnumerable<NotificationDTO>>> GetRecentNotifications()
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            _logger.LogInformation($"[NotificationsController] Getting recent notifications for user ID: {userId}");
+            
+            // Get recent notifications (last 10)
+            var notifications = (await _notificationRepository.GetUserNotificationsAsync(userId, unreadOnly: false))
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(10)
+                .ToList();
+                
+            _logger.LogInformation($"[NotificationsController] Found {notifications.Count} recent notifications for user {userId}");
+            
+            return Ok(notifications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"[NotificationsController] Error in GetRecentNotifications: {ex.Message}");
+            return StatusCode(500, new { message = "An error occurred while retrieving recent notifications" });
+        }
+    }
+
     [HttpPost]
 [Authorize(Roles = "Admin")]
 public async Task<ActionResult<NotificationDTO>> CreateNotification(CreateNotificationDTO notificationDto)

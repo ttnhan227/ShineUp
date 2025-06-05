@@ -181,9 +181,33 @@
                     {
                         var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
                         var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
+                        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+                        <!-- Notification Dropdown -->
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class='bx bx-bell fs-4'></i>
+                                <span id="unread-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                <div class="dropdown-header d-flex justify-content-between align-items-center p-3 border-bottom">
+                                    <h6 class="mb-0 fw-bold">Notifications</h6>
+                                    <a href="/Notifications" class="text-primary small">View All</a>
+                                </div>
+                                <div id="notification-list" class="list-group list-group-flush">
+                                    <div class="text-center p-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span class="ms-2">Loading notifications...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                        <!-- Profile Dropdown -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if (!string.IsNullOrEmpty(profileImageUrl))
                                 {
                                     <img src="@profileImageUrl"
@@ -235,6 +259,59 @@
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<style>
+    /* Notification Dropdown Styles */
+    .notification-dropdown {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    .notification-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f2f5;
+        transition: background-color 0.2s;
+        cursor: pointer;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .notification-item.unread {
+        background-color: #f8f9ff;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .notification-message {
+        white-space: normal;
+        word-wrap: break-word;
+    }
+
+    .notification-empty {
+        padding: 1.5rem;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    #notificationDropdown {
+        position: relative;
+    }
+
+    #unread-count {
+        font-size: 0.6rem;
+        padding: 0.25em 0.5em;
+    }
+</style>
+
 <script>
     toastr.options = {
         "closeButton": true,
@@ -243,7 +320,144 @@
         "timeOut": "5000"
     };
 
+    // Load notifications when dropdown is shown
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        if (notificationDropdown) {
+            notificationDropdown.addEventListener('shown.bs.dropdown', loadNotifications);
+        }
+        
+        // Initial load of unread count
+        updateUnreadCount();
+    });
+
+    // Function to update unread count badge
+    function updateUnreadCount() {
+        fetch('/notifications/GetUnreadCount')
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch unread count');
+                return response.json();
+            })
+            .then(data => {
+                const unreadCount = data.count || 0;
+                const badge = document.getElementById('unread-count');
+                
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching unread count:', error);
+                // Hide the badge on error to prevent confusion
+                document.getElementById('unread-count').style.display = 'none';
+            });
+    }
+
+    // Function to load notifications
+    function loadNotifications() {
+        const notificationList = document.getElementById('notification-list');
+        if (!notificationList) return;
+
+        // Show loading state
+        notificationList.innerHTML = `
+            <div class="text-center p-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="ms-2">Loading notifications...</span>
+            </div>`;
+
+        // Fetch notifications through the MVC controller
+        fetch('/notifications/recent-notifications')
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load notifications');
+                return response.json();
+            })
+            .then(notifications => {
+                if (!notifications || notifications.length === 0) {
+                    notificationList.innerHTML = `
+                        <div class="notification-empty">
+                            <i class='bx bx-bell-off fs-1 mb-2'></i>
+                            <p class="mb-0">No notifications yet</p>
+                        </div>`;
+                    return;
+                }
+
+                notificationList.innerHTML = notifications.map(notification => `
+                    <div class="notification-item ${notification.status === 'Read' ? '' : 'unread'}" 
+                         onclick="markAsRead(${notification.notificationID}, this)">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="notification-message">${notification.message}</div>
+                            <small class="notification-time">${formatTimeAgo(notification.createdAt)}</small>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+                notificationList.innerHTML = `
+                    <div class="notification-empty">
+                        <i class='bx bx-error fs-1 mb-2'></i>
+                        <p class="mb-0">Failed to load notifications</p>
+                        <small>${error.message}</small>
+                    </div>`;
+            });
+    }
+
+    // Function to mark notification as read
+    function markAsRead(notificationId, element) {
+        fetch(`/notifications/MarkAsRead/${notificationId}`, { 
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Update UI immediately for better UX
+                if (element) {
+                    element.classList.remove('unread');
+                }
+                // Update unread count after marking as read
+                updateUnreadCount();
+            }
+        })
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+
+    // Helper function to format time as "time ago"
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60,
+            second: 1
+        };
+        
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
+            }
+        }
+        
+        return 'just now';
+    }
+
+    // Update unread count every 30 seconds
+    setInterval(updateUnreadCount, 30000);
 </script>
+
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

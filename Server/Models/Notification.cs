@@ -7,7 +7,8 @@ public enum NotificationType
     ApplicationUpdate,
     MessageReceived,
     TalentMatch,
-    SystemAlert
+    SystemAlert,
+    Security        // For security-related notifications like password changes
 }
 
 public enum NotificationStatus

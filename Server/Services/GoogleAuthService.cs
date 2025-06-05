@@ -69,6 +69,7 @@ public class GoogleAuthService : IGoogleAuthService
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true,
                 Verified = true
+                // PasswordHash is intentionally left null - will be set during profile completion
             };
             await _context.Users.AddAsync(user);
         }
@@ -93,7 +94,7 @@ public class GoogleAuthService : IGoogleAuthService
             // Only update FullName if it's not already set
             if (string.IsNullOrEmpty(user.FullName))
             {
-                user.FullName = payload.Name;
+                user.FullName = payload.Name ?? user.FullName;
             }
             
             // Always update the profile picture from Google
@@ -103,8 +104,28 @@ public class GoogleAuthService : IGoogleAuthService
         }
 
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"[GoogleAuthService] User handled successfully. UserID: {user.UserID}, Email: {user.Email}");
-        return user;
+        _logger.LogInformation($"[GoogleAuthService] User processed successfully. UserID: {user.UserID}");
+        
+        // Ensure we have the latest data by explicitly selecting only the columns we need
+        return await _context.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .Select(u => new User
+            {
+                UserID = u.UserID,
+                Username = u.Username,
+                Email = u.Email,
+                PasswordHash = u.PasswordHash,
+                IsActive = u.IsActive,
+                Verified = u.Verified,
+                RoleID = u.RoleID,
+                Role = u.Role,
+                ProfileImageURL = u.ProfileImageURL,
+                LastLoginTime = u.LastLoginTime,
+                FullName = u.FullName,
+                GoogleId = u.GoogleId
+            })
+            .FirstOrDefaultAsync(u => u.UserID == user.UserID);
     }
 
     private async Task<string> GenerateUniqueUsername(string baseUsername)

@@ -7,6 +7,7 @@ public class OpportunityApplicationDTO
     public int ApplicationID { get; set; }
     public int UserID { get; set; }
     public UserDTO? User { get; set; }
+    public int ApplicantId { get; set; }
     public int TalentOpportunityID { get; set; }
     public string TalentOpportunityTitle { get; set; } = string.Empty;
     public string TalentOpportunityDescription { get; set; } = string.Empty;

@@ -13,15 +13,18 @@ namespace Server.Controllers;
 public class OpportunitiesController : ControllerBase
 {
     private readonly IOpportunityRepository _opportunityRepository;
+    private readonly INotificationRepository _notificationRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<OpportunitiesController> _logger;
 
     public OpportunitiesController(
         IOpportunityRepository opportunityRepository,
+        INotificationRepository notificationRepository,
         IHttpContextAccessor httpContextAccessor,
         ILogger<OpportunitiesController> logger)
     {
         _opportunityRepository = opportunityRepository;
+        _notificationRepository = notificationRepository;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
     }
@@ -238,6 +241,62 @@ public class OpportunitiesController : ControllerBase
             if (application == null)
             {
                 return NotFound(new { message = "Application not found" });
+            }
+            
+            // Send notification to the applicant
+            try
+            {
+                string notificationMessage;
+                var status = updateDto.Status.ToLower();
+                var opportunityTitle = opportunity.Title;
+                var recruiterName = User.FindFirst(ClaimTypes.Name)?.Value ?? "The recruitment team";
+
+                switch (status)
+                {
+                    case "pending":
+                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. We've received your application and will review it shortly.";
+                        break;
+                    case "reviewing":
+                        notificationMessage = $"Great news! Your application for '{opportunityTitle}' is currently under review by our team.";
+                        break;
+                    case "shortlisted":
+                        notificationMessage = $"Congratulations! Your application for '{opportunityTitle}' has been shortlisted. We'll be in touch soon with next steps.";
+                        break;
+                    case "interviewing":
+                        notificationMessage = $"We're excited to move forward with your application! Let's schedule an interview for the '{opportunityTitle}' position.";
+                        break;
+                    case "accepted":
+                        notificationMessage = $"Congratulations! We're thrilled to offer you the '{opportunityTitle}' position. Please check your email for the offer details.";
+                        break;
+                    case "rejected":
+                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. Unfortunately, we've decided to move forward with other candidates at this time.";
+                        break;
+                    default:
+                        notificationMessage = $"There's been an update to your application for '{opportunityTitle}'. Status: {updateDto.Status}";
+                        break;
+                }
+
+                // Add review notes if available
+                if (!string.IsNullOrEmpty(updateDto.ReviewNotes))
+                {
+                    notificationMessage += $"\n\nNote from {recruiterName}: {updateDto.ReviewNotes}";
+                }
+                
+                var notificationDto = new CreateNotificationDTO
+                {
+                    UserID = application.UserID,
+                    Message = notificationMessage,
+                    Type = NotificationType.ApplicationUpdate,
+                    RelatedEntityId = applicationId,
+                    RelatedEntityType = "Application"
+                };
+                
+                await _notificationRepository.CreateNotificationAsync(notificationDto);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the request
+                _logger.LogError(ex, "Failed to send notification for application status update");
             }
             
             return Ok(application);

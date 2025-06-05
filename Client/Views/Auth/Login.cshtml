@@ -134,10 +134,27 @@
                     }
                     
                     const data = JSON.parse(text);
-                    if (data.success) {
+                    
+                    if (data.needsPassword) {
+                        // Redirect to profile completion page with the necessary parameters
+                        const url = new URL('/Auth/CompleteProfile', window.location.origin);
+                        url.searchParams.append('userId', data.userId);
+                        url.searchParams.append('email', data.email);
+                        if (data.username) url.searchParams.append('username', data.username);
+                        if (data.fullName) url.searchParams.append('fullName', data.fullName);
+                        
+                        window.location.href = url.toString();
+                    } else if (data.token) {
+                        // Save the token in localStorage
+                        localStorage.setItem('authToken', data.token);
+                        
+                        // Set a flag to indicate successful login
+                        sessionStorage.setItem('justLoggedIn', 'true');
+                        
+                        // Redirect to home
                         showLoading('Success! Redirecting you to home...');
                         setTimeout(() => {
-                            window.location.replace(data.redirectUrl);
+                            window.location.href = '/';
                         }, 1000);
                     } else {
                         throw new Error(data.message || 'Authentication failed');

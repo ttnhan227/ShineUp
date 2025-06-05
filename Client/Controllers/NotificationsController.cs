@@ -203,6 +203,34 @@ namespace Client.Controllers
             }
         }
 
+        // GET: Notifications/GetRecentNotifications
+        [HttpGet("recent-notifications")]
+        public async Task<IActionResult> GetRecentNotifications()
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return Json(Array.Empty<NotificationViewModel>());
+            }
+            
+            try
+            {
+                var response = await client.GetAsync("api/Notifications/recent");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var notifications = JsonSerializer.Deserialize<List<NotificationViewModel>>(content, _jsonOptions);
+                    return Json(notifications ?? new List<NotificationViewModel>());
+                }
+                return Json(new List<NotificationViewModel>());
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error getting recent notifications");
+                return Json(new List<NotificationViewModel>());
+            }
+        }
+
         private IActionResult HandleError(System.Net.HttpStatusCode statusCode)
         {
             return statusCode switch

@@ -74,39 +74,30 @@ public class OpportunityRepository : IOpportunityRepository
 
     private OpportunityApplicationDTO MapToApplicationDTO(OpportunityApplication application)
     {
-        var dto = new OpportunityApplicationDTO
+        if (application == null) return null;
+        
+        return new OpportunityApplicationDTO
         {
             ApplicationID = application.ApplicationID,
             UserID = application.UserID,
-            TalentOpportunityID = application.TalentOpportunityID,
-            TalentOpportunityTitle = application.TalentOpportunity?.Title ?? "Opportunity not found",
-            TalentOpportunityDescription = application.TalentOpportunity?.Description ?? string.Empty,
-            CoverLetter = application.CoverLetter,
-            Status = application.Status,
-            AppliedAt = application.AppliedAt,
-            ReviewedAt = application.ReviewedAt,
-            ReviewNotes = application.ReviewNotes
-        };
-
-        // Map user data if available
-        if (application.User != null)
-        {
-            dto.User = new UserDTO
+            User = application.User != null ? new UserDTO
             {
                 UserID = application.User.UserID,
                 Username = application.User.Username,
                 FullName = application.User.FullName,
                 Email = application.User.Email,
-                ProfileImageURL = application.User.ProfileImageURL,
-                // Map other user properties as needed
-                RoleID = application.User.RoleID,
-                CreatedAt = application.User.CreatedAt,
-                IsActive = application.User.IsActive,
-                Verified = application.User.Verified
-            };
-        }
-
-        return dto;
+                ProfileImageURL = application.User.ProfileImageURL
+            } : null,
+            TalentOpportunityID = application.TalentOpportunityID,
+            TalentOpportunityTitle = application.TalentOpportunity?.Title ?? string.Empty,
+            TalentOpportunityDescription = application.TalentOpportunity?.Description ?? string.Empty,
+            CoverLetter = application.CoverLetter,
+            Status = application.Status,
+            AppliedAt = application.AppliedAt,
+            ReviewedAt = application.ReviewedAt,
+            ReviewNotes = application.ReviewNotes,
+            ApplicantId = application.UserID
+        };
     }
 
     public async Task<IEnumerable<OpportunityDTO>> GetAllOpportunitiesAsync()
