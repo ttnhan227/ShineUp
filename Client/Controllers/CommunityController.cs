@@ -599,20 +599,32 @@ namespace Client.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Moderator")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(int communityId, int userId)
         {
             if (communityId <= 0 || userId <= 0)
-                return BadRequest("Thông tin không hợp lệ");
+            {
+                TempData["Error"] = "Invalid request parameters.";
+                return RedirectToAction("Details", new { communityId });
+            }
 
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.PostAsJsonAsync($"api/community/{communityId}/remove-member", new { userId });
+                var response = await client.DeleteAsync($"api/Community/{communityId}/members/{userId}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Success"] = "Member removed successfully.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    TempData["Error"] = "You don't have permission to remove members.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    TempData["Error"] = "Community or user not found.";
                 }
                 else
                 {
@@ -628,7 +640,7 @@ namespace Client.Controllers
                 TempData["Error"] = "An error occurred while removing the member.";
             }
 
-            return RedirectToAction("Details", new { id = communityId });
+            return RedirectToAction("Details", new { communityId });
         }
 
         [HttpPost]

@@ -49,12 +49,16 @@ else
                                 <div class="d-flex gap-2 justify-content-end">
                                     @if (member.Role == CommunityRole.Member)
                                     {
-                                        <form method="post" asp-action="RemoveMember" class="d-inline">
+                                        <form method="post" 
+                                              asp-controller="Community" 
+                                              asp-action="RemoveMember" 
+                                              asp-route-communityId="@ViewBag.CommunityId"
+                                              asp-route-userId="@member.UserID"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to remove @(member.User?.FullName ?? member.User?.Username) from the community?');">
                                             @Html.AntiForgeryToken()
-                                            <input type="hidden" name="communityId" value="@ViewBag.CommunityId" />
-                                            <input type="hidden" name="userId" value="@member.UserID" />
-                                            <button type="submit" class="btn btn-danger btn-sm px-3 py-1 d-flex align-items-center" 
-                                                    onclick="return confirm('Are you sure you want to remove this member from the community?');"
+                                            <button type="submit" 
+                                                    class="btn btn-danger btn-sm px-3 py-1 d-flex align-items-center"
                                                     title="Remove Member">
                                                 <i class="fas fa-user-minus me-1"></i>
                                                 <span class="d-none d-md-inline">Remove</span>
