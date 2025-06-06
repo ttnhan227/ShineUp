@@ -188,6 +188,45 @@ public class CommunityController : ControllerBase
         }
     }
 
+    [HttpPut("{communityId}")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdateCommunity(int communityId, [FromForm] UpdateCommunityDTO dto)
+    {
+        try
+        {
+            var userId = GetUserId();
+            
+            // Check if user is admin of this community
+            if (!await IsUserAdminAsync(communityId, userId))
+            {
+                return Forbid("You must be an admin to update this community.");
+            }
+            
+            // Ensure the community ID in the path matches the DTO
+            if (communityId != dto.CommunityID)
+            {
+                return BadRequest("Community ID in the path does not match the request body.");
+            }
+            
+            var result = await _communityService.UpdateCommunityAsync(communityId, dto, userId);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update community {CommunityId}", communityId);
+            return StatusCode(500, "An error occurred while updating the community.");
+        }
+    }
+
     [HttpDelete("{communityId}/members/{userId}")]
     [Authorize]
     public async Task<IActionResult> RemoveMember(int communityId, int userId)
@@ -223,39 +262,7 @@ public class CommunityController : ControllerBase
         }
     }
 
-    [HttpPut("{communityId}")]
-    [Authorize]
-    [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UpdateCommunity(int communityId, [FromForm] UpdateCommunityDTO dto)
-    {
-        try
-        {
-            int userId = GetUserId();
-            bool isAdmin = await _communityService.IsUserAdminAsync(communityId, userId);
-            if (!isAdmin)
-                return Forbid("Only community admin can update community info.");
 
-            var updated = await _communityService.UpdateCommunityAsync(communityId, dto, userId);
-            return Ok(updated);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound("Community not found.");
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid("You do not have permission to update this community.");
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to update community");
-            return StatusCode(500, "Internal server error");
-        }
-    }
 
     /// Helper method để lấy vai trò của user trong cộng đồng
   
@@ -276,11 +283,6 @@ public class CommunityController : ControllerBase
 
 
     /// Helper method kiểm tra xem user có phải là admin của cộng đồng không
-    private async Task<bool> IsUserAdminAsync(int communityId, int userId)
-    {
-        var role = await GetUserRoleAsync(communityId, userId);
-        return role == CommunityRole.Admin.ToString();
-    }
     private int GetUserId() 
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -289,5 +291,18 @@ public class CommunityController : ControllerBase
             throw new UnauthorizedAccessException("User is not authenticated or invalid user ID.");
         }
         return userId;
+    }
+
+    private async Task<bool> IsUserAdminAsync(int communityId, int userId)
+    {
+        try
+        {
+            return await _communityService.IsUserAdminAsync(communityId, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if user {UserId} is admin of community {CommunityId}", userId, communityId);
+            return false;
+        }
     }
 }

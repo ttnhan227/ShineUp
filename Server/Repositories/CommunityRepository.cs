@@ -4,20 +4,98 @@ using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
 
-namespace Server.Services;
+namespace Server.Repositories;
 
-public class CommunityService : ICommunityService
+public class CommunityRepository : ICommunityService
 {
     private readonly DatabaseContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly ICloudinaryService _cloudinaryService;
+    private readonly ILogger<CommunityRepository> _logger;
 
-    public CommunityService(DatabaseContext db, IWebHostEnvironment env)
+    public CommunityRepository(
+        DatabaseContext db, 
+        IWebHostEnvironment env, 
+        ICloudinaryService cloudinaryService,
+        ILogger<CommunityRepository> logger)
     {
         _db = db;
         _env = env;
+        _cloudinaryService = cloudinaryService;
+        _logger = logger;
     }
 
-public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int userId)
+    public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
+    {
+        var community = await _db.Communities
+            .Include(c => c.Members)
+            .FirstOrDefaultAsync(c => c.CommunityID == communityId);
+
+        if (community == null)
+            throw new KeyNotFoundException("Community not found.");
+
+        // Check if requester is an admin of this community
+        var isAdmin = await IsUserAdminAsync(communityId, requesterId);
+        if (!isAdmin)
+            throw new UnauthorizedAccessException("You must be an admin to update this community.");
+
+        // Update properties if they are provided in the DTO
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+            community.Name = dto.Name.Trim();
+
+        if (dto.Description != null)
+            community.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
+
+        if (dto.PrivacyID.HasValue)
+        {
+            if (dto.PrivacyID != 1 && dto.PrivacyID != 3)
+                throw new ArgumentException("Only 'Public' (1) or 'Private' (3) privacy levels are allowed.");
+            
+            var privacyExists = await _db.Privacies.AnyAsync(p => p.PrivacyID == dto.PrivacyID.Value);
+            if (!privacyExists)
+                throw new ArgumentException("Invalid PrivacyID.");
+                
+            community.PrivacyID = dto.PrivacyID.Value;
+        }
+
+        // Handle cover image upload if provided
+        if (dto.CoverImage != null && dto.CoverImage.Length > 0)
+        {
+            var ext = Path.GetExtension(dto.CoverImage.FileName).ToLowerInvariant();
+            var allowed = new[] { ".jpg", ".jpeg", ".png" };
+            
+            if (!allowed.Contains(ext))
+                throw new ArgumentException("Unsupported image format. Only JPG, JPEG, and PNG are allowed.");
+
+            try
+            {
+                // Upload new cover image to Cloudinary
+                var uploadResult = await _cloudinaryService.UploadImgAsync(dto.CoverImage);
+                
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Failed to upload image to Cloudinary: {uploadResult.Error.Message}");
+                }
+
+
+                // Store the secure URL from Cloudinary
+                community.CoverImageUrl = uploadResult.SecureUrl.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading community cover image to Cloudinary");
+                throw new Exception("Failed to upload cover image. Please try again.");
+            }
+        }
+
+        community.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        // Return the updated community DTO
+        return await GetCommunityDetailsAsync(community.CommunityID, requesterId);
+    }
+
+    public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int userId)
     {
         if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 100)
             throw new ArgumentException("Community name is invalid.");
@@ -28,27 +106,34 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim(),
             CreatedAt = DateTime.UtcNow,
             CreatedByUserID = userId,
-            //Creatby : name of user who created the community
             PrivacyID = dto.PrivacyID
         };
 
         if (dto.CoverImage != null && dto.CoverImage.Length > 0)
         {
-            var ext = Path.GetExtension(dto.CoverImage.FileName);
+            var ext = Path.GetExtension(dto.CoverImage.FileName).ToLowerInvariant();
             var allowed = new[] { ".jpg", ".jpeg", ".png" };
-            if (!allowed.Contains(ext.ToLower()))
-                throw new ArgumentException("Unsupported image format.");
+            if (!allowed.Contains(ext))
+                throw new ArgumentException("Unsupported image format. Only JPG, JPEG, and PNG are allowed.");
 
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            var uploadPath = Path.Combine(_env.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
+            try
+            {
+                // Upload to Cloudinary
+                var uploadResult = await _cloudinaryService.UploadImgAsync(dto.CoverImage);
+                
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Failed to upload image to Cloudinary: {uploadResult.Error.Message}");
+                }
 
-            var path = Path.Combine(uploadPath, fileName);
-            using var stream = new FileStream(path, FileMode.Create);
-            await dto.CoverImage.CopyToAsync(stream);
-
-            community.CoverImageUrl = $"/uploads/{fileName}";
+                // Store the secure URL from Cloudinary
+                community.CoverImageUrl = uploadResult.SecureUrl.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading community cover image to Cloudinary");
+                throw new Exception("Failed to upload cover image. Please try again.");
+            }
         }
 
         if (dto.PrivacyID.HasValue)
@@ -204,7 +289,7 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             throw new InvalidOperationException("Not a member");
 
         if (community.CreatedByUserID == userId)
-            throw new InvalidOperationException("Admin must transfer admin rights before leaving");
+            throw new InvalidOperationException("Admin must transfer Admin rights before leaving");
 
         _db.CommunityMembers.Remove(member);
         await _db.SaveChangesAsync();
@@ -220,11 +305,11 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
 
         var currentAdmin = community.Members.FirstOrDefault(m => m.UserID == currentAdminId);
         if (currentAdmin == null || currentAdmin.Role != CommunityRole.Admin)
-            throw new Exception("Only current admin can transfer admin rights");
+            throw new Exception("Only current Admin can transfer Admin rights");
 
         var newAdmin = community.Members.FirstOrDefault(m => m.UserID == newAdminId);
         if (newAdmin == null)
-            throw new Exception("New admin must be a member");
+            throw new Exception("New Admin must be a member");
 
         currentAdmin.Role = CommunityRole.Member;
         newAdmin.Role = CommunityRole.Admin;
@@ -249,7 +334,7 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             throw new Exception("Admin cannot remove themselves");
 
         if (requesterId != userId && community.CreatedByUserID != requesterId)
-            throw new Exception("Only admin can remove other members");
+            throw new Exception("Only Admin can remove other members");
 
         _db.CommunityMembers.Remove(member);
         await _db.SaveChangesAsync();
@@ -289,69 +374,6 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             .ToListAsync();
     }
 
-    public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
-    {
-        var community = await _db.Communities.Include(c => c.Members)
-            .FirstOrDefaultAsync(c => c.CommunityID == communityId);
-
-        if (community == null)
-            throw new KeyNotFoundException("Community not found");
-
-        if (community.CreatedByUserID != requesterId)
-            throw new UnauthorizedAccessException("Only admin can update");
-
-        if (!string.IsNullOrWhiteSpace(dto.Name))
-        {
-            if (dto.Name.Length > 100)
-                throw new ArgumentException("Name too long");
-            community.Name = dto.Name.Trim();
-        }
-
-        if (dto.Description != null)
-            community.Description = dto.Description.Trim();
-
-        if (dto.PrivacyID.HasValue)
-        {
-            var valid = await _db.Privacies.AnyAsync(p => p.PrivacyID == dto.PrivacyID);
-            if (!valid || (dto.PrivacyID != 1 && dto.PrivacyID != 3))
-                throw new ArgumentException("Invalid PrivacyID");
-            community.PrivacyID = dto.PrivacyID.Value;
-        }
-
-        if (dto.CoverImage != null && dto.CoverImage.Length > 0)
-        {
-            var ext = Path.GetExtension(dto.CoverImage.FileName);
-            var allowed = new[] { ".jpg", ".jpeg", ".png" };
-            if (!allowed.Contains(ext.ToLower()))
-                throw new ArgumentException("Invalid image type");
-
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            var uploadPath = Path.Combine(_env.WebRootPath, "uploads");
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
-
-            var path = Path.Combine(uploadPath, fileName);
-            using var stream = new FileStream(path, FileMode.Create);
-            await dto.CoverImage.CopyToAsync(stream);
-
-            community.CoverImageUrl = $"/uploads/{fileName}";
-        }
-
-        await _db.SaveChangesAsync();
-
-        return new CommunityDTO
-        {
-            CommunityID = community.CommunityID,
-            Name = community.Name,
-            Description = community.Description,
-            CoverImageUrl = community.CoverImageUrl,
-            CreatedAt = community.CreatedAt,
-            CreatedByUserID = community.CreatedByUserID,
-            PrivacyID = community.PrivacyID,
-            MemberUserIds = community.Members.Select(m => m.UserID).ToList()
-        };
-    }
-
     public async Task<string?> GetUserRoleAsync(int communityId, int userId)
     {
         var member = await _db.CommunityMembers.AsNoTracking()
@@ -377,7 +399,7 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             throw new KeyNotFoundException("Community not found");
 
         if (community.CreatedByUserID != requesterId)
-            throw new UnauthorizedAccessException("Only admin can delete");
+            throw new UnauthorizedAccessException("Only Admin can delete");
 
         _db.CommunityMembers.RemoveRange(community.Members);
         _db.Communities.Remove(community);

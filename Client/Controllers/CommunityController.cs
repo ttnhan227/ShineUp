@@ -66,6 +66,142 @@ namespace Client.Controllers
 
             return View(new CommunityViewModel());
         }
+        
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Edit([FromQuery] int communityId)
+        {
+            if (communityId <= 0)
+                return BadRequest("CommunityId không hợp lệ");
+
+            try
+            {
+                using var client = CreateAuthenticatedClient();
+                _logger.LogInformation("Fetching community details for editing. CommunityId: {CommunityId}", communityId);
+                var response = await client.GetAsync($"api/community/{communityId}");
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                _logger.LogInformation("API Response Status: {StatusCode}", response.StatusCode);
+                _logger.LogDebug("API Response Content: {ResponseContent}", responseContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var community = JsonSerializer.Deserialize<CommunityViewModel>(responseContent, options);
+
+                        if (community != null)
+                        {
+                            _logger.LogInformation("Successfully deserialized community. ID: {CommunityId}, Name: {Name}", 
+                                community.CommunityID, community.Name);
+                                
+                            var editModel = new EditCommunityViewModel
+                            {
+                                CommunityID = community.CommunityID,
+                                Name = community.Name,
+                                Description = community.Description,
+                                CurrentCoverImageUrl = community.CoverImageUrl,
+                                PrivacyID = community.PrivacyID
+                            };
+                            
+                            return View(editModel);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to deserialize community. Response was null or invalid.");
+                        }
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        _logger.LogError(jsonEx, "JSON deserialization error. Response: {ResponseContent}", responseContent);
+                        throw; // This will be caught by the outer catch block
+                    }
+                }
+                
+                TempData["Error"] = "Không tìm thấy cộng đồng hoặc bạn không có quyền chỉnh sửa.";
+                return RedirectToAction("Details", new { communityId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading community for editing. CommunityId: {CommunityId}", communityId);
+                TempData["Error"] = "Đã xảy ra lỗi khi tải thông tin cộng đồng.";
+                return RedirectToAction("Details", new { communityId });
+            }
+        }
+        
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit([FromForm] int communityId, EditCommunityViewModel model)
+        {
+            if (communityId <= 0)
+            {
+                ModelState.AddModelError("", "CommunityId không hợp lệ");
+                return View(model);
+            }
+
+            // Ensure the model's CommunityID matches the one from the form
+            if (model.CommunityID != communityId)
+            {
+                _logger.LogWarning("Community ID mismatch. Model: {ModelId}, Form: {FormId}", model.CommunityID, communityId);
+                ModelState.AddModelError("", "Dữ liệu không hợp lệ");
+                return View(model);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Model state is invalid. CommunityId: {CommunityId}, Errors: {Errors}", communityId, 
+                    string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)));
+                return View(model);
+            }
+
+            try
+            {
+                using var client = CreateAuthenticatedClient();
+                
+                // Create multipart form data
+                using var formData = new MultipartFormDataContent();
+                
+                // Add model properties to form data
+                formData.Add(new StringContent(model.CommunityID.ToString()), "CommunityID");
+                formData.Add(new StringContent(model.Name), "Name");
+                formData.Add(new StringContent(model.Description ?? string.Empty), "Description");
+                
+                // Add cover image if provided
+                if (model.CoverImage != null && model.CoverImage.Length > 0)
+                {
+                    using var fileStream = model.CoverImage.OpenReadStream();
+                    var fileContent = new StreamContent(fileStream);
+                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(model.CoverImage.ContentType);
+                    formData.Add(fileContent, "CoverImage", model.CoverImage.FileName);
+                }
+                
+                var response = await client.PutAsync($"api/community/{communityId}", formData);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["Success"] = "Cập nhật cộng đồng thành công.";
+                    return RedirectToAction("Details", new { communityId });
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Error updating community. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                    
+                ModelState.AddModelError("", "Đã xảy ra lỗi khi cập nhật cộng đồng. Vui lòng thử lại sau.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating community. CommunityId: {CommunityId}", communityId);
+                ModelState.AddModelError("", "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+            }
+            
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -301,11 +437,12 @@ namespace Client.Controllers
 
             var userId = GetUserId();
             ViewBag.CurrentUserId = userId;
+            ViewBag.UserRole = "None"; // Default role
 
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.GetAsync($"/api/community/{communityId}");
+                var response = await client.GetAsync($"api/community/{communityId}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -315,7 +452,23 @@ namespace Client.Controllers
 
                     if (responseData != null)
                     {
-                        var userRole = responseData.UserRole;
+                        // First try to get role from response
+                        var userRole = responseData.UserRole ?? "None";
+                        
+                        // If role is None, try to get it from members list
+                        if (userRole == "None" && responseData.Members != null)
+                        {
+                            var currentUserMember = responseData.Members
+                                .FirstOrDefault(m => m.UserID == userId);
+                                
+                            if (currentUserMember != null)
+                            {
+                                userRole = currentUserMember.Role; // This will be "Admin" or "Member"
+                                _logger.LogInformation("Set user role from members list: {Role}", userRole);
+                            }
+                        }
+                        
+                        ViewBag.UserRole = userRole;
 
                         var viewModel = new CommunityDetailsViewModel
                         {
@@ -324,6 +477,7 @@ namespace Client.Controllers
                                 CommunityID = responseData.CommunityID,
                                 Name = responseData.Name,
                                 Description = responseData.Description,
+                                CoverImageUrl = responseData.CoverImageUrl,
                                 CreatedAt = responseData.CreatedAt,
                                 UpdatedAt = responseData.UpdatedAt
                             },
@@ -520,6 +674,7 @@ namespace Client.Controllers
             public int CommunityID { get; set; }
             public string Name { get; set; } = string.Empty;
             public string? Description { get; set; }
+            public string? CoverImageUrl { get; set; }
             public DateTime CreatedAt { get; set; }
             public DateTime? UpdatedAt { get; set; }
             public List<CommunityMemberResponse> Members { get; set; } = new();

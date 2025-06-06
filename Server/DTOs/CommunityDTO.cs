@@ -34,7 +34,8 @@ namespace Server.DTOs
     }
     public class UpdateCommunityDTO
     {
-
+        [Required(ErrorMessage = "CommunityID is required")]
+        public int CommunityID { get; set; }
 
         [MaxLength(100, ErrorMessage = "Community name must not exceed 100 characters")]
         public string? Name { get; set; }
@@ -46,6 +47,5 @@ namespace Server.DTOs
 
         [Range(1, int.MaxValue, ErrorMessage = "Invalid PrivacyID")]
         public int? PrivacyID { get; set; }
-    
     }
 }    
