@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models;
+namespace Client.Models;
 
-public class Community
+// Base Community ViewModel
+public class CommunityViewModel
 {
     [Key]
     public int CommunityID { get; set; }
@@ -18,19 +20,18 @@ public class Community
 
     public DateTime? UpdatedAt { get; set; }
 
-    [Required]
-    public int CreatedByUserID { get; set; }
+    public int? CreatedByUserID { get; set; }
 
-    public User CreatedBy { get; set; } = null!;
+    public UserViewModel? CreatedBy { get; set; }
 
     public int? PrivacyID { get; set; }
 
-    public Privacy? Privacy { get; set; }
+    public PrivacyViewModel? Privacy { get; set; }
 
     public string? CoverImageUrl { get; set; }
 
     // Navigation
-    public ICollection<Post> Posts { get; set; } = new List<Post>();
+    public ICollection<PostViewModel> Posts { get; set; } = new List<PostViewModel>();
 
-    public ICollection<CommunityMember> Members { get; set; } = new List<CommunityMember>();
+    public ICollection<CommunityMemberViewModel> Members { get; set; } = new List<CommunityMemberViewModel>();
 }

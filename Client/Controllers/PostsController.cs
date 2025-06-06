@@ -15,9 +15,9 @@ public class PostsController : Controller
     private readonly ILogger<PostsController> _logger;
 
     public PostsController(
-        IHttpClientFactory clientFactory,
-        IConfiguration configuration,
-        ILogger<PostsController> logger)
+       IHttpClientFactory clientFactory,
+              IConfiguration configuration,
+              ILogger<PostsController> logger )
     {
         _clientFactory = clientFactory;
         _configuration = configuration;

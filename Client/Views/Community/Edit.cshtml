@@ -1,0 +1,108 @@
+@model Client.Models.EditCommunityViewModel
+@{
+    ViewData["Title"] = "Edit Community";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-edit me-2"></i>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="CommunityID" />
+                        <input type="hidden" name="communityId" value="@Model.CommunityID" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label asp-for="CoverImage" class="form-label"></label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" asp-for="CoverImage" accept="image/*" />
+                            </div>
+                            <span asp-validation-for="CoverImage" class="text-danger"></span>
+                            
+                            @if (!string.IsNullOrEmpty(Model.CurrentCoverImageUrl))
+                            {
+                                <div class="mt-2">
+                                    <p class="small text-muted mb-1">Current Cover Image:</p>
+                                    <img src="@Model.CurrentCoverImageUrl" alt="Cover Image" class="img-thumbnail" style="max-height: 200px;" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="@Url.Action("Details", new { communityId = Model.CommunityID })" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-1"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Add any additional client-side validation or UI enhancements here
+        document.addEventListener('DOMContentLoaded', function() {
+            // Preview image before upload
+            const coverImageInput = document.getElementById('CoverImage');
+            if (coverImageInput) {
+                coverImageInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewContainer = document.createElement('div');
+                            previewContainer.className = 'mt-2';
+                            previewContainer.innerHTML = `
+                                <p class="small text-muted mb-1">New Cover Image Preview:</p>
+                                <img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
+                            `;
+                            
+                            // Remove any existing preview
+                            const existingPreview = document.querySelector('.image-preview');
+                            if (existingPreview) {
+                                existingPreview.remove();
+                            }
+                            
+                            previewContainer.classList.add('image-preview');
+                            coverImageInput.parentNode.insertAdjacentElement('afterend', previewContainer);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
+}

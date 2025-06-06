@@ -20,4 +20,6 @@ public class UserDTO
     public int ProfileCompletionPercentage { get; set; }
     public bool IsGoogleAccount { get; set; }
     public bool IsPrivate { get; set; }
+    
+    
 }

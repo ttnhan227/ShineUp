@@ -36,19 +36,8 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// Configure DbContext with sensitive data logging and detailed errors
-builder.Services.AddDbContext<DatabaseContext>((serviceProvider, options) =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .EnableSensitiveDataLogging()
-           .EnableDetailedErrors();
-
-    // Only log SQL commands in Development environment
-    if (builder.Environment.IsDevelopment())
-    {
-        options.LogTo(Console.WriteLine, LogLevel.Information);
-    }
-});
+builder.Services.AddDbContext<DatabaseContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -211,6 +200,8 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
     logging.SetMinimumLevel(LogLevel.Information);
 });
+
+builder.Services.AddScoped<ICommunityRepository, CommunityRepository>();
 
 // Build the application
 var app = builder.Build();

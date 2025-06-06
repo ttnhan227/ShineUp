@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -133,5 +134,7 @@ app.MapControllerRoute(
     name: "googleAuth",
     pattern: "Auth/google-auth",
     defaults: new { controller = "Auth", action = "GoogleAuth" });
+
+app.MapControllers();
 
 app.Run();

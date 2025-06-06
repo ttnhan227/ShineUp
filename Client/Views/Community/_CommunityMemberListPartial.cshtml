@@ -1,0 +1,146 @@
+@model List<Client.Models.CommunityMemberViewModel>
+@{
+    string role = ViewBag.UserRole as string ?? "None";
+    int currentUserId = ViewBag.CurrentUserId != null ? (int)ViewBag.CurrentUserId : 0;
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">There are no members in this community yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Join Date</th>
+                    @if (role == "Moderator")
+                    {
+                        <th class="text-end">Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in Model)
+                {
+                    <tr>
+                        <td>@(member.User?.FullName ?? "N/A")</td>
+                        <td>@(member.User?.Username ?? "N/A")</td>
+                        <td>@(member.User?.Email ?? "N/A")</td>
+                        <td>
+                            @if (member.Role == CommunityRole.Moderator)
+                            {
+                                <span class="badge bg-danger">Moderator</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Member</span>
+                            }
+                        </td>
+                        <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
+                        @if (role == "Moderator" && member.UserID != currentUserId)
+                        {
+                            <td class="text-end">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    @if (member.Role == CommunityRole.Member)
+                                    {
+                                        <form method="post" 
+                                              asp-controller="Community" 
+                                              asp-action="RemoveMember" 
+                                              asp-route-communityId="@ViewBag.CommunityId"
+                                              asp-route-userId="@member.UserID"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to remove @(member.User?.FullName ?? member.User?.Username) from the community?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" 
+                                                    class="btn btn-danger btn-sm px-3 py-1 d-flex align-items-center"
+                                                    title="Remove Member">
+                                                <i class="fas fa-user-minus me-1"></i>
+                                                <span class="d-none d-md-inline">Remove</span>
+                                            </button>
+                                        </form>
+                                        
+                                        <form method="post" 
+                                              asp-controller="Community" 
+                                              asp-action="TransferModerator" 
+                                              asp-route-communityId="@ViewBag.CommunityId"
+                                              asp-route-newModeratorId="@member.UserID"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" 
+                                                    class="btn btn-primary btn-sm px-3 py-1 d-flex align-items-center"
+                                                    onclick="return confirm('Are you sure you want to make @(member.User?.FullName ?? member.User?.Username) the new moderator?');"
+                                                    title="Make Moderator">
+                                                <i class="fas fa-user-shield me-1"></i>
+                                                <span class="d-none d-md-inline">Make Moderator</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle transfer moderator form submission
+            $('form[action*="TransferModerator"]').on('submit', function(e) {
+                e.preventDefault();
+                
+                if (!confirm($(this).find('button[type="submit"]').attr('data-confirm'))) {
+                    return false;
+                }
+                
+                var form = $(this);
+                var button = form.find('button[type="submit"]');
+                var originalText = button.html();
+                
+                // Disable button and show loading state
+                button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        // Reload the page to show updated member list and status message
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'An error occurred while processing your request.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        alert(errorMessage);
+                        button.prop('disabled', false).html(originalText);
+                    }
+                });
+                
+                return false;
+            });
+        });
+    </script>
+}

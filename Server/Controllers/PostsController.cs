@@ -161,6 +161,7 @@ public class PostsController : ControllerBase
                 UserID = userId,
                 CategoryID = createPostDto.CategoryID,
                 PrivacyID = createPostDto.PrivacyID ?? 1,
+                CommunityID = createPostDto.CommunityID,
                 CreatedAt = DateTime.UtcNow
             };
 

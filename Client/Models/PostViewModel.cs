@@ -45,6 +45,12 @@ namespace Client.Models
         public bool HasLiked { get; set; }
 
         public List<MediaFileViewModel> MediaFiles { get; set; } = new List<MediaFileViewModel>();
+        
+        [Display(Name = "Community")]
+        public int? CommunityID { get; set; }
+
+        [Display(Name = "Community Name")]
+        public string? CommunityName { get; set; }
     }
 
     public class MediaFileViewModel
@@ -86,7 +92,14 @@ namespace Client.Models
         public int LikesCount { get; set; }
         public int CommentsCount { get; set; }
         public bool HasLiked { get; set; }
+        
+        // Community info
+        public int? CommunityID { get; set; }
+        public string? CommunityName { get; set; }
+        public string? CommunityDescription { get; set; }
+        public string? CommunityCoverImageUrl { get; set; }
     }
+    
     public class EditPostViewModel
     {
         public int PostID { get; set; }
@@ -109,6 +122,10 @@ namespace Client.Models
         public int PrivacyID { get; set; }
 
         public List<MediaFileViewModel> CurrentMediaFiles { get; set; } = new List<MediaFileViewModel>();
+        
+        [Display(Name = "Community")]
+        public int? CommunityID { get; set; }
+        public string? CommunityName { get; set; }
     } 
     public class CreatePostViewModel
     {
@@ -138,5 +155,11 @@ namespace Client.Models
 
         public IEnumerable<SelectListItem>? Categories { get; set; }
         public IEnumerable<SelectListItem>? PrivacyOptions { get; set; }
+        
+        
+        [Display(Name = "Community")]
+        public int? CommunityID { get; set; }
+
+        public List<IFormFile>? MediaFiles { get; set; }
     } 
 }

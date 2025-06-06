@@ -383,4 +383,15 @@ public class PostRepository : IPostRepository
             await _context.SaveChangesAsync();
         }
     }
+    public async Task<List<Post>> GetPostsByCommunityIdAsync(int communityId)
+    {
+        return await _context.Posts
+            .Where(p => p.CommunityID == communityId)
+            .Include(p => p.User)
+            .Include(p => p.Comments)
+            .Include(p => p.Likes)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
 } 
