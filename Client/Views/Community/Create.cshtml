@@ -26,7 +26,7 @@
             </div>
         }
 
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             
             <div class="mb-3">
@@ -39,6 +39,21 @@
                 <label asp-for="Description" class="form-label">Mô tả</label>
                 <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mô tả về cộng đồng của bạn"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="PrivacyID" class="form-label">Chế độ riêng tư</label>
+                <select asp-for="PrivacyID" class="form-select">
+                    <option value="1">Công khai (Mọi người có thể xem bài viết và tham gia)</option>
+                    <option value="3">Riêng tư (Chỉ thành viên mới xem được nội dung)</option>
+                </select>
+                <span asp-validation-for="PrivacyID" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label for="coverImage" class="form-label">Ảnh bìa</label>
+                <input type="file" class="form-control" id="coverImage" name="coverImage" accept="image/*">
+                <div class="form-text">Tải lên ảnh bìa cho cộng đồng của bạn (tùy chọn)</div>
             </div>
             
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
