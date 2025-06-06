@@ -502,6 +502,7 @@ namespace Client.Controllers
 
                         ViewBag.UserRole = userRole;
                         ViewBag.CurrentUserId = userId;
+                        ViewBag.CommunityId = communityId; // Add this line to pass CommunityId to the view
                         return View(viewModel);
                     }
 
@@ -607,68 +608,72 @@ namespace Client.Controllers
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.DeleteAsync($"/api/community/{communityId}/members/{userId}");
+                var response = await client.PostAsJsonAsync($"api/community/{communityId}/remove-member", new { userId });
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Đã xoá thành viên khỏi cộng đồng thành công.";
+                    TempData["Success"] = "Member removed successfully.";
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogWarning("Failed to remove member. Status: {StatusCode}, Response: {Response}",
+                    _logger.LogError("Error removing member. Status: {StatusCode}, Response: {Response}", 
                         response.StatusCode, errorContent);
-
-                    TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest
-                        ? errorContent
-                        : "Không thể xoá thành viên. Vui lòng thử lại sau.";
+                    TempData["Error"] = "Failed to remove member. Please try again.";
                 }
-
-                return RedirectToAction(nameof(Details), new { communityId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing userId={UserId} from communityId={CommunityId}", userId, communityId);
-                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
-                return RedirectToAction(nameof(Details), new { communityId });
+                _logger.LogError(ex, "Error removing member from community {CommunityId}", communityId);
+                TempData["Error"] = "An error occurred while removing the member.";
             }
+
+            return RedirectToAction("Details", new { id = communityId });
         }
 
         [HttpPost]
-        [Authorize(Roles = "Moderator")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> TransferModerator(int communityId, int newModeratorId)
         {
             if (communityId <= 0 || newModeratorId <= 0)
-                return BadRequest("Thông tin không hợp lệ");
+            {
+                TempData["Error"] = "Invalid request parameters.";
+                return RedirectToAction("Details", new { id = communityId });
+            }
 
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.PostAsJsonAsync($"/api/community/{communityId}/transfer-Moderator?newModeratorId={newModeratorId}", new { });
+                var response = await client.PostAsync($"api/community/{communityId}/transfer-moderator?newModeratorId={newModeratorId}", null);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Đã chuyển quyền quản trị thành công.";
-                    return RedirectToAction(nameof(Details), new { communityId });
+                    TempData["Success"] = "Moderator role transferred successfully.";
                 }
-
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Failed to transfer Moderator. Status: {StatusCode}, Response: {Response}",
-                    response.StatusCode, errorContent);
-
-                TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest
-                    ? errorContent
-                    : "Không thể chuyển quyền quản trị. Vui lòng thử lại sau.";
-
-                return RedirectToAction(nameof(Details), new { communityId });
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    TempData["Error"] = "You don't have permission to transfer moderator role.";
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    TempData["Error"] = "Community or user not found.";
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Error transferring moderator. Status: {StatusCode}, Response: {Response}", 
+                        response.StatusCode, errorContent);
+                    TempData["Error"] = "Failed to transfer moderator role. Please try again.";
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error transferring Moderator for communityId={CommunityId} to userId={NewModeratorId}", communityId, newModeratorId);
-                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
-                return RedirectToAction(nameof(Details), new { communityId });
+                _logger.LogError(ex, "Error transferring moderator for community {CommunityId}", communityId);
+                TempData["Error"] = "An error occurred while transferring moderator role.";
             }
-        }
+
+            return RedirectToAction("Details", new { communityId });        }
 
         public class CommunityDetailsResponse
         {

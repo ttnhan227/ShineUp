@@ -6,7 +6,7 @@ using Server.Models;
 
 namespace Server.Repositories;
 
-public class CommunityRepository : ICommunityService
+public class CommunityRepository : ICommunityRepository
 {
     private readonly DatabaseContext _db;
     private readonly IWebHostEnvironment _env;
@@ -298,25 +298,85 @@ public class CommunityRepository : ICommunityService
 
     public async Task TransferModeratorAsync(int communityId, int currentModeratorId, int newModeratorId)
     {
-        var community = await _db.Communities.Include(c => c.Members)
-            .FirstOrDefaultAsync(c => c.CommunityID == communityId);
+        _logger.LogInformation("Starting moderator transfer for community {CommunityId} from {CurrentModeratorId} to {NewModeratorId}", 
+            communityId, currentModeratorId, newModeratorId);
+            
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        
+        try
+        {
+            // Get the community with members
+            var community = await _db.Communities
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.CommunityID == communityId);
 
-        if (community == null)
-            throw new Exception("Community not found");
+            if (community == null)
+            {
+                _logger.LogWarning("Community {CommunityId} not found", communityId);
+                throw new KeyNotFoundException("Community not found");
+            }
 
-        var currentModerator = community.Members.FirstOrDefault(m => m.UserID == currentModeratorId);
-        if (currentModerator == null || currentModerator.Role != CommunityRole.Moderator)
-            throw new Exception("Only current Moderator can transfer Moderator rights");
+            _logger.LogDebug("Found community: {CommunityName} with {MemberCount} members", 
+                community.Name, community.Members?.Count ?? 0);
 
-        var newModerator = community.Members.FirstOrDefault(m => m.UserID == newModeratorId);
-        if (newModerator == null)
-            throw new Exception("New Moderator must be a member");
+            // Verify current user is a moderator
+            var currentModerator = community.Members
+                .FirstOrDefault(m => m.UserID == currentModeratorId);
+                
+            if (currentModerator == null)
+            {
+                _logger.LogWarning("Current user {UserId} is not a member of community {CommunityId}", 
+                    currentModeratorId, communityId);
+                throw new UnauthorizedAccessException("You are not a member of this community");
+            }
 
-        currentModerator.Role = CommunityRole.Member;
-        newModerator.Role = CommunityRole.Moderator;
-        community.CreatedByUserID = newModeratorId;
+            if (currentModerator.Role != CommunityRole.Moderator)
+            {
+                _logger.LogWarning("User {UserId} attempted to transfer moderator role but is not a moderator", currentModeratorId);
+                throw new UnauthorizedAccessException("Only the current moderator can transfer moderator rights");
+            }
 
-        await _db.SaveChangesAsync();
+            // Verify new moderator is a member and not the same as current moderator
+            if (currentModeratorId == newModeratorId)
+            {
+                _logger.LogWarning("User {UserId} attempted to transfer moderator role to themselves", currentModeratorId);
+                throw new ArgumentException("You are already the moderator of this community");
+            }
+
+            var newModerator = community.Members
+                .FirstOrDefault(m => m.UserID == newModeratorId);
+                
+            if (newModerator == null)
+            {
+                _logger.LogWarning("New moderator {UserId} is not a member of community {CommunityId}", 
+                    newModeratorId, communityId);
+                throw new ArgumentException("The specified user is not a member of this community");
+            }
+
+            _logger.LogDebug("Current moderator: {CurrentModeratorId}, New moderator: {NewModeratorId}", 
+                currentModeratorId, newModeratorId);
+
+            // Update roles
+            currentModerator.Role = CommunityRole.Member;
+            newModerator.Role = CommunityRole.Moderator;
+            
+            // Update community's CreatedByUserID to the new moderator
+            community.CreatedByUserID = newModeratorId;
+            community.UpdatedAt = DateTime.UtcNow;
+
+            // Save changes
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            
+            _logger.LogInformation("Successfully transferred moderator role for community {CommunityId} from {CurrentModeratorId} to {NewModeratorId}", 
+                communityId, currentModeratorId, newModeratorId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error transferring moderator role for community {CommunityId}", communityId);
+            await transaction.RollbackAsync();
+            throw; // Re-throw to be handled by the controller
+        }
     }
 
     public async Task RemoveMemberAsync(int communityId, int userId, int requesterId)
@@ -382,13 +442,18 @@ public class CommunityRepository : ICommunityService
         return member?.Role.ToString();
     }
 
-    public async Task<bool> IsUserMemberAsync(int communityId, int userId) =>
-        await _db.CommunityMembers.AnyAsync(m => m.CommunityID == communityId && m.UserID == userId);
+    public async Task<bool> IsUserMemberAsync(int communityId, int userId)
+    {
+        return await _db.CommunityMembers
+            .AnyAsync(m => m.CommunityID == communityId && m.UserID == userId);
+    }
 
     public async Task<bool> IsUserModeratorAsync(int communityId, int userId)
     {
-        var role = await GetUserRoleAsync(communityId, userId);
-        return role == CommunityRole.Moderator.ToString();
+        var member = await _db.CommunityMembers
+            .FirstOrDefaultAsync(m => m.CommunityID == communityId && m.UserID == userId);
+            
+        return member != null && member.Role == CommunityRole.Moderator;
     }
 
     public async Task DeleteCommunityAsync(int communityId, int requesterId)

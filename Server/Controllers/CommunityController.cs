@@ -13,14 +13,14 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class CommunityController : ControllerBase
 {
-    private readonly ICommunityService _communityService;
+    private readonly ICommunityRepository _communityRepository;
     private readonly ILogger<CommunityController> _logger;
     private readonly DatabaseContext _db;
 
-    public CommunityController(ICommunityService communityService, ILogger<CommunityController> logger,
+    public CommunityController(ICommunityRepository communityRepository, ILogger<CommunityController> logger,
         DatabaseContext db)
     {
-        _communityService = communityService;
+        _communityRepository = communityRepository;
         _logger = logger;
         _db = db;
     }
@@ -56,7 +56,7 @@ public class CommunityController : ControllerBase
             if (communityId <= 0)
                 return BadRequest("Invalid community ID.");
                 
-            var community = await _communityService.GetCommunityDetailsAsync(communityId, userId);
+            var community = await _communityRepository.GetCommunityDetailsAsync(communityId, userId);
             return Ok(community);
         }
         catch (KeyNotFoundException)
@@ -82,7 +82,7 @@ public class CommunityController : ControllerBase
         try
         {
             int userId = GetUserId();
-            var result = await _communityService.CreateCommunityAsync(dto, userId);
+            var result = await _communityRepository.CreateCommunityAsync(dto, userId);
             return Ok(result);
         }
         catch (Exception ex)
@@ -97,7 +97,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            var result = await _communityService.GetAllCommunitiesAsync();
+            var result = await _communityRepository.GetAllCommunitiesAsync();
             return Ok(result);
         }
         catch (Exception ex)
@@ -114,7 +114,7 @@ public class CommunityController : ControllerBase
         try
         {
             int userId = GetUserId();
-            await _communityService.JoinCommunityAsync(communityId, userId);
+            await _communityRepository.JoinCommunityAsync(communityId, userId);
             return NoContent();
         }
         catch (Exception ex)
@@ -131,7 +131,7 @@ public class CommunityController : ControllerBase
         try
         {
             int userId = GetUserId();
-            await _communityService.LeaveCommunityAsync(communityId, userId);
+            await _communityRepository.LeaveCommunityAsync(communityId, userId);
             return NoContent();
         }
         catch (Exception ex)
@@ -141,20 +141,74 @@ public class CommunityController : ControllerBase
         }
     }
 
-    [HttpPost("{communityId}/transfer-Moderator")]
-    [Authorize]
+    [HttpPost("{communityId}/transfer-moderator")]
+    [Authorize]  // Only require authentication, not a specific role
     public async Task<IActionResult> TransferModerator(int communityId, [FromQuery] int newModeratorId)
     {
+        if (communityId <= 0 || newModeratorId <= 0)
+        {
+            _logger.LogWarning("Invalid parameters - CommunityId: {CommunityId}, NewModeratorId: {NewModeratorId}", 
+                communityId, newModeratorId);
+            return BadRequest("Invalid community or user ID");
+        }
+
         try
         {
             int currentModeratorId = GetUserId();
-            await _communityService.TransferModeratorAsync(communityId, currentModeratorId, newModeratorId);
+            _logger.LogInformation("User {UserId} attempting to transfer moderator role for community {CommunityId} to {NewModeratorId}", 
+                currentModeratorId, communityId, newModeratorId);
+            
+            // Verify current user is a member of the community
+            bool isMember = await _communityRepository.IsUserMemberAsync(communityId, currentModeratorId);
+            if (!isMember)
+            {
+                _logger.LogWarning("User {UserId} is not a member of community {CommunityId}", currentModeratorId, communityId);
+                return Forbid("You are not a member of this community");
+            }
+
+            // Verify current user is a moderator of the community
+            bool isModerator = await _communityRepository.IsUserModeratorAsync(communityId, currentModeratorId);
+            if (!isModerator)
+            {
+                _logger.LogWarning("User {UserId} is not a moderator of community {CommunityId}", currentModeratorId, communityId);
+                return Forbid("Only the current moderator can transfer moderator rights");
+            }
+
+            // Verify new moderator is a member of the community
+            bool isNewModeratorMember = await _communityRepository.IsUserMemberAsync(communityId, newModeratorId);
+            if (!isNewModeratorMember)
+            {
+                _logger.LogWarning("New moderator {NewModeratorId} is not a member of community {CommunityId}", newModeratorId, communityId);
+                return BadRequest("The specified user is not a member of this community");
+            }
+
+            // Perform the transfer
+            await _communityRepository.TransferModeratorAsync(communityId, currentModeratorId, newModeratorId);
+            
+            _logger.LogInformation("Successfully transferred moderator role for community {CommunityId} from {CurrentModeratorId} to {NewModeratorId}", 
+                communityId, currentModeratorId, newModeratorId);
+                
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized moderator transfer attempt for community {CommunityId}", communityId);
+            return Forbid(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Community or user not found during moderator transfer for community {CommunityId}", communityId);
+            return NotFound(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid argument during moderator transfer for community {CommunityId}", communityId);
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "TransferModerator failed");
-            return BadRequest(ex.Message);
+            _logger.LogError(ex, "TransferModerator failed for community {CommunityId}", communityId);
+            return StatusCode(500, "An error occurred while transferring moderator role.");
         }
     }
 
@@ -163,7 +217,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            var members = await _communityService.GetCommunityMembersAsync(communityId);
+            var members = await _communityRepository.GetCommunityMembersAsync(communityId);
             return Ok(members);
         }
         catch (Exception ex)
@@ -178,7 +232,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            var posts = await _communityService.GetCommunityPostsAsync(communityId);
+            var posts = await _communityRepository.GetCommunityPostsAsync(communityId);
             return Ok(posts);
         }
         catch (Exception ex)
@@ -209,7 +263,7 @@ public class CommunityController : ControllerBase
                 return BadRequest("Community ID in the path does not match the request body.");
             }
             
-            var result = await _communityService.UpdateCommunityAsync(communityId, dto, userId);
+            var result = await _communityRepository.UpdateCommunityAsync(communityId, dto, userId);
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -251,7 +305,7 @@ public class CommunityController : ControllerBase
                 }
             }
 
-            await _communityService.RemoveMemberAsync(communityId, userId, requesterId);
+            await _communityRepository.RemoveMemberAsync(communityId, userId, requesterId);
             return Ok(new { message = "Member removed successfully." });
         }
         catch (Exception ex)
@@ -297,7 +351,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            return await _communityService.IsUserModeratorAsync(communityId, userId);
+            return await _communityRepository.IsUserModeratorAsync(communityId, userId);
         }
         catch (Exception ex)
         {

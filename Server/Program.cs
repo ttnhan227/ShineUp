@@ -195,7 +195,7 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
-builder.Services.AddScoped<ICommunityService, CommunityRepository>();
+builder.Services.AddScoped<ICommunityRepository, CommunityRepository>();
 
 var app = builder.Build();
 

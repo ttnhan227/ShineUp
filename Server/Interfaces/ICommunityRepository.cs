@@ -4,7 +4,7 @@ using Server.Models;
 namespace Server.Interfaces;
 
 
-public interface ICommunityService
+public interface ICommunityRepository
 {
     /// Tạo mới một cộng đồng (Moderator mặc định là người tạo)
 
