@@ -1,0 +1,266 @@
+@model IEnumerable<Client.Models.NotificationViewModel>
+@using Client.Models
+
+@{
+    ViewData["Title"] = "Notifications";
+    var unreadCount = Model?.Count(n => n.Status == NotificationStatus.Unread) ?? 0;
+    var hasNotifications = Model != null && Model.Any();
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Notifications</h2>
+        <div>
+            <a href="?unreadOnly=true" class="btn @(Context.Request.Query["unreadOnly"] == "true" ? "btn-primary" : "btn-outline-primary") btn-sm me-2">
+                Unread Only
+            </a>
+            <a href="?" class="btn @(Context.Request.Query["unreadOnly"] != "true" ? "btn-primary" : "btn-outline-primary") btn-sm me-2">
+                All Notifications
+            </a>
+            @if (unreadCount > 0)
+            {
+                <form asp-action="MarkAllAsRead" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-all"></i> Mark All as Read
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (!hasNotifications)
+    {
+        <div class="alert alert-info">
+            No notifications found.
+        </div>
+    }
+    else
+    {
+        <div class="list-group">
+            @foreach (var notification in Model)
+            {
+                <div class="list-group-item list-group-item-action @(notification.Status == NotificationStatus.Unread ? "list-group-item-primary" : "")" 
+                     data-notification-id="@notification.NotificationID">
+                    <div class="d-flex w-100 justify-content-between">
+                        <div class="notification-content">
+                            <p class="mb-1">@notification.Message</p>
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> @notification.CreatedAt.ToString("g")
+                            </small>
+                        </div>
+                        <div class="notification-actions">
+                            @if (notification.Status == NotificationStatus.Unread)
+                            {
+                                <form asp-action="MarkAsRead" asp-route-id="@notification.NotificationID" method="post" class="d-inline mark-as-read-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-success me-2" title="Mark as read">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            }
+                            <form asp-action="Delete" asp-route-id="@notification.NotificationID" method="post" class="d-inline delete-notification-form">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .notification-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .list-group-item:hover .notification-actions {
+            opacity: 1;
+        }
+        .list-group-item {
+            transition: background-color 0.2s;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle mark as read form submission
+            $(document).on('submit', '.mark-as-read-form', function(e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var notificationItem = form.closest('.list-group-item');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function() {
+                        // Update UI
+                        notificationItem.removeClass('list-group-item-primary');
+                        form.remove();
+                        
+                        // Update unread count in the navbar if it exists
+                        updateUnreadCount(-1);
+                        
+                        // If we're in "Unread Only" mode, remove the notification
+                        if (new URLSearchParams(window.location.search).get('unreadOnly') === 'true') {
+                            notificationItem.fadeOut(300, function() {
+                                $(this).remove();
+                                checkEmptyState();
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Failed to mark notification as read', xhr);
+                        showToast('Error', 'Failed to mark notification as read', 'danger');
+                    }
+                });
+            });
+
+            // Handle mark all as read
+            $('form[action*="MarkAllAsRead"]').on('submit', function(e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var unreadCount = $('.list-group-item.list-group-item-primary').length;
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function() {
+                        // Update all notifications to read state
+                        $('.list-group-item').removeClass('list-group-item-primary');
+                        $('.mark-as-read-form').remove();
+                        
+                        // Update unread count
+                        updateUnreadCount(-unreadCount);
+                        
+                        // If in "Unread Only" mode, remove all notifications
+                        if (new URLSearchParams(window.location.search).get('unreadOnly') === 'true') {
+                            $('.list-group-item').fadeOut(300, function() {
+                                $(this).remove();
+                                checkEmptyState();
+                            });
+                        }
+                        
+                        showToast('Success', 'All notifications marked as read', 'success');
+                    },
+                    error: function(xhr) {
+                        console.error('Failed to mark all as read', xhr);
+                        showToast('Error', 'Failed to mark all notifications as read', 'danger');
+                    }
+                });
+            });
+            
+            // Handle delete notification
+            $(document).on('submit', '.delete-notification-form', function(e) {
+                e.preventDefault();
+                
+                if (!confirm('Are you sure you want to delete this notification?')) {
+                    return false;
+                }
+                
+                var form = $(this);
+                var notificationItem = form.closest('.list-group-item');
+                var isUnread = notificationItem.hasClass('list-group-item-primary');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function() {
+                        // Remove the notification from the UI
+                        notificationItem.fadeOut(300, function() {
+                            $(this).remove();
+                            checkEmptyState();
+                        });
+                        
+                        // Update unread count if the deleted notification was unread
+                        if (isUnread) {
+                            updateUnreadCount(-1);
+                        }
+                        
+                        showToast('Success', 'Notification deleted', 'success');
+                    },
+                    error: function(xhr) {
+                        console.error('Failed to delete notification', xhr);
+                        showToast('Error', 'Failed to delete notification', 'danger');
+                    }
+                });
+            });
+            
+            // Show/hide empty state
+            function checkEmptyState() {
+                if ($('.list-group-item').length === 0) {
+                    $('.list-group').html(`
+                        <div class="alert alert-info">
+                            No notifications found.
+                        </div>
+                    `);
+                }
+            }
+            
+            // Update unread count in the navbar
+            function updateUnreadCount(change) {
+                var unreadCountElement = $('#unread-notifications-count');
+                if (unreadCountElement.length) {
+                    var count = parseInt(unreadCountElement.text()) + change;
+                    unreadCountElement.text(count);
+                    if (count <= 0) {
+                        unreadCountElement.hide();
+                    } else {
+                        unreadCountElement.show();
+                    }
+                }
+            }
+            
+            // Show toast notification
+            function showToast(title, message, type) {
+                // Create toast element
+                var toastId = 'toast-' + Date.now();
+                var toast = $(`
+                    <div class="toast align-items-center text-white bg-${type} border-0" role="alert" id="${toastId}">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <strong>${title}</strong><br>${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `);
+                
+                // Add to container
+                $('#toastContainer').append(toast);
+                
+                // Initialize and show toast
+                var bsToast = new bootstrap.Toast(toast[0], {
+                    autohide: true,
+                    delay: 3000
+                });
+                
+                bsToast.show();
+                
+                // Remove toast after it's hidden
+                toast.on('hidden.bs.toast', function () {
+                    $(this).remove();
+                });
+            }
+        });
+    </script>
+}

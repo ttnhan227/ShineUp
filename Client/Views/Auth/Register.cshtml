@@ -58,6 +58,16 @@
                         </div>
 
                         <div class="form-group mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label">
+                                <i class='bx bx-lock-alt'></i> Confirm Password
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm your password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
                             <label asp-for="TalentArea" class="form-label">
                                 <i class='bx bx-star'></i> Talent Area
                             </label>
@@ -94,4 +104,32 @@
     <link href="~/css/auth.css" rel="stylesheet">
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const passwordField = document.getElementById('Password');
+            const confirmPasswordField = document.getElementById('ConfirmPassword');
+            
+            function validatePassword() {
+                if (passwordField.value !== confirmPasswordField.value) {
+                    confirmPasswordField.setCustomValidity("Passwords do not match");
+                    return false;
+                } else {
+                    confirmPasswordField.setCustomValidity("");
+                    return true;
+                }
+            }
+            
+            passwordField.addEventListener('change', validatePassword);
+            confirmPasswordField.addEventListener('keyup', validatePassword);
+            
+            form.addEventListener('submit', function(e) {
+                if (!validatePassword()) {
+                    e.preventDefault();
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
 }

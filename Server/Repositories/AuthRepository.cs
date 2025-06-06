@@ -31,8 +31,23 @@ public class AuthRepository : IAuthRepository
 
     public async Task<User> Login(string emailOrUsername, string password)
     {
+        // Explicitly select only the columns we need to avoid EF trying to access non-existent columns
         var user = await _context.Users
+            .AsNoTracking()
             .Include(u => u.Role)
+            .Select(u => new User
+            {
+                UserID = u.UserID,
+                Username = u.Username,
+                Email = u.Email,
+                PasswordHash = u.PasswordHash,
+                IsActive = u.IsActive,
+                Verified = u.Verified,
+                RoleID = u.RoleID,
+                Role = u.Role,
+                ProfileImageURL = u.ProfileImageURL,
+                LastLoginTime = u.LastLoginTime
+            })
             .FirstOrDefaultAsync(x => x.Email.Equals(emailOrUsername) || x.Username.Equals(emailOrUsername));
 
         if (user == null)

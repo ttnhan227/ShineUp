@@ -1,527 +1,734 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Json;
-using System.Security.Claims;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Client.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Client.Models;
-using Newtonsoft.Json;
-using System.Text;
-using Microsoft.AspNetCore.Http;
-using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Json.Serialization;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace Client.Controllers;
-
-[Authorize]
-public class OpportunitiesController : Controller
+namespace Client.Controllers
 {
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<OpportunitiesController> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public OpportunitiesController(IHttpClientFactory httpClientFactory, ILogger<OpportunitiesController> logger)
+    [Authorize]
+    [Route("Opportunities")]
+    public class OpportunitiesController : Controller
     {
-        _httpClientFactory = httpClientFactory;
-        _httpClient = _httpClientFactory.CreateClient("API");
-        _logger = logger;
-        
-        // Set the base address from configuration
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json")
-            .Build();
-            
-        var apiBaseUrl = configuration["ApiSettings:BaseUrl"];
-        if (!string.IsNullOrEmpty(apiBaseUrl))
-        {
-            _httpClient.BaseAddress = new Uri(apiBaseUrl);
-        }
-    }
+        private readonly IHttpClientFactory _clientFactory;
+        private readonly IConfiguration _configuration;
+        private readonly JsonSerializerOptions _jsonOptions;
+        private readonly ILogger<OpportunitiesController> _logger;
 
-    public async Task<IActionResult> Index()
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
+        public OpportunitiesController(
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration,
+            ILogger<OpportunitiesController> logger)
         {
-            _logger.LogWarning("User is not authenticated");
-            return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Index", "Opportunities") });
+            _clientFactory = httpClientFactory;
+            _configuration = configuration;
+            _logger = logger;
+            _jsonOptions = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            };
         }
 
-        try
+        private async Task<HttpClient> GetAuthenticatedClient()
         {
-            // Try to get token from auth_token cookie first
-            var token = HttpContext.Request.Cookies["auth_token"];
+            var client = _clientFactory.CreateClient("API");
             
-            // If not in cookie, try to get from claims (for backward compatibility)
-            if (string.IsNullOrEmpty(token))
+            if (!User.Identity.IsAuthenticated)
             {
-                token = User.FindFirst("JWT")?.Value;
-                _logger.LogInformation("Token found in claims");
+                _logger.LogWarning("User is not authenticated");
+                return null;
             }
             
+            var token = User.FindFirst("JWT")?.Value;
             if (string.IsNullOrEmpty(token))
             {
-                _logger.LogWarning("JWT token not found in auth_token cookie or claims");
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Index", "Opportunities") });
+                _logger.LogWarning("JWT token not found in claims");
+                return null;
             }
 
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return client;
+        }
 
-            // Get user ID from claims
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                              ?? User.FindFirst("UserID")?.Value 
-                              ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        // GET: Opportunities
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Index(int? id = null, int? categoryId = null)
+        {
+            // If id is provided in the route, use it as categoryId
+            categoryId ??= id;
+            var client = _clientFactory.CreateClient("API");
+            var apiUrl = categoryId.HasValue 
+                ? $"api/opportunities/category/{categoryId}"
+                : "api/opportunities";
+                
+            Console.WriteLine($"Fetching opportunities from: {apiUrl}");
+                
+            // Get categories for the filter dropdown
+            ViewBag.Categories = await GetCategories(client);
+            
+            try
             {
-                _logger.LogWarning("Invalid or missing user ID in claims");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Index", "Opportunities") });
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var opportunities = JsonSerializer.Deserialize<List<OpportunityViewModel>>(content, _jsonOptions);
+                    return View(opportunities);
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // GET: Opportunities/Details/5
+        [HttpGet("details/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Details(int id)
+        {
+            var client = _clientFactory.CreateClient("API");
+            var apiUrl = $"api/opportunities/{id}";
+            
+            try
+            {
+                // Load categories first
+                ViewBag.Categories = await GetCategories(client);
+                
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var opportunity = JsonSerializer.Deserialize<OpportunityViewModel>(content, _jsonOptions);
+                    
+                    if (opportunity != null)
+                    {
+                        // The Category property is [JsonIgnore] so it won't be deserialized
+                        // We need to manually set it if we have the data
+                        if (opportunity.CategoryId.HasValue && !string.IsNullOrEmpty(opportunity.CategoryName))
+                        {
+                            opportunity.Category = new CategoryViewModel
+                            {
+                                CategoryID = opportunity.CategoryId.Value,
+                                CategoryName = opportunity.CategoryName
+                            };
+                        }
+                        
+                        // If we have a category but no name, try to get it from the ViewBag
+                        if (opportunity.CategoryId.HasValue && string.IsNullOrEmpty(opportunity.CategoryName))
+                        {
+                            var categories = await GetCategories(client);
+                            var category = categories?.FirstOrDefault(c => c.CategoryID == opportunity.CategoryId.Value);
+                            if (category != null)
+                            {
+                                opportunity.Category = category;
+                                opportunity.CategoryName = category.CategoryName;
+                            }
+                        }
+                    }
+                    
+                    return View(opportunity);
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // GET: Opportunities/Create
+        [HttpGet("create")]
+        public async Task<IActionResult> Create()
+        {
+            var client = _clientFactory.CreateClient("API");
+            ViewBag.Categories = await GetCategories(client);
+            return View(new CreateOpportunityViewModel 
+            { 
+                ApplicationDeadline = DateTime.Today.AddDays(30) // Default to 30 days from now
+            });
+        }
+
+        // POST: Opportunities/Create
+        [HttpPost("create")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateOpportunityViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var clientForCategories = _clientFactory.CreateClient("API");
+                ViewBag.Categories = await GetCategories(clientForCategories);
+                return View(model);
             }
 
-            // Fetch applications
-            var applicationsResponse = await client.GetAsync($"api/opportunities/applications/user/{userId}");
-            var applications = new List<OpportunityApplicationViewModel>();
-            
-            if (applicationsResponse.IsSuccessStatusCode)
+            var client = await GetAuthenticatedClient();
+            if (client == null)
             {
-                applications = await applicationsResponse.Content.ReadFromJsonAsync<List<OpportunityApplicationViewModel>>() ?? new List<OpportunityApplicationViewModel>();
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PostAsync("api/opportunities", content);
                 
-                // Format the dates for display
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError(string.Empty, $"Error creating opportunity: {errorContent}");
+                var clientForCategories = _clientFactory.CreateClient("API");
+                ViewBag.Categories = await GetCategories(clientForCategories);
+                return View(model);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // GET: Opportunities/Edit/5
+        [HttpGet("edit/{id}")]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            try
+            {
+                var response = await client.GetAsync($"api/opportunities/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var opportunity = JsonSerializer.Deserialize<OpportunityViewModel>(content, _jsonOptions);
+                    
+                    // Check if the current user is the owner of the opportunity
+                    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (opportunity.PostedByUserId.ToString() != currentUserId)
+                    {
+                        return Forbid();
+                    }
+
+                    // Load categories for the dropdown
+                    ViewBag.Categories = await GetCategories(client);
+                    
+                    var updateModel = new UpdateOpportunityViewModel
+                    {
+                        Id = opportunity.Id,
+                        Title = opportunity.Title,
+                        Description = opportunity.Description,
+                        Location = opportunity.Location,
+                        IsRemote = opportunity.IsRemote,
+                        Type = opportunity.Type,
+                        ApplicationDeadline = opportunity.ApplicationDeadline,
+                        TalentArea = opportunity.TalentArea,
+                        CategoryId = opportunity.CategoryId
+                    };
+
+                    return View(updateModel);
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // POST: Opportunities/Edit/5
+        [HttpPost("edit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, UpdateOpportunityViewModel model)
+        {
+            if (id != model.Id)
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            try
+            {
+                var content = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PutAsync($"api/opportunities/{id}", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                
+                ModelState.AddModelError(string.Empty, "Error updating opportunity. Please try again.");
+                return View(model);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // POST: Opportunities/UpdateStatus/5
+        [HttpPost("update-status/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, [FromForm] string status)
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            try
+            {
+                
+                // Normalize the status (map 'close' to 'Closed', 'publish' to 'Open')
+                var normalizedStatus = status.ToLower() switch
+                {
+                    "close" => "Closed",
+                    "publish" => "Open",
+                    _ => status
+                };
+                
+                // Log the status being sent
+                _logger.LogInformation($"Sending status update for opportunity {id}. Original status: {status}, Normalized status: {normalizedStatus}");
+                
+                // Send a POST request with status as a query parameter
+                var response = await client.PostAsync($"api/opportunities/{id}/update-status?status={Uri.EscapeDataString(normalizedStatus)}", null);
+                
+                // Log the response status
+                _logger.LogInformation($"Status update response: {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    // If we're on the details page, redirect back to details with a success message
+                    if (Request.Headers["Referer"].ToString().Contains("Details"))
+                    {
+                        TempData["SuccessMessage"] = "Opportunity status updated successfully";
+                        return RedirectToAction(nameof(Details), new { id });
+                    }
+                    // Otherwise, go to MyOpportunities with success message
+                    TempData["SuccessMessage"] = "Opportunity status updated successfully";
+                    return RedirectToAction(nameof(MyOpportunities));
+                }
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorMessage = "An error occurred while updating the application status.";
+                    
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(errorContent);
+                        if (errorResponse != null && errorResponse.ContainsKey("message"))
+                        {
+                            errorMessage = errorResponse["message"];
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // If we can't parse the error message, include the raw content
+                        errorMessage = $"Error: {response.StatusCode} - {errorContent}";
+                        _logger.LogError(ex, "Error parsing error response: {ErrorContent}", errorContent);
+                    }
+                    
+                    return StatusCode((int)response.StatusCode, new { message = errorMessage });
+                }
+                // Try to return to the previous page
+                if (Request.Headers["Referer"].ToString().Contains("Details"))
+                {
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                return RedirectToAction(nameof(MyOpportunities));
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // GET: Opportunities/MyOpportunities
+        [HttpGet("my-opportunities")]
+        public async Task<IActionResult> MyOpportunities()
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                var response = await client.GetAsync("api/opportunities/user");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var opportunities = JsonSerializer.Deserialize<List<OpportunityViewModel>>(content, _jsonOptions);
+                    return View(opportunities);
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // POST: Opportunities/Delete/5
+        [HttpPost("delete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                var response = await client.DeleteAsync($"api/opportunities/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(MyOpportunities));
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // POST: Opportunities/Apply/5
+        [HttpPost("apply/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Apply(int id, CreateOpportunityApplicationViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                // Ensure the model has the correct opportunity ID
+                model.TalentOpportunityID = id;
+                
+                var content = new StringContent(
+                    JsonSerializer.Serialize(model, _jsonOptions), 
+                    System.Text.Encoding.UTF8, 
+                    "application/json");
+                    
+                var response = await client.PostAsync($"api/opportunities/{id}/apply", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(MyApplications));
+                }
+                
+                // Try to read the error message from the response
+                var errorContent = await response.Content.ReadAsStringAsync();
+                TempData["ErrorMessage"] = $"Error applying to opportunity: {errorContent}";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
+        // GET: Opportunities/MyApplications
+        [HttpGet("my-applications")]
+        public async Task<IActionResult> MyApplications()
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                var response = await client.GetAsync("api/opportunities/applications/me");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var applications = JsonSerializer.Deserialize<List<OpportunityApplicationViewModel>>(content, _jsonOptions);
+                    return View(applications);
+                }
+                return HandleError(response.StatusCode);
+            }
+            catch (HttpRequestException)
+            {
+                return View("Error", new ErrorViewModel { RequestId = HttpContext.TraceIdentifier });
+            }
+        }
+
+        // GET: Opportunities/ApplicationDetails/5
+        [HttpGet("application-details/{id}")]
+        public async Task<IActionResult> ApplicationDetails(int id)
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                // First get the application details
+                var response = await client.GetAsync($"api/opportunities/applications/{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    return HandleError(response.StatusCode);
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                var application = JsonSerializer.Deserialize<OpportunityApplicationViewModel>(content, _jsonOptions);
+                
+                if (application == null)
+                {
+                    return NotFound();
+                }
+                
+                // Check if the current user is the opportunity owner or the applicant
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (application.UserID.ToString() != currentUserId && 
+                    application.Opportunity?.PostedByUserId.ToString() != currentUserId)
+                {
+                    return Forbid();
+                }
+                
+                var categories = await GetCategories(client);
+                
+                return View(application);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting application details");
+                return View("Error", new ErrorViewModel 
+                { 
+                    RequestId = HttpContext.TraceIdentifier,
+                    Message = "An error occurred while loading the application details." 
+                });
+            }
+        }
+
+        // GET: Opportunities/ManageApplications/5
+        [HttpGet("manage-applications/{id}")]
+        public async Task<IActionResult> ManageApplications(int id)
+        {
+            var client = await GetAuthenticatedClient();
+            if (client == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+            
+            try
+            {
+                // Get the opportunity details
+                var opportunityResponse = await client.GetAsync($"api/opportunities/{id}");
+                if (!opportunityResponse.IsSuccessStatusCode)
+                {
+                    return HandleError(opportunityResponse.StatusCode);
+                }
+                
+                var opportunityContent = await opportunityResponse.Content.ReadAsStringAsync();
+                var opportunity = JsonSerializer.Deserialize<OpportunityViewModel>(opportunityContent, _jsonOptions);
+                
+                // Check if the current user is the owner of the opportunity
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (opportunity.PostedByUserId.ToString() != currentUserId)
+                {
+                    return Forbid();
+                }
+                
+                // Get applications for this opportunity with user data
+                var applicationsResponse = await client.GetAsync($"api/opportunities/{id}/applications");
+                if (!applicationsResponse.IsSuccessStatusCode)
+                {
+                    return HandleError(applicationsResponse.StatusCode);
+                }
+                
+                var applicationsContent = await applicationsResponse.Content.ReadAsStringAsync();
+                var applications = JsonSerializer.Deserialize<List<OpportunityApplicationViewModel>>(applicationsContent, _jsonOptions);
+                
+                // Map the data to the view model
                 foreach (var app in applications)
                 {
-                    if (DateTime.TryParse(app.AppliedAt, out var appliedAt))
+                    app.TalentOpportunityTitle = opportunity.Title;
+                    app.TalentOpportunityID = opportunity.Id;
+                    
+                    // Set the UserName for backward compatibility
+                    if (app.User != null && string.IsNullOrEmpty(app.UserName))
                     {
-                        app.AppliedAt = appliedAt.ToString("MMM dd, yyyy");
+                        app.UserName = app.User.FullName ?? app.User.Username;
                     }
                 }
-            }
-            else if (applicationsResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _logger.LogWarning("Unauthorized access to applications for user {UserId}", userId);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            else
-            {
-                var errorContent = await applicationsResponse.Content.ReadAsStringAsync();
-                _logger.LogError("Error fetching applications: {StatusCode} - {Error}", 
-                    applicationsResponse.StatusCode, errorContent);
-            }
-
-            // Fetch notifications
-            var notificationsResponse = await client.GetAsync($"api/opportunities/notifications/user/{userId}");
-            var notifications = new List<NotificationViewModel>();
-            
-            if (notificationsResponse.IsSuccessStatusCode)
-            {
-                notifications = await notificationsResponse.Content.ReadFromJsonAsync<List<NotificationViewModel>>() ?? new List<NotificationViewModel>();
                 
-                // Format the dates for display
-                foreach (var notification in notifications)
+                // Create the view model with applications
+                var viewModel = new ManageApplicationsViewModel
                 {
-                    if (DateTime.TryParse(notification.CreatedAt, out var createdAt))
-                    {
-                        notification.CreatedAt = createdAt.ToString("MMM dd, yyyy");
-                    }
-                }
+                    OpportunityId = opportunity.Id,
+                    OpportunityTitle = opportunity.Title,
+                    Applications = applications.OrderByDescending(a => a.AppliedAt).ToList()
+                };
+                
+                return View(viewModel);
             }
-            else if (notificationsResponse.StatusCode != System.Net.HttpStatusCode.NotFound)
+            catch (Exception ex)
             {
-                var errorContent = await notificationsResponse.Content.ReadAsStringAsync();
-                _logger.LogError("Error fetching notifications: {StatusCode} - {Error}", 
-                    notificationsResponse.StatusCode, errorContent);
+                _logger.LogError(ex, "Error loading applications for management");
+                return View("Error", new ErrorViewModel 
+                { 
+                    RequestId = HttpContext.TraceIdentifier,
+                    Message = "An error occurred while loading applications." 
+                });
             }
+        }
 
-            // Store notifications in ViewBag to be displayed in the layout
-            ViewBag.Notifications = notifications;
+        // PUT: Opportunities/UpdateApplicationStatus/5/5
+        [HttpPut("UpdateApplicationStatus/{opportunityId}/{applicationId}", Name = "UpdateApplicationStatus")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateApplicationStatus(int opportunityId, int applicationId, [FromBody] Client.Models.UpdateOpportunityApplicationViewModel model)
+        {
+            _logger.LogInformation($"UpdateApplicationStatus called with opportunityId: {opportunityId}, applicationId: {applicationId}");
+            _logger.LogInformation($"Model state is valid: {ModelState.IsValid}");
             
-            return View(applications);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in Opportunities/Index: {Message}", ex.Message);
-            TempData["ErrorMessage"] = "An error occurred while loading your applications. Please try again later.";
-            return View(new List<OpportunityApplicationViewModel>());
-            return RedirectToAction("Index", "Home");
-        }
-    }
-
-
-    // GET: Opportunities/Create
-    public IActionResult Create()
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-            return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Create", "Opportunities") });
-
-        return View();
-    }
-
-    // POST: Opportunities/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(OpportunityApplicationViewModel model)
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-            return RedirectToAction("Login", "Auth");
-
-        if (!ModelState.IsValid)
-            return View(model);
-
-        try
-        {
-            // Get the JWT token from the authentication cookie
-            var token = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
-            if (string.IsNullOrEmpty(token))
+            if (!ModelState.IsValid)
             {
-                _logger.LogWarning("JWT token not found in authentication cookie");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            // Get user ID from claims
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                            ?? User.FindFirst("UserID")?.Value 
-                            ?? User.FindFirst("sub")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-            {
-                _logger.LogWarning("Invalid or missing user ID in claims");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-
-            // Get username from claims
-            var username = User.FindFirst(ClaimTypes.Name)?.Value 
-                         ?? User.FindFirst("name")?.Value 
-                         ?? User.Identity?.Name 
-                         ?? "Unknown User";
-
-            var response = await client.PostAsJsonAsync("api/opportunities/applications", new
-            {
-                UserID = userId,
-                Username = username,
-                OpportunityTitle = model.OpportunityTitle,
-                OpportunityDescription = model.OpportunityDescription,
-                AppliedAt = DateTime.UtcNow
-            });
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Application submitted successfully!";
-                return RedirectToAction(nameof(Index));
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _logger.LogWarning("Unauthorized access attempt to create application");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Error creating application: {StatusCode} - {Error}", 
-                    response.StatusCode, errorContent);
-                ModelState.AddModelError(string.Empty, "An error occurred while creating the application. Please try again.");
-                return View(model);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in Opportunities/Create: {Message}", ex.Message);
-            ModelState.AddModelError(string.Empty, "An error occurred while creating the application. Please try again.");
-            return View(model);
-        }
-    }
-
-    // GET: Opportunities/Details/5
-    public async Task<IActionResult> Details(int id)
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            _logger.LogWarning("User is not authenticated");
-            return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Details", "Opportunities", new { id }) });
-        }
-
-        try
-        {
-            // Try to get token from auth_token cookie first
-            var token = HttpContext.Request.Cookies["auth_token"];
-            
-            // If not in cookie, try to get from claims (for backward compatibility)
-            if (string.IsNullOrEmpty(token))
-            {
-                token = User.FindFirst("JWT")?.Value;
-                _logger.LogInformation("Token found in claims for Details action");
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+                    
+                _logger.LogWarning($"Model validation failed: {string.Join(", ", errors)}");
+                return BadRequest(new { message = "Invalid form data. " + string.Join(", ", errors) });
             }
             
-            if (string.IsNullOrEmpty(token))
+            // Validate status value
+            if (!model.TryGetStatus(out var status))
             {
-                _logger.LogWarning("JWT token not found in auth_token cookie or claims for Details action");
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Details", "Opportunities", new { id }) });
+                _logger.LogWarning($"Invalid status value: {model.Status}");
+                return BadRequest(new { message = $"Invalid status value: {model.Status}" });
             }
 
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            // Get the application details
-            var response = await client.GetAsync($"api/opportunities/applications/{id}");
-            
-            if (response.IsSuccessStatusCode)
+            var client = await GetAuthenticatedClient();
+            if (client == null)
             {
-                var viewModel = await response.Content.ReadFromJsonAsync<OpportunityApplicationViewModel>();
-                if (viewModel != null)
+                return Unauthorized(new { message = "You must be logged in to perform this action." });
+            }
+            
+            try
+            {
+                var content = new StringContent(
+                    JsonSerializer.Serialize(new 
+                    { 
+                        status = model.Status, 
+                        reviewNotes = model.ReviewNotes 
+                    }),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var response = await client.PutAsync($"api/opportunities/{opportunityId}/applications/{applicationId}/status", content);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    // Format the date for display if needed
-                    if (DateTime.TryParse(viewModel.AppliedAt, out var appliedAt))
-                    {
-                        viewModel.AppliedAt = appliedAt.ToString("MMM dd, yyyy");
-                    }
-                    return View(viewModel);
+                    return Json(new { success = true, message = "Application status updated successfully." });
                 }
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _logger.LogWarning("Unauthorized access attempt to view application details {ApplicationId}", id);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            
-            return NotFound();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in Opportunities/Details: {Message}", ex.Message);
-            TempData["ErrorMessage"] = "An error occurred while loading the application details. Please try again later.";
-            return RedirectToAction(nameof(Index));
-        }
-    }
 
-    // GET: Opportunities/Edit/5
-    public async Task<IActionResult> Edit(int id)
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            _logger.LogWarning("User is not authenticated for Edit action");
-            return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Edit", "Opportunities", new { id }) });
-        }
-
-        try
-        {
-            // Try to get token from auth_token cookie first
-            var token = HttpContext.Request.Cookies["auth_token"];
-            
-            // If not in cookie, try to get from claims (for backward compatibility)
-            if (string.IsNullOrEmpty(token))
-            {
-                token = User.FindFirst("JWT")?.Value;
-                _logger.LogInformation("Token found in claims for Edit action");
-            }
-            
-            if (string.IsNullOrEmpty(token))
-            {
-                _logger.LogWarning("JWT token not found in auth_token cookie or claims for Edit action");
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Edit", "Opportunities", new { id }) });
-            }
-
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync($"api/opportunities/applications/{id}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var viewModel = await response.Content.ReadFromJsonAsync<OpportunityApplicationViewModel>();
-                if (viewModel != null)
+                
+                // Try to get error details from the response
+                var errorContent = await response.Content.ReadAsStringAsync();
+                var errorMessage = !string.IsNullOrEmpty(errorContent) ? 
+                    $"Error: {errorContent}" : 
+                    "An error occurred while updating the application status.";
+                
+                TempData["ErrorMessage"] = errorMessage;
+                
+                // If coming from the manage applications page, return there
+                if (Request.Headers["Referer"].ToString().Contains("ManageApplications"))
                 {
-                    // Format the date for display if needed
-                    if (DateTime.TryParse(viewModel.AppliedAt, out var appliedAt))
-                    {
-                        viewModel.AppliedAt = appliedAt.ToString("MMM dd, yyyy");
-                    }
-                    return View(viewModel);
+                    return RedirectToAction(nameof(ManageApplications));
                 }
+                
+                return RedirectToAction(nameof(ApplicationDetails), new { id = applicationId });
             }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            catch (Exception ex)
             {
-                _logger.LogWarning("Unauthorized access attempt to edit application {ApplicationId}", id);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            
-            return NotFound();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in Opportunities/Edit GET: {Message}", ex.Message);
-            TempData["ErrorMessage"] = "An error occurred while loading the application for editing. Please try again later.";
-            return RedirectToAction(nameof(Index));
-        }
-    }
-
-    // POST: Opportunities/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, OpportunityApplicationViewModel model)
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            _logger.LogWarning("User is not authenticated for Edit POST action");
-            return RedirectToAction("Login", "Auth");
-        }
-
-        if (!ModelState.IsValid)
-            return View(model);
-
-        try
-        {
-            // Try to get token from auth_token cookie first
-            var token = HttpContext.Request.Cookies["auth_token"];
-            
-            // If not in cookie, try to get from claims (for backward compatibility)
-            if (string.IsNullOrEmpty(token))
-            {
-                token = User.FindFirst("JWT")?.Value;
-                _logger.LogInformation("Token found in claims for Edit POST action");
-            }
-            
-            if (string.IsNullOrEmpty(token))
-            {
-                _logger.LogWarning("JWT token not found in auth_token cookie or claims for Edit POST action");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.PutAsJsonAsync($"api/opportunities/applications/{id}", new
-            {
-                ApplicationID = id,
-                UserID = model.UserID,
-                Username = model.Username,
-                OpportunityTitle = model.OpportunityTitle,
-                OpportunityDescription = model.OpportunityDescription,
-                AppliedAt = model.AppliedAt
-            });
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Application updated successfully!";
-                return RedirectToAction(nameof(Index));
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _logger.LogWarning("Unauthorized access attempt to update application {ApplicationId}", id);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Error updating application {ApplicationId}: {StatusCode} - {Error}", 
-                    id, response.StatusCode, errorContent);
-                ModelState.AddModelError(string.Empty, "An error occurred while updating the application. Please try again.");
-                return View(model);
+                _logger.LogError(ex, "Error updating application status");
+                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                
+                // If coming from the manage applications page, return there
+                if (Request.Headers["Referer"].ToString().Contains("ManageApplications"))
+                {
+                    return RedirectToAction(nameof(ManageApplications));
+                }
+                
+                return RedirectToAction(nameof(ApplicationDetails), new { id = applicationId });
             }
         }
-        catch (Exception ex)
+
+        private async Task<List<CategoryViewModel>> GetCategories(HttpClient client)
         {
-            _logger.LogError(ex, "Error in Opportunities/Edit POST: {Message}", ex.Message);
-            ModelState.AddModelError(string.Empty, "An error occurred while updating the application. Please try again.");
-            return View(model);
-        }
-    }
-
-    // POST: Opportunities/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            _logger.LogWarning("User is not authenticated for Delete action");
-            return RedirectToAction("Login", "Auth");
-        }
-
-        try
-        {
-            // Try to get token from auth_token cookie first
-            var token = HttpContext.Request.Cookies["auth_token"];
-            
-            // If not in cookie, try to get from claims (for backward compatibility)
-            if (string.IsNullOrEmpty(token))
+            try
             {
-                token = User.FindFirst("JWT")?.Value;
-                _logger.LogInformation("Token found in claims for Delete action");
+                var response = await client.GetAsync("api/categories");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<List<CategoryViewModel>>(content, _jsonOptions) ?? new List<CategoryViewModel>();
+                }
+                return new List<CategoryViewModel>();
             }
-            
-            if (string.IsNullOrEmpty(token))
+            catch
             {
-                _logger.LogWarning("JWT token not found in auth_token cookie or claims for Delete action");
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-
-            // Create a new HttpClient with the token
-            var client = _httpClientFactory.CreateClient("API");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.DeleteAsync($"api/opportunities/applications/{id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Application deleted successfully!";
-                return RedirectToAction(nameof(Index));
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return NotFound();
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                _logger.LogWarning("Unauthorized access attempt to delete application {ApplicationId}", id);
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return RedirectToAction("Login", "Auth");
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Error deleting application {ApplicationId}: {StatusCode} - {Error}", 
-                    id, response.StatusCode, errorContent);
-                TempData["ErrorMessage"] = "An error occurred while deleting the application. Please try again.";
-                return RedirectToAction(nameof(Index));
+                return new List<CategoryViewModel>();
             }
         }
-        catch (Exception ex)
+
+        private IActionResult HandleError(System.Net.HttpStatusCode statusCode)
         {
-            _logger.LogError(ex, "Error in Opportunities/Delete: {Message}", ex.Message);
-            TempData["ErrorMessage"] = "An error occurred while deleting the application. Please try again.";
-            return RedirectToAction(nameof(Index));
+            return statusCode switch
+            {
+                System.Net.HttpStatusCode.NotFound => NotFound(),
+                System.Net.HttpStatusCode.Unauthorized => RedirectToAction("Login", "Auth"),
+                System.Net.HttpStatusCode.Forbidden => Forbid(),
+                _ => StatusCode((int)statusCode)
+            };
         }
     }
 }
-
-// Using ViewModels from Client.Models namespace instead of DTOs

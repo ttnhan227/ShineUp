@@ -165,18 +165,38 @@ public class AuthController : ControllerBase
             user.LastLoginTime = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            var token = GenerateToken(user);
+            // For Google users without a password, they need to complete their profile
+            bool needsPassword = string.IsNullOrEmpty(user.PasswordHash);
+            string token = needsPassword ? string.Empty : GenerateToken(user);
 
-            // Make sure we're returning the correct profile image URL and include Verified status
-            return Ok(new
+            var response = new
             {
                 Token = token,
                 Username = user.Username,
                 Email = user.Email,
                 ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
                 Verified = user.Verified,
-                IsGoogleAccount = true // Added to indicate Google authentication
-            });
+                needsPassword = needsPassword,
+                userId = user.UserID
+            };
+
+            // If user needs to set a password, include their name info
+            if (needsPassword)
+            {
+                return Ok(new
+                {
+                    response.Token,
+                    response.Username,
+                    response.Email,
+                    response.ProfileImageURL,
+                    response.Verified,
+                    response.needsPassword,
+                    response.userId,
+                    fullName = user.FullName ?? ""
+                });
+            }
+
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -211,6 +231,114 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpGet("CompleteProfile")]
+    public IActionResult CompleteProfile(int userId, string email, string fullName)
+    {
+        _logger.LogInformation($"Serving CompleteProfile page for user ID: {userId}");
+        
+        // Return the Razor view from the Client project
+        // The view is served by the Client project, so we just need to redirect to it
+        // The Client project should handle the routing to the correct view
+        return Redirect($"~/auth/completeprofile?userId={userId}&email={email}&fullName={fullName}");
+    }
+    
+    [HttpPost("CompleteGoogleProfile")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CompleteGoogleProfile([FromBody] CompleteProfileDTO model)
+    {
+        try
+        {
+            _logger.LogInformation($"Starting profile completion for user ID: {model?.UserId}");
+            
+            // Validate the model
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                
+                _logger.LogWarning($"Model validation failed: {string.Join(", ", errors)}");
+                return BadRequest(new { 
+                    success = false, 
+                    message = "Validation failed",
+                    errors = errors 
+                });
+            }
+            
+            // Find the user
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserID == model.UserId);
+
+            if (user == null)
+            {
+                _logger.LogWarning($"User not found with ID: {model.UserId}");
+                return NotFound(new { 
+                    success = false,
+                    message = "User not found" 
+                });
+            }
+
+            // Check if the username is already taken by another user
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username.ToLower() == model.Username.ToLower() && u.UserID != model.UserId);
+
+            if (existingUser != null)
+            {
+                _logger.LogWarning($"Username {model.Username} is already taken");
+                return BadRequest(new { 
+                    success = false,
+                    message = "Username is already taken" 
+                });
+            }
+
+
+            _logger.LogInformation($"Updating user profile for user ID: {user.UserID}");
+            
+            // Update user information
+            user.Username = model.Username.Trim();
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+            user.FullName = model.FullName.Trim();
+
+            // Update user profile information
+            user.TalentArea = model.TalentArea?.Trim();
+
+
+            // Save changes
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Successfully updated profile for user ID: {user.UserID}");
+
+            // Generate JWT token
+            var token = GenerateToken(user);
+            
+            // Get the user's role name
+            var roleName = user.Role?.Name ?? "User";
+
+            _logger.LogInformation($"Profile completion successful for user ID: {user.UserID}");
+            
+            return Ok(new
+            {
+                success = true,
+                token = token,
+                username = user.Username,
+                email = user.Email,
+                profileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
+                role = roleName,
+                fullName = user.FullName,
+                redirectUrl = "/"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error completing Google profile for user ID: {model?.UserId}");
+            return StatusCode(500, new { 
+                success = false,
+                message = "An error occurred while completing your profile. Please try again." 
+            });
+        }
+    }
+
     [HttpPost("validate-otp")]
     public async Task<IActionResult> ValidateOTP([FromBody] ValidateOTPDTO model)
     {
@@ -236,6 +364,8 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    // Removed duplicate CompleteGoogleProfile endpoint - using the more robust implementation above
 
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
@@ -392,6 +522,8 @@ public class AuthController : ControllerBase
 
     private string GenerateToken(User user)
     {
+        _logger.LogInformation($"[AuthController] Generating token for user ID: {user.UserID}, Email: {user.Email}, Username: {user.Username}");
+        
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
@@ -403,9 +535,11 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
             new Claim("Username", user.Username),
             new Claim("Email", user.Email),
-            new Claim(ClaimTypes.Role, user.Role.Name),
+            new Claim(ClaimTypes.Role, user.Role?.Name ?? "User"),
             new Claim("RoleID", user.RoleID.ToString())
         };
+
+        _logger.LogInformation($"[AuthController] Token claims: {string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}"))}");
 
         var token = new JwtSecurityToken(
             _configuration["Jwt:Issuer"],
@@ -414,7 +548,11 @@ public class AuthController : ControllerBase
             expires: DateTime.Now.AddDays(7), // Changed from 30 minutes to 7 days
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        _logger.LogInformation($"[AuthController] Token generated successfully for user ID: {user.UserID}");
+        
+        return tokenString;
     }
 
 }

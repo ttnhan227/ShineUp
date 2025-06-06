@@ -1,12 +1,15 @@
-﻿using Server.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Server.DTOs;
+using Server.Models;
 
 namespace Server.Interfaces;
 
 public interface INotificationRepository
 {
-    Task<Notification> CreateAsync(Notification notification);
-    Task<IEnumerable<Notification>> GetByUserIdAsync(int userId);
-    Task<bool> DeleteAsync(int notificationId);
+    Task<NotificationDTO?> GetByIdAsync(int id, int userId);
+    Task<IEnumerable<NotificationDTO>> GetUserNotificationsAsync(int userId, bool unreadOnly = false);
+    Task<NotificationDTO> CreateNotificationAsync(CreateNotificationDTO notificationDto);
+    Task<bool> MarkAsReadAsync(int notificationId, int userId);
+    Task MarkAllAsReadAsync(int userId);
+    Task<bool> DeleteNotificationAsync(int notificationId, int userId);
+    Task<int> GetUnreadCountAsync(int userId);
 }

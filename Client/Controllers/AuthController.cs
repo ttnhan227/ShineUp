@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-using System.IdentityModel.Tokens.Jwt; // Added for JWT token parsing
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Logging;
 
 namespace Client.Controllers
@@ -19,7 +19,7 @@ namespace Client.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<AuthController> _logger; // Added logger
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(HttpClient httpClient, IConfiguration configuration, ILogger<AuthController> logger)
         {
@@ -39,7 +39,6 @@ namespace Client.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Add a stricter email format check
                 var emailPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
                 if (!System.Text.RegularExpressions.Regex.IsMatch(model.Email, emailPattern))
                 {
@@ -88,15 +87,15 @@ namespace Client.Controllers
         {
             var email = TempData["Email"]?.ToString();
             var userId = TempData["UserId"]?.ToString();
-            
+
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(userId))
             {
                 return RedirectToAction("Register");
             }
-            
+
             TempData.Keep("Email");
             TempData.Keep("UserId");
-            
+
             return View(new VerifyEmailViewModel { Email = email });
         }
 
@@ -111,8 +110,7 @@ namespace Client.Controllers
             try
             {
                 _logger.LogInformation($"Attempting to verify email: {model.Email}");
-                
-                // First verify the email
+
                 var verifyResponse = await _httpClient.PostAsJsonAsync("api/Auth/verify-email", new
                 {
                     Email = model.Email,
@@ -125,7 +123,7 @@ namespace Client.Controllers
                 if (verifyResponse.IsSuccessStatusCode)
                 {
                     var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    
+
                     if (result == null)
                     {
                         _logger.LogError("Failed to deserialize verification response");
@@ -133,7 +131,6 @@ namespace Client.Controllers
                         return View(model);
                     }
 
-                    // Create claims from the verification response
                     var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Name, result.user?.username?.ToString() ?? model.Email),
@@ -149,7 +146,6 @@ namespace Client.Controllers
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
 
-                    // Set the token in a cookie
                     Response.Cookies.Append("auth_token", result.token?.ToString() ?? string.Empty, new CookieOptions
                     {
                         HttpOnly = true,
@@ -231,11 +227,11 @@ namespace Client.Controllers
                 });
 
                 var content = await response.Content.ReadAsStringAsync();
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var result = JsonConvert.DeserializeObject<dynamic>(content);
-                    
+
                     if (result == null)
                     {
                         ModelState.AddModelError("", "Invalid response from server.");
@@ -258,13 +254,12 @@ namespace Client.Controllers
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
 
-                    // Set the token in a cookie
                     Response.Cookies.Append("auth_token", result.Token.ToString(), new CookieOptions
                     {
                         HttpOnly = true,
                         Secure = true,
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTime.UtcNow.AddDays(7) // Match the token expiration
+                        Expires = DateTime.UtcNow.AddDays(7)
                     });
 
                     await HttpContext.SignInAsync(
@@ -273,7 +268,7 @@ namespace Client.Controllers
                         new AuthenticationProperties
                         {
                             IsPersistent = true,
-                            ExpiresUtc = DateTime.UtcNow.AddDays(7) // Match the token expiration
+                            ExpiresUtc = DateTime.UtcNow.AddDays(7)
                         });
 
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -284,7 +279,6 @@ namespace Client.Controllers
                 }
                 else
                 {
-                    // Check for the specific 403 Forbidden status for email verification
                     if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
                     {
                         try
@@ -294,7 +288,6 @@ namespace Client.Controllers
                             {
                                 TempData["Email"] = errorDetails.Email;
                                 TempData["UserId"] = errorDetails.UserId.ToString();
-                                // Optionally, add a message to TempData to display on the VerifyEmail page
                                 TempData["VerificationMessage"] = errorDetails.Message;
                                 return RedirectToAction("VerifyEmail");
                             }
@@ -302,11 +295,9 @@ namespace Client.Controllers
                         catch (JsonException jsonEx)
                         {
                             _logger.LogError(jsonEx, "Failed to deserialize 403 Forbidden response during login.");
-                            // Fall through to generic error handling if deserialization fails
                         }
                     }
 
-                    // Generic error handling for other non-success status codes
                     var errorMessage = content;
                     try
                     {
@@ -343,7 +334,54 @@ namespace Client.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            HttpContext.Session.Clear();
             return RedirectToAction("Login", "Auth");
+        }
+
+        private async Task SignInUserAsync(CompleteProfileResponse response)
+        {
+            try
+            {
+                var token = response.Token;
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, response.UserId.ToString()),
+                    new Claim(ClaimTypes.Name, response.Username),
+                    new Claim(ClaimTypes.Email, response.Email),
+                    new Claim(ClaimTypes.Role, response.Role),
+                    new Claim("Token", token)
+                };
+
+                var claimsIdentity = new ClaimsIdentity(
+                    claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var authProperties = new AuthenticationProperties
+                {
+                    AllowRefresh = true,
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                HttpContext.Session.SetString("UserId", response.UserId.ToString());
+                HttpContext.Session.SetString("Username", response.Username);
+                HttpContext.Session.SetString("Email", response.Email);
+                HttpContext.Session.SetString("ProfileImageURL", response.ProfileImageURL ?? string.Empty);
+                HttpContext.Session.SetString("Role", response.Role);
+                HttpContext.Session.SetString("Token", token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error signing in user: {ex.Message}");
+                throw;
+            }
         }
 
         [HttpPost("google-auth")]
@@ -353,7 +391,7 @@ namespace Client.Controllers
             {
                 _logger.LogInformation("Starting Google auth...");
                 var apiUrl = $"{_configuration["ApiBaseUrl"]}/api/Auth/google-login";
-                
+
                 var response = await _httpClient.PostAsJsonAsync(apiUrl, new { IdToken = model.IdToken });
                 var content = await response.Content.ReadAsStringAsync();
                 _logger.LogInformation($"API Response: {content}");
@@ -363,6 +401,20 @@ namespace Client.Controllers
                     return Json(new { success = false, message = content });
                 }
 
+                var responseObj = JsonConvert.DeserializeObject<dynamic>(content);
+                if (responseObj?.needsPassword != null && (bool)responseObj.needsPassword)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        needsPassword = true,
+                        userId = (int)responseObj.userId,
+                        email = (string)responseObj.email,
+                        username = (string)(responseObj.username ?? ""),
+                        fullName = (string)(responseObj.fullName ?? "")
+                    });
+                }
+
                 var result = JsonConvert.DeserializeObject<LoginResponseDTO>(content);
                 if (result?.Token == null)
                 {
@@ -370,17 +422,16 @@ namespace Client.Controllers
                 }
 
                 var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;                var claims = new List<Claim>
+                var jwtToken = handler.ReadToken(result.Token) as JwtSecurityToken;
+                var claims = new List<Claim>
                 {
                     new(ClaimTypes.Name, result.Username),
                     new(ClaimTypes.Email, result.Email),
                     new("JWT", result.Token),
-                    // Ensure profile image URL is properly set
                     new("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
                     new("IsGoogleAccount", result.IsGoogleAccount.ToString())
                 };
 
-                // Extract UserID, Role and RoleID from JWT
                 if (jwtToken != null)
                 {
                     var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
@@ -395,7 +446,6 @@ namespace Client.Controllers
                         claims.Add(new Claim("RoleID", roleIdClaim.Value));
                 }
 
-                // Log the profile image URL for debugging
                 _logger.LogInformation($"Setting profile image URL: {result.ProfileImageURL}");
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -404,13 +454,22 @@ namespace Client.Controllers
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     principal,
-                    new AuthenticationProperties 
-                    { 
+                    new AuthenticationProperties
+                    {
                         IsPersistent = true,
                         ExpiresUtc = DateTime.UtcNow.AddHours(24)
                     });
 
-                return Json(new { success = true, redirectUrl = "/" });
+                return Json(new
+                {
+                    success = true,
+                    token = result.Token,
+                    username = result.Username,
+                    email = result.Email,
+                    profileImageURL = result.ProfileImageURL,
+                    isGoogleAccount = result.IsGoogleAccount,
+                    redirectUrl = "/"
+                });
             }
             catch (Exception ex)
             {
@@ -453,7 +512,7 @@ namespace Client.Controllers
             {
                 return RedirectToAction("ForgotPassword");
             }
-            TempData.Keep("Email"); // Keep the email for the next request
+            TempData.Keep("Email");
             return View(new ConfirmOTPViewModel { Email = email });
         }
 
@@ -510,7 +569,7 @@ namespace Client.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["PasswordResetSuccess"] = true;
-                    return View(model); // This will trigger the modal
+                    return View(model);
                 }
 
                 ModelState.AddModelError("NewPassword", result?["message"] ?? "Failed to reset password. Please try again.");
@@ -541,6 +600,135 @@ namespace Client.Controllers
                 return Json(new { success = false, message = "An error occurred" });
             }
         }
+
+        [HttpGet("CompleteProfile")]
+        [HttpGet("complete-profile")]
+        public IActionResult CompleteProfile(int userId, string email, string fullName = "", string username = "")
+        {
+            var model = new CompleteProfileViewModel
+            {
+                UserId = userId,
+                Email = email,
+                Username = username,
+                FullName = fullName
+            };
+            return View(model);
+        }
+
+        [HttpPost("CompleteProfile")]
+        [HttpPost("complete-profile")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteProfile(CompleteProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _logger.LogInformation($"Starting profile completion for user {model.UserId}");
+
+                var requestData = new
+                {
+                    UserId = model.UserId,
+                    Username = model.Username,
+                    FullName = model.FullName,
+                    TalentArea = model.TalentArea,
+                    Password = model.Password,
+                    ConfirmPassword = model.ConfirmPassword
+                };
+
+                _logger.LogInformation($"Sending request to API: {JsonConvert.SerializeObject(requestData, Formatting.Indented)}");
+
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/CompleteGoogleProfile", requestData);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation($"API Response: {response.StatusCode} - {responseContent}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<CompleteProfileResponse>(responseContent);
+                    if (result == null)
+                    {
+                        throw new JsonException("Failed to deserialize the response");
+                    }
+
+                    _logger.LogInformation($"Successfully completed profile for user {result.Username} (ID: {result.UserId})");
+
+                    // Set auth token in cookie first
+                    Response.Cookies.Append("auth_token", result.Token, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTime.UtcNow.AddDays(7)
+                    });
+
+                    // Create claims for the user - matching the normal login flow
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, result.Username ?? string.Empty),
+                        new Claim(ClaimTypes.Email, result.Email ?? string.Empty),
+                        new Claim(ClaimTypes.NameIdentifier, result.UserId.ToString()),
+                        new Claim(ClaimTypes.Role, result.Role ?? "User"),
+                        new Claim("JWT", result.Token),
+                        new Claim("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"),
+                        new Claim("IsGoogleAccount", "true")
+                    };
+
+                    // Add RoleID claim
+                    claims.Add(new Claim("RoleID", result.RoleId.ToString()));
+
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+
+                    // Sign in the user with the same settings as normal login
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        principal,
+                        new AuthenticationProperties
+                        {
+                            IsPersistent = true,
+                            ExpiresUtc = DateTime.UtcNow.AddDays(7)
+                        });
+
+                    // Set session variables
+                    HttpContext.Session.SetString("UserId", result.UserId.ToString());
+                    HttpContext.Session.SetString("Username", result.Username);
+                    HttpContext.Session.SetString("Email", result.Email);
+                    HttpContext.Session.SetString("ProfileImageURL", result.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U");
+
+                    TempData["SuccessMessage"] = "Your profile has been updated successfully!";
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var errorResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(responseContent);
+                if (errorResponse?.ContainsKey("message") == true)
+                {
+                    ModelState.AddModelError("", errorResponse["message"].ToString());
+                }
+                else if (errorResponse?.ContainsKey("errors") == true)
+                {
+                    var errors = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(errorResponse["errors"].ToString());
+                    foreach (var error in errors.Values.SelectMany(e => e))
+                    {
+                        ModelState.AddModelError("", error);
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "An error occurred while completing your profile.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error completing profile");
+                ModelState.AddModelError("", "An error occurred while completing your profile. Please try again.");
+            }
+
+            return View(model);
+        }
     }
 
     public class LoginResponseDTO
@@ -556,13 +744,23 @@ namespace Client.Controllers
     {
         public string IdToken { get; set; }
     }
-}
 
-// Helper class to deserialize the 403 Forbidden response when verification is required
-public class VerificationRequiredResponse
-{
-    public string Message { get; set; }
-    public bool RequiresVerification { get; set; }
-    public string Email { get; set; }
-    public int UserId { get; set; }
+    public class CompleteProfileResponse
+    {
+        public string Token { get; set; }
+        public int UserId { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string ProfileImageURL { get; set; }
+        public string Role { get; set; }
+        public int RoleId { get; set; }
+    }
+
+    public class VerificationRequiredResponse
+    {
+        public string Message { get; set; }
+        public bool RequiresVerification { get; set; }
+        public string Email { get; set; }
+        public int UserId { get; set; }
+    }
 }

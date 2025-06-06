@@ -1,58 +1,275 @@
-@model Client.Models.OpportunityApplicationViewModel
-
+@using System.Security.Claims
+@model Client.Models.OpportunityViewModel
 @{
-    ViewData["Title"] = "Application Details";
+    ViewData["Title"] = Model.Title;
+    var isOwner = User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier)?.Value == Model.PostedByUserId.ToString();
 }
 
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Application Details</h5>
-                    <div>
-                        <a asp-action="Edit" asp-route-id="@Model.ApplicationID" class="btn btn-sm btn-outline-primary me-2">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                        <a asp-action="Delete" asp-route-id="@Model.ApplicationID" class="btn btn-sm btn-outline-danger"
-                           onclick="return confirm('Are you sure you want to delete this application?')">
-                            <i class="bi bi-trash"></i> Delete
-                        </a>
-                    </div>
-                </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Opportunities</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
                 <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-3">Opportunity Title</dt>
-                        <dd class="col-sm-9">@Model.OpportunityTitle</dd>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h3 mb-2">@Model.Title</h1>
+                            <div class="d-flex align-items-center text-muted mb-3">
+                                <span class="me-3">
+                                    <i class="bi @(Model.IsRemote ? "bi-globe" : "bi-geo-alt") me-1"></i>
+                                    @(Model.IsRemote ? "Remote" : Model.Location)
+                                </span>
+                                <span class="me-3">
+                                    <i class="bi bi-tag me-1"></i>@Model.Type.ToString()
+                                </span>
+                                @if (Model.ApplicationDeadline.HasValue)
+                                {
+                                    <span class="me-3">
+                                        <i class="bi bi-calendar-check me-1"></i>
+                                        Apply by @Model.ApplicationDeadline.Value.ToString("MMM d, yyyy")
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="opportunityActions" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="opportunityActions">
+                                @if (isOwner)
+                                {
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@Model.Id">
+                                            <i class="bi bi-pencil me-2"></i>Edit
+                                        </a>
+                                    </li>
+                                    @if (Model.Status == OpportunityStatus.Open)
+                                    {
+                                        <li>
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="status" value="close" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-x-circle me-2"></i>Close
+                                                </button>
+                                            </form>
+                                        </li>
+                                    }
+                                    else if (Model.Status == OpportunityStatus.Draft)
+                                    {
+                                        <li>
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="status" value="publish" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-check-circle me-2"></i>Publish
+                                                </button>
+                                            </form>
+                                        </li>
+                                    }
+                                    <li>
+                                        <form asp-action="Delete" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger" 
+                                                    onclick="return confirm('Are you sure you want to delete this opportunity?')">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                }
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi bi-flag me-2"></i>Report
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="mb-3">Opportunity Details</h5>
+                        <div class="mb-3">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
                         
-                        <dt class="col-sm-3">Description</dt>
-                        <dd class="col-sm-9">@Model.OpportunityDescription</dd>
+                        @if (!string.IsNullOrEmpty(Model.TalentArea))
+                        {
+                            <div class="mb-3">
+                                <h6>Talent Area</h6>
+                                <span class="badge bg-primary">@Model.TalentArea</span>
+                            </div>
+                        }
+
+                        @if (Model.Category != null)
+                        {
+                            <div class="mb-3">
+                                <h6>Category</h6>
+                                <span class="badge bg-secondary">@Model.Category.CategoryName</span>
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.CategoryName))
+                        {
+                            <div class="mb-3">
+                                <h6>Category</h6>
+                                <span class="badge bg-secondary">@Model.CategoryName</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <div class="text-muted small">
+                            <div>Posted by <strong>@Model.PostedByUserName</strong></div>
+                            <div>Posted on @Model.CreatedAt.ToString("MMMM d, yyyy")</div>
+                        </div>
                         
-                        <dt class="col-sm-3">Applicant</dt>
-                        <dd class="col-sm-9">@Model.Username</dd>
-                        
-                        <dt class="col-sm-3">Applied On</dt>
-                        <dd class="col-sm-9">@Model.AppliedAt</dd>
-                    </dl>
-                    
-                    <div class="mt-4">
-                        <a asp-action="Index" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to List
-                        </a>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            if (isOwner)
+                            {
+                                <div class="d-flex gap-2">
+                                    <a asp-action="MyOpportunities" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i> My Opportunities
+                                    </a>
+                                    <a asp-action="ManageApplications" asp-route-id="@Model.Id" class="btn btn-primary">
+                                        <i class="bi bi-people me-1"></i> Manage Applications
+                                    </a>
+                                </div>
+                            }
+                            else if (Model.HasApplied)
+                            {
+                                <button class="btn btn-success" disabled>
+                                    <i class="bi bi-check-circle me-1"></i> Applied
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#applyModal">
+                                    <i class="bi bi-send me-1"></i> Apply Now
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Sign in to Apply
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">About @Model.PostedByUserName</h5>
+                    <p class="card-text">
+                        This section would contain information about the opportunity poster.
+                        You can include their bio, experience, or other relevant details here.
+                    </p>
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-person-lines-fill me-1"></i> View Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Opportunity Summary</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-calendar-event me-2"></i>Posted</span>
+                            <span>@Model.CreatedAt.ToString("MMMM d, yyyy")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-people me-2"></i>Applications</span>
+                            <span>@Model.ApplicationCount</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi @(Model.IsRemote ? "bi-globe" : "bi-geo-alt") me-2"></i>Location</span>
+                            <span>@(Model.IsRemote ? "Remote" : Model.Location)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-briefcase me-2"></i>Type</span>
+                            <span>@Model.Type</span>
+                        </li>
+                        @if (Model.ApplicationDeadline.HasValue)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-calendar-check me-2"></i>Deadline</span>
+                                <span>@Model.ApplicationDeadline.Value.ToString("MMMM d, yyyy")</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.TalentArea))
+            {
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Similar Opportunities</h5>
+                        <div class="list-group list-group-flush">
+                            <!-- Placeholder for similar opportunities -->
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Similar Opportunity Title</h6>
+                                    <small>3 days ago</small>
+                                </div>
+                                <p class="mb-1 small text-muted">Brief description of the similar opportunity...</p>
+                                <small><i class="bi bi-geo-alt me-1"></i>Location</small>
+                            </a>
+                            <!-- Add more similar opportunities as needed -->
+                        </div>
+                        <a asp-action="Index" asp-route-talentArea="@Model.TalentArea" class="btn btn-link p-0 mt-2">
+                            View all @Model.TalentArea opportunities <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-@section Styles {
-    <style>
-        dt {
-            font-weight: 500;
-        }
-        dd {
-            margin-bottom: 1rem;
-        }
-    </style>
+<!-- Apply Modal -->
+<div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="applyModalLabel">Apply for @Model.Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="Apply" asp-route-id="@Model.Id" method="post">
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="coverLetter" class="form-label">Cover Letter</label>
+                        <textarea class="form-control" id="coverLetter" name="CoverLetter" rows="6" required 
+                                  placeholder="Tell us why you're a good fit for this opportunity..."></textarea>
+                        <div class="form-text">
+                            Include any relevant experience, skills, or other information that makes you a strong candidate.
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                        <label class="form-check-label" for="termsCheck">
+                            I understand that my application will be reviewed by the opportunity poster.
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 }

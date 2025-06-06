@@ -26,6 +26,7 @@
                                 <select class="form-select" name="RoleID" required>
                                     <option value="1" selected="@(Model.RoleID == 1)">User</option>
                                     <option value="2" selected="@(Model.RoleID == 2)">Admin</option>
+                                    <option value="3" selected="@(Model.RoleID == 3)">Recruiter</option>
                                 </select>
                             </div>
                         </div>
@@ -46,106 +47,5 @@
 
 @section Scripts {
     <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <style>
-        .card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .profile-details {
-            display: grid;
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .profile-detail-item {
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .profile-detail-item:hover {
-            background: #fff;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .profile-detail-item label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8898aa;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .profile-detail-item label i {
-            font-size: 1.25rem;
-            color: #5e72e4;
-        }
-
-        .form-control, .form-select {
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            color: #525f7f;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #5e72e4;
-            box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
-        }
-
-        .form-control[readonly] {
-            background-color: #f8f9fa;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-start;
-        }
-
-        .button-group .btn {
-            padding: 0.75rem 1.5rem;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            border-radius: 8px;
-        }
-
-        .button-group .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-primary {
-            background: #5e72e4;
-            border: none;
-        }
-
-        .btn-secondary {
-            background: #8898aa;
-            border: none;
-        }
-
-        @@media (max-width: 768px) {
-            .button-group {
-                flex-direction: column;
-            }
-
-            .button-group .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
 }

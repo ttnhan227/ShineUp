@@ -1,0 +1,134 @@
+@model Client.Models.CompleteProfileViewModel
+@{
+    ViewData["Title"] = "Complete Your Profile";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4 class="card-title">Complete Your Profile</h4>
+                        <p class="text-muted">Please complete your profile information to continue</p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ViewBag.SuccessMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @ViewBag.SuccessMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @ViewBag.ErrorMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    
+                    <form id="completeProfileForm" method="post" asp-controller="Auth" asp-action="CompleteProfile" class="register-form">
+                        <input type="hidden" asp-for="UserId" />
+                        <input type="hidden" asp-for="Email" />
+                        <input type="hidden" asp-for="FullName" />
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="Username" class="form-label">
+                                <i class='bx bx-user'></i> Username
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Username" class="form-control" placeholder="Choose a username" required />
+                            </div>
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="FullName" class="form-label">
+                                <i class='bx bx-user-circle'></i> Full Name
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="FullName" class="form-control" placeholder="Enter your full name" required />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="TalentArea" class="form-label">
+                                <i class='bx bx-star'></i> Talent Area
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="TalentArea" class="form-control" placeholder="What's your talent?" required />
+                            </div>
+                            <span asp-validation-for="TalentArea" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="form-label">
+                                <i class='bx bx-lock-alt'></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Choose a password" required />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label">
+                                <i class='bx bx-lock-alt'></i> Confirm Password
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password" required />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class='bx bx-check-circle'></i> Complete Registration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="~/css/auth.css" rel="stylesheet">
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('completeProfileForm');
+            const passwordField = document.getElementById('Password');
+            const confirmPasswordField = document.getElementById('ConfirmPassword');
+            
+            function validatePassword() {
+                if (passwordField.value !== confirmPasswordField.value) {
+                    confirmPasswordField.setCustomValidity("Passwords do not match");
+                    return false;
+                } else {
+                    confirmPasswordField.setCustomValidity("");
+                    return true;
+                }
+            }
+            
+            passwordField.addEventListener('change', validatePassword);
+            confirmPasswordField.addEventListener('keyup', validatePassword);
+            
+            form.addEventListener('submit', function(e) {
+                if (!validatePassword()) {
+                    e.preventDefault();
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
+}

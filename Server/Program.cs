@@ -25,7 +25,7 @@ builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.secrets.json", optional: false, reloadOnChange: true);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
 // Remove duplicate AddControllers and configure JSON
@@ -36,8 +36,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configure DbContext with sensitive data logging and detailed errors
+builder.Services.AddDbContext<DatabaseContext>((serviceProvider, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .EnableSensitiveDataLogging()
+           .EnableDetailedErrors();
+
+    // Only log SQL commands in Development environment
+    if (builder.Environment.IsDevelopment())
+    {
+        options.LogTo(Console.WriteLine, LogLevel.Information);
+    }
+});
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -168,7 +179,7 @@ builder.Services.AddScoped<IPrivacyRepository, PrivacyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<IOpportunityApplicationRepository, OpportunityApplicationRepository>();
+builder.Services.AddScoped<IOpportunityRepository, OpportunityRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 // Add Cloudinary Service
@@ -176,6 +187,10 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // Add Admin Repositories
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
+builder.Services.AddScoped<IContestManagementRepository, ContestManagementRepository>();
+builder.Services.AddScoped<IPostManagementRepository, PostManagementRepository>();
+builder.Services.AddScoped<ICategoryManagementRepository, CategoryManagementRepository>();
+builder.Services.AddScoped<IOpportunityManagementRepository, OpportunityManagementRepository>();
 
 // Update CORS configuration
 builder.Services.AddCors(options =>
@@ -197,6 +212,7 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
+// Build the application
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

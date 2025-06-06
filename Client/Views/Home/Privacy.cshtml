@@ -1,6 +1,182 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" />
+}
+
+<!-- Header Section -->
+<div class="privacy-header text-white">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4" data-aos="fade-up">Privacy Policy</h1>
+        <p class="lead mb-0" data-aos="fade-up" data-aos-delay="100">
+            Protecting your privacy is our top priority at ShineUp
+        </p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <!-- Last Updated -->
+    <div class="alert alert-info mb-5" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        Last updated: June 6, 2025
+    </div>
+
+    <!-- Introduction -->
+    <div class="privacy-section" data-aos="fade-up">
+        <div class="icon-circle mb-4">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        <h2 class="h3 mb-4">Introduction</h2>
+        <p class="text-muted">
+            Welcome to ShineUp's Privacy Policy. This document explains how we collect, use, and protect your personal information
+            when you use our talent competition platform. We are committed to ensuring your privacy and protecting any personal
+            information that you share with us.
+        </p>
+    </div>
+
+    <!-- Information We Collect -->
+    <div class="privacy-section" data-aos="fade-up">
+        <div class="icon-circle">
+            <i class="bi bi-collection"></i>
+        </div>
+        <h2 class="h3 mb-4">Information We Collect</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <h5>Account Information</h5>
+                <p class="text-muted">Name, email address, password, and profile picture</p>
+            </div>
+            <div class="timeline-item">
+                <h5>Content</h5>
+                <p class="text-muted">Videos, images, and descriptions you upload to our platform</p>
+            </div>
+            <div class="timeline-item">
+                <h5>Usage Data</h5>
+                <p class="text-muted">Information about how you interact with our platform</p>
+            </div>
+            <div class="timeline-item">
+                <h5>Device Information</h5>
+                <p class="text-muted">Browser type, IP address, and device specifications</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- How We Use Your Information -->
+    <div class="privacy-section" data-aos="fade-up">
+        <div class="icon-circle">
+            <i class="bi bi-gear"></i>
+        </div>
+        <h2 class="h3 mb-4">How We Use Your Information</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person-check text-primary me-2"></i>
+                            Platform Operation
+                        </h5>
+                        <p class="card-text text-muted">
+                            To operate, maintain, and improve our platform's features and functionality
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-shield-lock text-primary me-2"></i>
+                            Security
+                        </h5>
+                        <p class="card-text text-muted">
+                            To protect our platform and users from fraud and abuse
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Rights -->
+    <div class="privacy-section" data-aos="fade-up">
+        <div class="icon-circle">
+            <i class="bi bi-person"></i>
+        </div>
+        <h2 class="h3 mb-4">Your Rights</h2>
+        <div class="accordion" id="rightsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                        Access and Update
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#rightsAccordion">
+                    <div class="accordion-body text-muted">
+                        You have the right to access and update your personal information at any time through your account settings.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                        Data Deletion
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#rightsAccordion">
+                    <div class="accordion-body text-muted">
+                        You can request the deletion of your account and associated data by contacting our support team.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Us -->
+    <div class="privacy-section" data-aos="fade-up">
+        <div class="icon-circle">
+            <i class="bi bi-envelope"></i>
+        </div>
+        <h2 class="h3 mb-4">Contact Us</h2>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    If you have any questions about our Privacy Policy, please contact us:
+                </p>
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <i class="bi bi-envelope-fill text-primary me-2"></i>
+                        Email: privacy@shineup.com
+                    </li>
+                    <li class="mb-3">
+                        <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                        Address: 123 Talent Street, District 1, Ho Chi Minh City, Vietnam
+                    </li>
+                    <li>
+                        <i class="bi bi-telephone-fill text-primary me-2"></i>
+                        Phone: (84) 28 1234 5678
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 800,
+        once: true
+    });
+
+    // Add animation to sections on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        const sections = document.querySelectorAll('.privacy-section');
+        sections.forEach((section, index) => {
+            section.style.animationDelay = `${index * 0.2}s`;
+            section.classList.add('fade-in');
+        });
+    });
+</script>
+}

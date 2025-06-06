@@ -1,0 +1,150 @@
+@model IEnumerable<Client.Areas.Admin.Models.ContestViewModel>
+@{
+    ViewData["Title"] = "Contest Management";
+    string backIcon = "bx bx-arrow-back";
+    string plusIcon = "bx bx-plus";
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+    Layout = "_AdminLayout";
+}
+
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Contest Management</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="@plusIcon"></i> Create New Contest
+        </a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Entries</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var contest in Model)
+                            {
+                                <tr>
+                                    <td>@contest.Title</td>
+                                    <td>@contest.StartDate.ToString("g")</td>
+                                    <td>@contest.EndDate.ToString("g")</td>
+                                    <td>@contest.EntryCount</td>
+                                    <td>
+                                        @if (DateTime.Now < contest.StartDate)
+                                        {
+                                            <span class="badge bg-info">Upcoming</span>
+                                        }
+                                        else if (DateTime.Now > contest.EndDate)
+                                        {
+                                            <span class="badge bg-secondary">Ended</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@contest.ContestID" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
+                                                <i class='bx bx-show'></i>
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@contest.ContestID" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                                <i class='bx bx-edit'></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-danger delete-contest" data-id="@contest.ContestID" data-bs-toggle="tooltip" title="Delete">
+                                                <i class='bx bx-trash'></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">No contests found. Create your first contest to get started!</div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this contest? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // Handle delete button click
+            const deleteButtons = document.querySelectorAll('.delete-contest');
+            const deleteForm = document.getElementById('deleteForm');
+            
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const contestId = this.getAttribute('data-id');
+                    deleteForm.action = '/Admin/ContestManagement/Delete/' + contestId;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
+                });
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
+}

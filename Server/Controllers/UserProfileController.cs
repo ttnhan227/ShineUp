@@ -6,6 +6,7 @@ using Server.Interfaces;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Server.Models;
+using Server.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,13 +23,23 @@ public class UserProfileController : ControllerBase
     private readonly ICloudinaryService _cloudinaryService; // Injected Cloudinary Service
     private readonly ILogger<UserProfileController> _logger;
     private readonly IPostRepository _postRepository; // Injected Post Repository
+    private readonly INotificationRepository _notificationRepository; // Injected Notification Repository
+    private readonly DatabaseContext _context; // Database context for direct access
 
-    public UserProfileController(IUserProfileRepository userProfileRepository, ICloudinaryService cloudinaryService, ILogger<UserProfileController> logger, IPostRepository postRepository)
+    public UserProfileController(
+        IUserProfileRepository userProfileRepository, 
+        ICloudinaryService cloudinaryService, 
+        ILogger<UserProfileController> logger, 
+        IPostRepository postRepository,
+        INotificationRepository notificationRepository,
+        DatabaseContext context)
     {
         _userProfileRepository = userProfileRepository;
         _cloudinaryService = cloudinaryService; // Assigned
         _logger = logger;
         _postRepository = postRepository; // Assigned
+        _notificationRepository = notificationRepository; // Assigned
+        _context = context; // Assigned
     }
 
     // Removed [HttpGet("{userId}")] GetProfile(int userId) action as it's replaced by GetProfileByUsername
@@ -162,6 +173,25 @@ public class UserProfileController : ControllerBase
 
             var updatedUser = await _userProfileRepository.UpdateProfile(userModel);
 
+            // Create a notification for profile update
+            try
+            {
+                var notificationDto = new CreateNotificationDTO
+                {
+                    UserID = currentUserId,
+                    Message = "Your profile has been successfully updated.",
+                    Type = NotificationType.Generic,
+                    RelatedEntityType = "Profile"
+                };
+
+                await _notificationRepository.CreateNotificationAsync(notificationDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating profile update notification");
+                // Don't fail the profile update if notification fails
+            }
+
             var userDto = new UserDTO
             {
                 UserID = updatedUser.UserID,
@@ -208,6 +238,9 @@ public class UserProfileController : ControllerBase
             // The DTO doesn't contain userId, so we use the one from the claim.
             // No need to compare route userId with claim userId here as there's no route parameter for userId.
 
+            // Get user info before changing password for the notification
+            var user = await _context.Users.FindAsync(currentUserId);
+            
             var success = await _userProfileRepository.ChangePassword(
                 currentUserId,
                 changePasswordDto.CurrentPassword,
@@ -216,6 +249,25 @@ public class UserProfileController : ControllerBase
 
             if (success)
             {
+                // Create a notification for password change
+                try
+                {
+                    var notificationDto = new CreateNotificationDTO
+                    {
+                        UserID = currentUserId,
+                        Message = "Your password was recently changed. If you didn't make this change, please secure your account.",
+                        Type = NotificationType.Security,
+                        RelatedEntityType = "Account"
+                    };
+
+                    await _notificationRepository.CreateNotificationAsync(notificationDto);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating password change notification");
+                    // Don't fail the password change if notification fails
+                }
+
                 return Ok(new { message = "Password changed successfully." });
             }
             else

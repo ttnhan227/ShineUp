@@ -1,213 +1,398 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Server.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
+[ApiController]
+[Authorize]
 public class OpportunitiesController : ControllerBase
 {
-    private readonly IOpportunityApplicationRepository _applicationRepository;
+    private readonly IOpportunityRepository _opportunityRepository;
     private readonly INotificationRepository _notificationRepository;
-    private readonly DatabaseContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<OpportunitiesController> _logger;
 
     public OpportunitiesController(
-        IOpportunityApplicationRepository applicationRepository,
+        IOpportunityRepository opportunityRepository,
         INotificationRepository notificationRepository,
-        DatabaseContext context)
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<OpportunitiesController> logger)
     {
-        _applicationRepository = applicationRepository;
+        _opportunityRepository = opportunityRepository;
         _notificationRepository = notificationRepository;
-        _context = context;
+        _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
-    [HttpPost("applications")]
-    public async Task<IActionResult> CreateApplication([FromBody] OpportunityApplicationCreateDTO dto)
+    private int GetCurrentUserId()
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var user = await _context.Users.FindAsync(dto.UserID);
-        if (user == null)
-            return BadRequest(new { message = "User not found" });
-
-        var application = new OpportunityApplication
+        var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                        ?? _httpContextAccessor.HttpContext?.User.FindFirst("id")?.Value
+                        ?? throw new UnauthorizedAccessException("User ID claim not found");
+        
+        if (!int.TryParse(userIdClaim, out int userId))
         {
-            UserID = dto.UserID,
-            OpportunityTitle = dto.OpportunityTitle,
-            OpportunityDescription = dto.OpportunityDescription,
-            AppliedAt = DateTime.UtcNow
-        };
-
-        var createdApplication = await _applicationRepository.CreateAsync(application);
-
-        var response = new OpportunityApplicationDTO
-        {
-            ApplicationID = createdApplication.ApplicationID,
-            UserID = createdApplication.UserID,
-            Username = user.Username,
-            OpportunityTitle = createdApplication.OpportunityTitle,
-            OpportunityDescription = createdApplication.OpportunityDescription,
-            AppliedAt = createdApplication.AppliedAt
-        };
-
-        return Ok(response);
-    }
-
-    [HttpGet("applications/user/{userId}")]
-    public async Task<IActionResult> GetUserApplications(int userId)
-    {
-        var applications = await _applicationRepository.GetByUserIdAsync(userId);
-        var response = applications.Select(a => new OpportunityApplicationDTO
-        {
-            ApplicationID = a.ApplicationID,
-            UserID = a.UserID,
-            Username = a.User.Username,
-            OpportunityTitle = a.OpportunityTitle,
-            OpportunityDescription = a.OpportunityDescription,
-            AppliedAt = a.AppliedAt
-        }).ToList();
-
-        return Ok(response);
-    }
-
-    [HttpPost("notifications")]
-    public async Task<IActionResult> CreateNotification([FromBody] NotificationCreateDTO dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var user = await _context.Users.FindAsync(dto.UserID);
-        if (user == null)
-            return BadRequest(new { message = "User not found" });
-
-        var notification = new Notification
-        {
-            UserID = dto.UserID,
-            Message = dto.Message,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        var createdNotification = await _notificationRepository.CreateAsync(notification);
-
-        var response = new NotificationDTO
-        {
-            NotificationID = createdNotification.NotificationID,
-            UserID = createdNotification.UserID,
-            Username = user.Username,
-            Message = createdNotification.Message,
-            CreatedAt = createdNotification.CreatedAt
-        };
-
-        return Ok(response);
-    }
-
-    [HttpGet("notifications/user/{userId}")]
-    public async Task<IActionResult> GetUserNotifications(int userId)
-    {
-        var notifications = await _notificationRepository.GetByUserIdAsync(userId);
-        var response = notifications.Select(n => new NotificationDTO
-        {
-            NotificationID = n.NotificationID,
-            UserID = n.UserID,
-            Username = n.User.Username,
-            Message = n.Message,
-            CreatedAt = n.CreatedAt
-        }).ToList();
-
-        return Ok(response);
-    }
-
-    [HttpGet("applications/{id}")]
-    public async Task<IActionResult> GetApplication(int id)
-    {
-        var application = await _applicationRepository.GetByIdAsync(id);
-        if (application == null)
-            return NotFound();
-
-        var response = new OpportunityApplicationDTO
-        {
-            ApplicationID = application.ApplicationID,
-            UserID = application.UserID,
-            Username = application.User.Username,
-            OpportunityTitle = application.OpportunityTitle,
-            OpportunityDescription = application.OpportunityDescription,
-            AppliedAt = application.AppliedAt
-        };
-
-        return Ok(response);
-    }
-
-    [HttpPut("applications/{id}")]
-    public async Task<IActionResult> UpdateApplication(int id, [FromBody] OpportunityApplicationDTO dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var existingApplication = await _applicationRepository.GetByIdAsync(id);
-        if (existingApplication == null)
-            return NotFound();
-
-        // Verify the user owns this application
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                          ?? User.FindFirst("UserID")?.Value 
-                          ?? User.FindFirst("sub")?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId) || 
-            existingApplication.UserID != userId)
-        {
-            return Unauthorized();
+            throw new UnauthorizedAccessException("Invalid user ID format");
         }
-
-        // Update the application
-        existingApplication.OpportunityTitle = dto.OpportunityTitle;
-        existingApplication.OpportunityDescription = dto.OpportunityDescription;
-
-        await _context.SaveChangesAsync();
-
-        var response = new OpportunityApplicationDTO
-        {
-            ApplicationID = existingApplication.ApplicationID,
-            UserID = existingApplication.UserID,
-            Username = existingApplication.User.Username,
-            OpportunityTitle = existingApplication.OpportunityTitle,
-            OpportunityDescription = existingApplication.OpportunityDescription,
-            AppliedAt = existingApplication.AppliedAt
-        };
-
-        return Ok(response);
+        
+        return userId;
     }
 
-    [HttpDelete("applications/{id}")]
-    public async Task<IActionResult> DeleteApplication(int id)
+    // GET: api/opportunities
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<OpportunityDTO>>> GetOpportunities()
     {
-        var application = await _applicationRepository.GetByIdAsync(id);
-        if (application == null)
-            return NotFound();
+        var opportunities = await _opportunityRepository.GetAllOpportunitiesAsync();
+        return Ok(opportunities);
+    }
+    
+    // GET: api/opportunities/category/5
+    [HttpGet("category/{categoryId}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<OpportunityDTO>>> GetOpportunitiesByCategory(int categoryId)
+    {
+        var opportunities = await _opportunityRepository.GetOpportunitiesByCategoryAsync(categoryId);
+        return Ok(opportunities);
+    }
 
-        // Verify the user owns this application
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                          ?? User.FindFirst("UserID")?.Value 
-                          ?? User.FindFirst("sub")?.Value;
-
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId) || 
-            application.UserID != userId)
+    // GET: api/opportunities/5
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<OpportunityDTO>> GetOpportunity(int id)
+    {
+        var opportunity = await _opportunityRepository.GetOpportunityByIdAsync(id);
+        if (opportunity == null)
         {
-            return Unauthorized();
+            return NotFound();
         }
+        return Ok(opportunity);
+    }
 
+    // GET: api/opportunities/user
+    [HttpGet("user")]
+    public async Task<ActionResult<IEnumerable<OpportunityDTO>>> GetUserOpportunities()
+    {
+        var userId = GetCurrentUserId();
+        var opportunities = await _opportunityRepository.GetOpportunitiesByUserAsync(userId);
+        return Ok(opportunities);
+    }
 
-        var result = await _applicationRepository.DeleteAsync(id);
-        if (!result)
-            return StatusCode(500, "An error occurred while deleting the application.");
+    // GET: api/opportunities/talent/music
+    [HttpGet("talent/{talentArea}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<OpportunityDTO>>> GetOpportunitiesByTalentArea(string talentArea)
+    {
+        var opportunities = await _opportunityRepository.GetOpportunitiesByTalentAreaAsync(talentArea);
+        return Ok(opportunities);
+    }
 
+    // POST: api/opportunities
+    [HttpPost]
+    public async Task<ActionResult<OpportunityDTO>> CreateOpportunity(CreateOpportunityDTO opportunityDto)
+    {
+        var userId = GetCurrentUserId();
+        var opportunity = await _opportunityRepository.CreateOpportunityAsync(opportunityDto, userId);
+        return CreatedAtAction(nameof(GetOpportunity), new { id = opportunity.Id }, opportunity);
+    }
+
+    // PUT: api/opportunities/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOpportunity(int id, UpdateOpportunityDTO opportunityDto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _opportunityRepository.UpdateOpportunityAsync(id, opportunityDto, userId);
+        
+        if (result == null)
+        {
+            return NotFound();
+        }
+        
         return NoContent();
+    }
+
+    // DELETE: api/opportunities/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOpportunity(int id)
+    {
+        var userId = GetCurrentUserId();
+        var success = await _opportunityRepository.DeleteOpportunityAsync(id, userId);
+        
+        if (!success)
+        {
+            return NotFound();
+        }
+        
+        return NoContent();
+    }
+
+    // POST: api/opportunities/5/apply
+    [HttpPost("{opportunityId}/apply")]
+    public async Task<ActionResult<OpportunityApplicationDTO>> ApplyForOpportunity(
+        int opportunityId, 
+        [FromBody] CreateOpportunityApplicationDTO applicationDto)
+    {
+        if (opportunityId != applicationDto.TalentOpportunityID)
+        {
+            return BadRequest("Opportunity ID mismatch");
+        }
+
+        var userId = GetCurrentUserId();
+        var application = await _opportunityRepository.ApplyForOpportunityAsync(applicationDto, userId);
+        
+        if (application == null)
+        {
+            return NotFound("Opportunity not found");
+        }
+        
+        return CreatedAtAction(
+            nameof(GetApplication),
+            new { opportunityId, applicationId = application.ApplicationID },
+            application);
+    }
+
+    // GET: api/opportunities/5/applications
+    [HttpGet("{opportunityId}/applications")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<OpportunityApplicationDTO>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetOpportunityApplications(int opportunityId)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var applications = await _opportunityRepository.GetOpportunityApplicationsAsync(opportunityId, userId);
+            
+            if (applications == null)
+            {
+                return NotFound(new { message = "Opportunity not found or you don't have permission to view applications" });
+            }
+            
+            return Ok(applications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting opportunity applications");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving applications" });
+        }
+    }
+
+    // GET: api/opportunities/applications/me
+    [HttpGet("applications/me")]
+    public async Task<ActionResult<IEnumerable<OpportunityApplicationDTO>>> GetMyApplications()
+    {
+        var userId = GetCurrentUserId();
+        var applications = await _opportunityRepository.GetUserApplicationsAsync(userId);
+        return Ok(applications);
+    }
+
+    // GET: api/opportunities/5/applications/3
+    [HttpGet("{opportunityId}/applications/{applicationId}")]
+    public async Task<ActionResult<OpportunityApplicationDTO>> GetApplication(int opportunityId, int applicationId)
+    {
+        var userId = GetCurrentUserId();
+        var applications = await _opportunityRepository.GetOpportunityApplicationsAsync(opportunityId, userId);
+        
+        if (applications == null)
+        {
+            return NotFound("Opportunity not found or you don't have permission to view applications");
+        }
+        
+        var application = applications.FirstOrDefault(a => a.ApplicationID == applicationId);
+        if (application == null)
+        {
+            return NotFound("Application not found");
+        }
+        
+        return Ok(application);
+    }
+
+    // PUT: api/opportunities/5/applications/3/status
+    [HttpPut("{opportunityId}/applications/{applicationId}/status")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(OpportunityApplicationDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateApplicationStatus(
+        int opportunityId, 
+        int applicationId, 
+        [FromBody] UpdateOpportunityApplicationDTO updateDto)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            
+            // First verify the opportunity exists and user has access
+            var opportunity = await _opportunityRepository.GetOpportunityByIdAsync(opportunityId);
+            if (opportunity == null)
+            {
+                return NotFound(new { message = "Opportunity not found" });
+            }
+            
+            // Update the application status
+            var application = await _opportunityRepository.UpdateApplicationStatusAsync(applicationId, updateDto, userId);
+            
+            if (application == null)
+            {
+                return NotFound(new { message = "Application not found" });
+            }
+            
+            // Send notification to the applicant
+            try
+            {
+                string notificationMessage;
+                var status = updateDto.Status.ToLower();
+                var opportunityTitle = opportunity.Title;
+                var recruiterName = User.FindFirst(ClaimTypes.Name)?.Value ?? "The recruitment team";
+
+                switch (status)
+                {
+                    case "pending":
+                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. We've received your application and will review it shortly.";
+                        break;
+                    case "reviewing":
+                        notificationMessage = $"Great news! Your application for '{opportunityTitle}' is currently under review by our team.";
+                        break;
+                    case "shortlisted":
+                        notificationMessage = $"Congratulations! Your application for '{opportunityTitle}' has been shortlisted. We'll be in touch soon with next steps.";
+                        break;
+                    case "interviewing":
+                        notificationMessage = $"We're excited to move forward with your application! Let's schedule an interview for the '{opportunityTitle}' position.";
+                        break;
+                    case "accepted":
+                        notificationMessage = $"Congratulations! We're thrilled to offer you the '{opportunityTitle}' position. Please check your email for the offer details.";
+                        break;
+                    case "rejected":
+                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. Unfortunately, we've decided to move forward with other candidates at this time.";
+                        break;
+                    default:
+                        notificationMessage = $"There's been an update to your application for '{opportunityTitle}'. Status: {updateDto.Status}";
+                        break;
+                }
+
+                // Add review notes if available
+                if (!string.IsNullOrEmpty(updateDto.ReviewNotes))
+                {
+                    notificationMessage += $"\n\nNote from {recruiterName}: {updateDto.ReviewNotes}";
+                }
+                
+                var notificationDto = new CreateNotificationDTO
+                {
+                    UserID = application.UserID,
+                    Message = notificationMessage,
+                    Type = NotificationType.ApplicationUpdate,
+                    RelatedEntityId = applicationId,
+                    RelatedEntityType = "Application"
+                };
+                
+                await _notificationRepository.CreateNotificationAsync(notificationDto);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the request
+                _logger.LogError(ex, "Failed to send notification for application status update");
+            }
+            
+            return Ok(application);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating application status");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the application status" });
+        }
+    }
+    
+    // POST: api/opportunities/5/update-status
+    [HttpPost("{id}/update-status")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(OpportunityDTO))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateStatus(int id)
+    {
+        try
+        {
+            // Get status from query string
+            var status = Request.Query["status"].FirstOrDefault();
+            
+            _logger.LogInformation($"UpdateStatus called with id: {id}, status: {status}");
+            _logger.LogInformation($"Request content type: {Request.ContentType}");
+            _logger.LogInformation($"Request query string: {Request.QueryString}");
+            
+            if (string.IsNullOrEmpty(status))
+            {
+                _logger.LogWarning("Status parameter is missing or empty");
+                return BadRequest(new { message = "Status is required. Valid values are: Open, Closed, Draft, Paused" });
+            }
+            
+            // Normalize the status value (trim and capitalize first letter)
+            status = status.Trim();
+            if (status.Length > 0)
+            {
+                status = char.ToUpper(status[0]) + (status.Length > 1 ? status[1..].ToLower() : string.Empty);
+            }
+
+            var userId = GetCurrentUserId();
+            var opportunity = await _opportunityRepository.GetOpportunityByIdAsync(id);
+            
+            if (opportunity == null)
+            {
+                return NotFound(new { message = "Opportunity not found" });
+            }
+            
+            // Verify the current user is the owner of the opportunity
+            if (opportunity.PostedByUserId != userId)
+            {
+                return Forbid();
+            }
+            
+            // Map the status string to the enum
+            if (!Enum.TryParse<OpportunityStatus>(status, true, out var statusEnum))
+            {
+                _logger.LogWarning($"Invalid status value provided: {status}");
+                var validValues = string.Join(", ", Enum.GetNames(typeof(OpportunityStatus)));
+                return BadRequest(new { 
+                    message = $"Invalid status value: '{status}'. Valid values are: {validValues}",
+                    validValues = Enum.GetNames(typeof(OpportunityStatus))
+                });
+            }
+            
+            // Create an update DTO with just the status
+            var updateDto = new UpdateOpportunityDTO
+            {
+                Status = statusEnum
+            };
+            
+            var result = await _opportunityRepository.UpdateOpportunityAsync(id, updateDto, userId);
+            
+            if (result == null)
+            {
+                _logger.LogError("Error updating opportunity status. UpdateOpportunityAsync returned null.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error updating opportunity status" });
+            }
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating opportunity status");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the opportunity status" });
+        }
     }
 }

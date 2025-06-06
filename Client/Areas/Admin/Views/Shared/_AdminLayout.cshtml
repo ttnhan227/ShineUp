@@ -1,0 +1,270 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin - ShineUp</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="~/admin/assets/css/admin.css" asp-append-version="true" />
+    
+    <!-- Custom styles for this template-->
+    <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        body.loaded {
+            opacity: 1;
+        }
+    </style>
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="loaded">
+    <div class="wrapper">
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay"></div>
+        
+        <!-- Sidebar -->
+        <nav id="sidebar" class="active">
+            <div class="sidebar-header">
+                <h3>ShineUp Admin</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                        <i class='bx bxs-dashboard'></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#userManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-user-account'></i>
+                        <span>User Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="userManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="UserManagement" asp-action="Index">
+                                <i class='bx bx-user'></i>
+                                <span>Users</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="RoleManagement" asp-action="Index">
+                                <i class='bx bx-shield'></i>
+                                <span>Roles</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#contestSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-trophy'></i>
+                        <span>Contest Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="contestSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="ContestManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Contests</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="ContestManagement" asp-action="Create">
+                                <i class='bx bx-plus-circle'></i>
+                                <span>Create New</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#postManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-news'></i>
+                        <span>Post Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="postManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="PostManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Posts</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#categoryManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-category'></i>
+                        <span>Category Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="categoryManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="CategoryManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Categories</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="CategoryManagement" asp-action="Create">
+                                <i class='bx bx-plus-circle'></i>
+                                <span>Create New</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#opportunityManagementSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class='bx bxs-briefcase-alt-2'></i>
+                        <span>Opportunities</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="opportunityManagementSubmenu">
+                        <li>
+                            <a asp-area="Admin" asp-controller="OpportunityManagement" asp-action="Index">
+                                <i class='bx bx-list-ul'></i>
+                                <span>All Opportunities</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="Admin" asp-controller="OpportunityManagement" asp-action="Create">
+                                <i class='bx bx-plus-circle'></i>
+                                <span>Create New</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a asp-area="Admin" asp-controller="Settings" asp-action="Index">
+                        <i class='bx bxs-cog'></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Back to Home Link -->
+            <div class="back-to-home p-3 border-top">
+                <a href="/" class="d-flex align-items-center text-decoration-none">
+                    <i class='bx bx-home-alt me-2'></i>
+                    <span>Back to Home</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-info d-flex align-items-center">
+                    <div class="user-avatar">
+                        <i class='bx bxs-user-circle'></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">@User.Identity?.Name</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-light">
+                        <i class='bx bx-menu'></i>
+                    </button>
+                    <div class="ms-auto d-flex align-items-center">
+                        <span class="me-3">Welcome, @User.Identity?.Name</span>
+                        <form class="d-flex" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Toggle sidebar
+            $('#sidebarCollapse').on('click', function (e) {
+                e.preventDefault();
+                $('body').toggleClass('sidebar-open');
+                $('#sidebar').toggleClass('active');
+            });
+            
+            // Close sidebar when clicking on overlay
+            $('.sidebar-overlay').on('click', function() {
+                $('body').removeClass('sidebar-open');
+                $('#sidebar').removeClass('active');
+            });
+
+            // Check for saved sidebar state (only for mobile)
+            if ($(window).width() <= 992) {
+                $('#sidebar').removeClass('active');
+            }
+
+            // Activate current menu item
+            var current = location.pathname;
+            $('ul.components li a').each(function() {
+                var $this = $(this);
+                if (current.indexOf($this.attr('href')) !== -1) {
+                    $this.parent().addClass('active');
+                }
+            });
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Add smooth fade-in for page content
+            $('body').addClass('loaded');
+        });
+
+        // Handle window resize
+        function handleResize() {
+            if ($(window).width() <= 992) {
+                // Mobile view - hide sidebar by default
+                $('body').removeClass('sidebar-open');
+                $('#sidebar').removeClass('active');
+            } else {
+                // Desktop view - always show sidebar
+                $('body').removeClass('sidebar-open');
+                $('#sidebar').addClass('active');
+            }
+        }
+        
+        // Initial call and on resize
+        $(window).on('resize', handleResize).trigger('resize');
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

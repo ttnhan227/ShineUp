@@ -33,5 +33,11 @@ namespace Client.Models
         [StringLength(50, MinimumLength = 2, ErrorMessage = "Talent area must be between 2 and 50 characters")]
         [Display(Name = "Talent Area")]
         public string TalentArea { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm Password")]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

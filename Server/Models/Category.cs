@@ -13,4 +13,5 @@ public class Category
     public ICollection<Video> Videos { get; set; }
     public ICollection<Post> Posts { get; set; }
     public ICollection<Image> Images { get; set; }
+    public ICollection<TalentOpportunity> TalentOpportunities { get; set; }
 }

@@ -117,6 +117,12 @@ app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Opportunities route with category filter
+app.MapControllerRoute(
+    name: "opportunities",
+    pattern: "Opportunities/{action=Index}/{id?}",
+    defaults: new { controller = "Opportunities" });
+
 // Default route
 app.MapControllerRoute(
     name: "default",

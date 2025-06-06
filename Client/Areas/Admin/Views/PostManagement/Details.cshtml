@@ -1,0 +1,176 @@
+@model Client.Areas.Admin.Models.PostDetailViewModel
+@{
+    ViewData["Title"] = "Post Details";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Post Details</h2>
+                        <div>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class='bx bx-arrow-back'></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>@Model.Title</h4>
+                                    <div class="text-muted small">
+                                        <i class='bx bx-time'></i> Created: @Model.CreatedAt.ToString("f")
+                                        @if (Model.UpdatedAt.HasValue)
+                                        {
+                                            <span class="ms-3">
+                                                <i class='bx bx-edit'></i> Updated: @Model.UpdatedAt.Value.ToString("f")
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="post-content mb-4">
+                                        @Html.Raw(Model.Content)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5>Post Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-1">Author</h6>
+                                        <p class="mb-0">@Model.UserName (@Model.UserEmail)</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-1">Category</h6>
+                                        <p class="mb-0">@(string.IsNullOrEmpty(Model.CategoryName) ? "-" : Model.CategoryName)</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-1">Privacy</h6>
+                                        <p class="mb-0">@(string.IsNullOrEmpty(Model.PrivacyName) ? "-" : Model.PrivacyName)</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-1">Community</h6>
+                                        <p class="mb-0">@(string.IsNullOrEmpty(Model.CommunityName) ? "-" : Model.CommunityName)</p>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <h6 class="text-muted mb-1">Comments</h6>
+                                            <p class="mb-0">@Model.CommentCount</p>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6 class="text-muted mb-1">Likes</h6>
+                                            <p class="mb-0">@Model.LikeCount</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-1">Status</h6>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="isActive"
+                                                   @(Model.IsActive ? "checked" : "")
+                                                   onchange="updatePostStatus(@Model.PostID, this.checked)">
+                                            <label class="form-check-label" for="isActive">
+                                                @(Model.IsActive ? "Active" : "Inactive")
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-danger" 
+                                                onclick="confirmDelete(@Model.PostID, '@Model.Title')">
+                                            <i class='bx bx-trash'></i> Delete Post
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the post "<span id="postTitle"></span>"? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline-block;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
+    
+    <script>
+        function updatePostStatus(postId, isActive) {
+            fetch(`/Admin/PostManagement/UpdateStatus/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(isActive)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the post status.');
+                window.location.reload();
+            });
+        }
+
+        function confirmDelete(postId, postTitle) {
+            document.getElementById('postTitle').textContent = postTitle;
+            const form = document.getElementById('deleteForm');
+            form.action = `/Admin/PostManagement/Delete/${postId}`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
+}
