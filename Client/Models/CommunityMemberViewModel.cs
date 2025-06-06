@@ -18,6 +18,7 @@ public class CommunityMemberViewModel
 
 public enum CommunityRole
 {
-    Member,
-    Moderator
+    None,      // Not a member
+    Member,    // Regular member
+    Moderator  // Community moderator
 }

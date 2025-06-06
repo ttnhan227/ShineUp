@@ -1,7 +1,6 @@
 @model Client.Models.CommunityDetailsViewModel
 @{
     ViewData["Title"] = "Community Details";
-    string role = ViewBag.UserRole as string ?? "None";
     int currentUserId = (int)ViewBag.CurrentUserId;
 }
 
@@ -34,17 +33,17 @@
                 <div class="card-header bg-light">
                     <div class="d-flex justify-content-between align-items-center">
                         <h2 class="h4 mb-0">@Model.Community.Name</h2>
-                        @if (role == "Moderator")
+                        @switch (Model.CommunityRole)
                         {
-                            <span class="badge bg-success">Moderator</span>
-                        }
-                        else if (role == "Member")
-                        {
-                            <span class="badge bg-primary">Member</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Not Joined</span>
+                            case Client.Models.CommunityRole.Moderator:
+                                <span class="badge bg-success">Moderator</span>
+                                break;
+                            case Client.Models.CommunityRole.Member:
+                                <span class="badge bg-primary">Member</span>
+                                break;
+                            default:
+                                <span class="badge bg-secondary">Not Joined</span>
+                                break;
                         }
                     </div>
                 </div>
@@ -67,33 +66,33 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
-                    @if (role == "Moderator")
+                    @switch (Model.CommunityRole)
                     {
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-success"><i class="fas fa-shield-alt me-2"></i>You are moderator of this community</span>
-                            <div>
-                                <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID" class="btn btn-outline-primary btn-sm me-2">
-                                    <i class="fas fa-edit me-1"></i> Edit
-                                </a>
+                        case Client.Models.CommunityRole.Moderator:
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-success"><i class="fas fa-shield-alt me-2"></i>You are moderator of this community</span>
+                                <div>
+                                    <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID" class="btn btn-outline-primary btn-sm me-2">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    }
-                    else if (role == "Member")
-                    {
-                        <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger" 
-                                    onclick="return confirm('Are you sure you want to leave this community?');">
-                                <i class="fas fa-sign-out-alt me-1"></i> Leave Community
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-user-plus me-1"></i> Join Community
-                            </button>
-                        </form>
+                            break;
+                        case Client.Models.CommunityRole.Member:
+                            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger" 
+                                        onclick="return confirm('Are you sure you want to leave this community?');">
+                                    <i class="fas fa-sign-out-alt me-1"></i> Leave Community
+                                </button>
+                            </form>
+                            break;
+                        default:
+                            <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus me-1"></i> Join Community
+                                </button>
+                            </form>
+                            break;
                     }
                 </div>
             </div>
@@ -112,7 +111,7 @@
                 <div class="card-body p-0">
                     @{
                         ViewBag.CurrentUserId = currentUserId;
-                        ViewBag.UserRole = role;
+                        ViewBag.UserRole = Model.CommunityRole.ToString();
                     }
                     @await Html.PartialAsync("_CommunityMemberListPartial", Model.Members)
                 </div>

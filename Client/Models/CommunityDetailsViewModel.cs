@@ -7,6 +7,6 @@ namespace Client.Models
     {
         public CommunityViewModel Community { get; set; } = null!;
         public List<CommunityMemberViewModel> Members { get; set; } = new();
-        public string UserRole { get; set; } = "None";
+        public CommunityRole CommunityRole { get; set; } = CommunityRole.None;
     }
 }

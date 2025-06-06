@@ -249,6 +249,7 @@ public class CommunityRepository : ICommunityRepository
                 Username = m.User.Username,
                 FullName = m.User.FullName,
                 Email = m.User.Email,
+                ProfileImageUrl = m.User.ProfileImageURL,
                 Role = m.Role.ToString(),
                 JoinedAt = m.JoinedAt,
                 LastActiveAt = m.LastActiveAt
@@ -415,8 +416,10 @@ public class CommunityRepository : ICommunityRepository
                 FullName = m.User.FullName,
                 Username = m.User.Username,
                 Email = m.User.Email,
+                ProfileImageUrl = m.User.ProfileImageURL,
                 Role = m.Role.ToString(),
-                JoinedAt = m.JoinedAt
+                JoinedAt = m.JoinedAt,
+                LastActiveAt = m.LastActiveAt
             })
             .ToListAsync();
     }

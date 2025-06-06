@@ -1,6 +1,9 @@
 @model List<Client.Models.CommunityMemberViewModel>
+@using Client.Models
 @{
-    string role = ViewBag.UserRole as string ?? "None";
+    var currentUserRole = !string.IsNullOrEmpty(ViewBag.UserRole) ? 
+        (CommunityRole)Enum.Parse(typeof(CommunityRole), ViewBag.UserRole) : 
+        CommunityRole.None;
     int currentUserId = ViewBag.CurrentUserId != null ? (int)ViewBag.CurrentUserId : 0;
 }
 
@@ -19,7 +22,7 @@ else
                     <th>Email</th>
                     <th>Role</th>
                     <th>Join Date</th>
-                    @if (role == "Moderator")
+                    @if (currentUserRole == CommunityRole.Moderator)
                     {
                         <th class="text-end">Actions</th>
                     }
@@ -33,17 +36,21 @@ else
                         <td>@(member.User?.Username ?? "N/A")</td>
                         <td>@(member.User?.Email ?? "N/A")</td>
                         <td>
-                            @if (member.Role == CommunityRole.Moderator)
+                            @switch (member.Role)
                             {
-                                <span class="badge bg-danger">Moderator</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Member</span>
+                                case CommunityRole.Moderator:
+                                    <span class="badge bg-danger">Moderator</span>
+                                    break;
+                                case CommunityRole.Member:
+                                    <span class="badge bg-primary">Member</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">@member.Role</span>
+                                    break;
                             }
                         </td>
                         <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
-                        @if (role == "Moderator" && member.UserID != currentUserId)
+                        @if (currentUserRole == CommunityRole.Moderator && member.UserID != currentUserId)
                         {
                             <td class="text-end">
                                 <div class="d-flex gap-2 justify-content-end">
