@@ -237,5 +237,10 @@
     };
 </script>
 @await RenderSectionAsync("Scripts", required: false)
+@if (!Context.Request.Path.Value.ToLower().Contains("/login"))
+{
+    @Html.Partial("_Chatbot")
+}
+
 </body>
 </html>

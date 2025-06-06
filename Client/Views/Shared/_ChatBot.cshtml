@@ -1,0 +1,183 @@
+<div id="chatbot-toggle" onclick="toggleChatbot()">💬</div>
+
+<div id="chatbot-box" style="display:none;">
+    <div id="chat-header">ChatBot</div>
+    <div id="chat-messages"></div>
+    <div id="chat-loading" style="display:none; text-align:center;">⏳ Loading...</div>
+    <div id="chat-input">
+        <input type="text" id="user-input" placeholder="Type your message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<style>
+    #chatbot-toggle {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #007bff;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 1000;
+    }
+
+    #chatbot-box {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 300px;
+        max-height: 400px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    #chat-header {
+        background: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 10px 10px 0 0;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    #chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .user-message, .bot-message {
+        padding: 8px 12px;
+        margin: 5px 0;
+        border-radius: 12px;
+        max-width: 80%;
+    }
+
+    .user-message {
+        background: #d1e7dd;
+        text-align: right;
+        margin-left: auto;
+    }
+
+    .bot-message {
+        background: #f8d7da;
+        margin-right: auto;
+    }
+
+    #chat-input {
+        display: flex;
+        border-top: 1px solid #ccc;
+    }
+
+    #user-input {
+        flex: 1;
+        border: none;
+        padding: 10px;
+    }
+
+    #chat-input button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+    }
+
+    #chat-loading {
+        font-style: italic;
+        color: gray;
+        font-size: 13px;
+    }
+    .user-message, .bot-message {
+        white-space: pre-wrap;
+    }
+
+</style>
+
+<script>
+    const chatKey = 'chatbot-history';
+
+    function toggleChatbot() {
+        const chatbox = document.getElementById('chatbot-box');
+        chatbox.style.display = (chatbox.style.display === 'none') ? 'flex' : 'none';
+        if (chatbox.style.display === 'flex') loadChatHistory();
+    }
+
+    function appendMessage(message, type, isHtml = false) {
+        const container = document.getElementById('chat-messages');
+        const msg = document.createElement('div');
+        msg.className = type + '-message';
+        if (isHtml) {
+            msg.innerHTML = message;
+        } else {
+            msg.textContent = message;
+        }
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendMessage(text, 'user');
+        saveMessage(text, 'user');
+        input.value = '';
+
+        document.getElementById('chat-loading').style.display = 'block';
+
+        try {
+            const response = await fetch('/ChatBot/Ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            let reply = data.reply || 'No reply from bot';
+
+            // Thay \n thành <br> để xuống dòng khi hiển thị HTML
+            reply = reply.replace(/\n/g, '<br>');
+
+            appendMessage(reply, 'bot', true);
+            saveMessage(data.reply, 'bot'); // lưu bản gốc
+        } catch (error) {
+            appendMessage("❌ Error contacting bot.", 'bot');
+            saveMessage("❌ Error contacting bot.", 'bot');
+        } finally {
+            document.getElementById('chat-loading').style.display = 'none';
+        }
+    }
+
+    function saveMessage(text, type) {
+        let history = JSON.parse(localStorage.getItem(chatKey) || '[]');
+        history.push({ text, type });
+        localStorage.setItem(chatKey, JSON.stringify(history));
+    }
+
+    function loadChatHistory() {
+        const history = JSON.parse(localStorage.getItem(chatKey) || '[]');
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+        for (const msg of history) {
+            const isHtml = (msg.type === 'bot');
+            // bot message có thể có HTML xuống dòng
+            appendMessage(msg.text.replace(/\n/g, '<br>'), msg.type, isHtml);
+        }
+    }
+</script>
