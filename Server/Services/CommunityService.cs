@@ -142,6 +142,7 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
     {
         var community = await _db.Communities
             .Include(c => c.Members)
+                .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(c => c.CommunityID == communityId);
 
         if (community == null)
@@ -157,9 +158,17 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             CreatedByUserID = community.CreatedByUserID,
             PrivacyID = community.PrivacyID,
             MemberUserIds = community.Members.Select(m => m.UserID).ToList(),
+            Members = community.Members.Select(m => new CommunityMemberDTO
+            {
+                UserID = m.UserID,
+                Username = m.User.Username,
+                Email = m.User.Email,
+                Role = m.Role.ToString(),
+                JoinedAt = m.JoinedAt,
+                LastActiveAt = m.LastActiveAt
+            }).ToList(),
             IsCurrentUserMember = community.Members.Any(m => m.UserID == userId),
-            IsCurrentUserAdmin  = community.Members.Any(m => m.UserID == userId && m.Role == CommunityRole.Admin)
-
+            IsCurrentUserAdmin = community.Members.Any(m => m.UserID == userId && m.Role == CommunityRole.Admin)
         };
     }
 
@@ -176,6 +185,7 @@ public async Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int
             CommunityID = communityId,
             UserID = userId,
             JoinedAt = DateTime.UtcNow,
+            LastActiveAt = DateTime.UtcNow,
             Role = CommunityRole.Member
         });
         await _db.SaveChangesAsync();

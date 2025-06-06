@@ -62,7 +62,7 @@ namespace Client.Controllers
         public IActionResult Create()
         {
             if (!User.Identity.IsAuthenticated)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Auth");
 
             return View(new CommunityViewModel());
         }
@@ -74,7 +74,7 @@ namespace Client.Controllers
             if (!User.Identity.IsAuthenticated)
             {
                 _logger.LogWarning("Unauthenticated user attempted to create a community");
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Auth");
             }
 
             var currentUserId = GetUserId();
@@ -297,7 +297,7 @@ namespace Client.Controllers
             if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
             if (!User.Identity.IsAuthenticated)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Auth");
 
             var userId = GetUserId();
             ViewBag.CurrentUserId = userId;
@@ -354,7 +354,7 @@ namespace Client.Controllers
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("Login", "Auth");
                 }
                 else
                 {
