@@ -170,6 +170,8 @@ builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IOpportunityRepository, OpportunityRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ICommunityRepository, CommunityRepository>();
+
 
 // Add Cloudinary Service
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -180,6 +182,7 @@ builder.Services.AddScoped<IContestManagementRepository, ContestManagementReposi
 builder.Services.AddScoped<IPostManagementRepository, PostManagementRepository>();
 builder.Services.AddScoped<ICategoryManagementRepository, CategoryManagementRepository>();
 builder.Services.AddScoped<IOpportunityManagementRepository, OpportunityManagementRepository>();
+
 
 // Update CORS configuration
 builder.Services.AddCors(options =>
@@ -201,7 +204,6 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
-builder.Services.AddScoped<ICommunityRepository, CommunityRepository>();
 
 // Build the application
 var app = builder.Build();
