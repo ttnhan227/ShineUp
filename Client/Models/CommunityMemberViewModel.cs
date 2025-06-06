@@ -18,5 +18,5 @@ public class CommunityMemberViewModel
 public enum CommunityRole
 {
     Member,
-    Admin
+    Moderator
 }

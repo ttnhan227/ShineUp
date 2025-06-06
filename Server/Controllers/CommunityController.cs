@@ -141,19 +141,19 @@ public class CommunityController : ControllerBase
         }
     }
 
-    [HttpPost("{communityId}/transfer-admin")]
+    [HttpPost("{communityId}/transfer-Moderator")]
     [Authorize]
-    public async Task<IActionResult> TransferAdmin(int communityId, [FromQuery] int newAdminId)
+    public async Task<IActionResult> TransferModerator(int communityId, [FromQuery] int newModeratorId)
     {
         try
         {
-            int currentAdminId = GetUserId();
-            await _communityService.TransferAdminAsync(communityId, currentAdminId, newAdminId);
+            int currentModeratorId = GetUserId();
+            await _communityService.TransferModeratorAsync(communityId, currentModeratorId, newModeratorId);
             return NoContent();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "TransferAdmin failed");
+            _logger.LogError(ex, "TransferModerator failed");
             return BadRequest(ex.Message);
         }
     }
@@ -197,10 +197,10 @@ public class CommunityController : ControllerBase
         {
             var userId = GetUserId();
             
-            // Check if user is admin of this community
-            if (!await IsUserAdminAsync(communityId, userId))
+            // Check if user is Moderator of this community
+            if (!await IsUserModeratorAsync(communityId, userId))
             {
-                return Forbid("You must be an admin to update this community.");
+                return Forbid("You must be an Moderator to update this community.");
             }
             
             // Ensure the community ID in the path matches the DTO
@@ -235,19 +235,19 @@ public class CommunityController : ControllerBase
         {
             var requesterId = GetUserId();
         
-            // Sử dụng helper method để kiểm tra quyền admin
-            if (!await IsUserAdminAsync(communityId, requesterId))
+            // Sử dụng helper method để kiểm tra quyền Moderator
+            if (!await IsUserModeratorAsync(communityId, requesterId))
             {
-                // Nếu không phải admin, chỉ được phép tự rời nhóm
+                // Nếu không phải Moderator, chỉ được phép tự rời nhóm
                 if (requesterId != userId)
                 {
-                    return Forbid("Only admin can remove other members.");
+                    return Forbid("Only Moderator can remove other members.");
                 }
             
-                // Kiểm tra xem người bị xóa có phải admin không
-                if (await IsUserAdminAsync(communityId, userId))
+                // Kiểm tra xem người bị xóa có phải Moderator không
+                if (await IsUserModeratorAsync(communityId, userId))
                 {
-                    return BadRequest("Admin must transfer rights before leaving.");
+                    return BadRequest("Moderator must transfer rights before leaving.");
                 }
             }
 
@@ -282,7 +282,7 @@ public class CommunityController : ControllerBase
     }
 
 
-    /// Helper method kiểm tra xem user có phải là admin của cộng đồng không
+    /// Helper method kiểm tra xem user có phải là Moderator của cộng đồng không
     private int GetUserId() 
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -293,15 +293,15 @@ public class CommunityController : ControllerBase
         return userId;
     }
 
-    private async Task<bool> IsUserAdminAsync(int communityId, int userId)
+    private async Task<bool> IsUserModeratorAsync(int communityId, int userId)
     {
         try
         {
-            return await _communityService.IsUserAdminAsync(communityId, userId);
+            return await _communityService.IsUserModeratorAsync(communityId, userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking if user {UserId} is admin of community {CommunityId}", userId, communityId);
+            _logger.LogError(ex, "Error checking if user {UserId} is Moderator of community {CommunityId}", userId, communityId);
             return false;
         }
     }

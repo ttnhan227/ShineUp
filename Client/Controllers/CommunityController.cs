@@ -463,7 +463,7 @@ namespace Client.Controllers
                                 
                             if (currentUserMember != null)
                             {
-                                userRole = currentUserMember.Role; // This will be "Admin" or "Member"
+                                userRole = currentUserMember.Role; // This will be "Moderator" or "Member"
                                 _logger.LogInformation("Set user role from members list: {Role}", userRole);
                             }
                         }
@@ -492,7 +492,7 @@ namespace Client.Controllers
                                     Email = m.Email
                                 },
                                 CommunityID = responseData.CommunityID,
-                                Role = m.Role == "Admin" ? CommunityRole.Admin : CommunityRole.Member,
+                                Role = m.Role == "Moderator" ? CommunityRole.Moderator : CommunityRole.Member,
                                 JoinedAt = m.JoinedAt,
                                 LastActiveAt = m.LastActiveAt
                             }).ToList() ?? new List<CommunityMemberViewModel>(),
@@ -597,7 +597,7 @@ namespace Client.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Moderator")]
         public async Task<IActionResult> RemoveMember(int communityId, int userId)
         {
             if (communityId <= 0 || userId <= 0)
@@ -634,16 +634,16 @@ namespace Client.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> TransferAdmin(int communityId, int newAdminId)
+        [Authorize(Roles = "Moderator")]
+        public async Task<IActionResult> TransferModerator(int communityId, int newModeratorId)
         {
-            if (communityId <= 0 || newAdminId <= 0)
+            if (communityId <= 0 || newModeratorId <= 0)
                 return BadRequest("Thông tin không hợp lệ");
 
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.PostAsJsonAsync($"/api/community/{communityId}/transfer-admin?newAdminId={newAdminId}", new { });
+                var response = await client.PostAsJsonAsync($"/api/community/{communityId}/transfer-Moderator?newModeratorId={newModeratorId}", new { });
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -652,7 +652,7 @@ namespace Client.Controllers
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Failed to transfer admin. Status: {StatusCode}, Response: {Response}",
+                _logger.LogWarning("Failed to transfer Moderator. Status: {StatusCode}, Response: {Response}",
                     response.StatusCode, errorContent);
 
                 TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest
@@ -663,7 +663,7 @@ namespace Client.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error transferring admin for communityId={CommunityId} to userId={NewAdminId}", communityId, newAdminId);
+                _logger.LogError(ex, "Error transferring Moderator for communityId={CommunityId} to userId={NewModeratorId}", communityId, newModeratorId);
                 TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return RedirectToAction(nameof(Details), new { communityId });
             }

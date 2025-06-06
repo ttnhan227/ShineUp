@@ -34,10 +34,10 @@ public class CommunityRepository : ICommunityService
         if (community == null)
             throw new KeyNotFoundException("Community not found.");
 
-        // Check if requester is an admin of this community
-        var isAdmin = await IsUserAdminAsync(communityId, requesterId);
-        if (!isAdmin)
-            throw new UnauthorizedAccessException("You must be an admin to update this community.");
+        // Check if requester is an Moderator of this community
+        var isModerator = await IsUserModeratorAsync(communityId, requesterId);
+        if (!isModerator)
+            throw new UnauthorizedAccessException("You must be an Moderator to update this community.");
 
         // Update properties if they are provided in the DTO
         if (!string.IsNullOrWhiteSpace(dto.Name))
@@ -154,7 +154,7 @@ public class CommunityRepository : ICommunityService
             UserID = userId,
             Community = community,
             JoinedAt = DateTime.UtcNow,
-            Role = CommunityRole.Admin
+            Role = CommunityRole.Moderator
         });
 
         await _db.SaveChangesAsync();
@@ -169,7 +169,7 @@ public class CommunityRepository : ICommunityService
             CreatedByUserID = userId,
             PrivacyID = community.PrivacyID,
             MemberUserIds = new List<int> { userId },
-            IsCurrentUserAdmin = true,
+            IsCurrentUserModerator = true,
             IsCurrentUserMember = true,
             Members = new List<CommunityMemberDTO>(),
             Posts = new List<PostListResponseDto>()
@@ -253,7 +253,7 @@ public class CommunityRepository : ICommunityService
                 LastActiveAt = m.LastActiveAt
             }).ToList(),
             IsCurrentUserMember = community.Members.Any(m => m.UserID == userId),
-            IsCurrentUserAdmin = community.Members.Any(m => m.UserID == userId && m.Role == CommunityRole.Admin)
+            IsCurrentUserModerator = community.Members.Any(m => m.UserID == userId && m.Role == CommunityRole.Moderator)
         };
     }
 
@@ -289,13 +289,13 @@ public class CommunityRepository : ICommunityService
             throw new InvalidOperationException("Not a member");
 
         if (community.CreatedByUserID == userId)
-            throw new InvalidOperationException("Admin must transfer Admin rights before leaving");
+            throw new InvalidOperationException("Moderator must transfer Moderator rights before leaving");
 
         _db.CommunityMembers.Remove(member);
         await _db.SaveChangesAsync();
     }
 
-    public async Task TransferAdminAsync(int communityId, int currentAdminId, int newAdminId)
+    public async Task TransferModeratorAsync(int communityId, int currentModeratorId, int newModeratorId)
     {
         var community = await _db.Communities.Include(c => c.Members)
             .FirstOrDefaultAsync(c => c.CommunityID == communityId);
@@ -303,17 +303,17 @@ public class CommunityRepository : ICommunityService
         if (community == null)
             throw new Exception("Community not found");
 
-        var currentAdmin = community.Members.FirstOrDefault(m => m.UserID == currentAdminId);
-        if (currentAdmin == null || currentAdmin.Role != CommunityRole.Admin)
-            throw new Exception("Only current Admin can transfer Admin rights");
+        var currentModerator = community.Members.FirstOrDefault(m => m.UserID == currentModeratorId);
+        if (currentModerator == null || currentModerator.Role != CommunityRole.Moderator)
+            throw new Exception("Only current Moderator can transfer Moderator rights");
 
-        var newAdmin = community.Members.FirstOrDefault(m => m.UserID == newAdminId);
-        if (newAdmin == null)
-            throw new Exception("New Admin must be a member");
+        var newModerator = community.Members.FirstOrDefault(m => m.UserID == newModeratorId);
+        if (newModerator == null)
+            throw new Exception("New Moderator must be a member");
 
-        currentAdmin.Role = CommunityRole.Member;
-        newAdmin.Role = CommunityRole.Admin;
-        community.CreatedByUserID = newAdminId;
+        currentModerator.Role = CommunityRole.Member;
+        newModerator.Role = CommunityRole.Moderator;
+        community.CreatedByUserID = newModeratorId;
 
         await _db.SaveChangesAsync();
     }
@@ -331,10 +331,10 @@ public class CommunityRepository : ICommunityService
             throw new Exception("User is not a member");
 
         if (userId == community.CreatedByUserID)
-            throw new Exception("Admin cannot remove themselves");
+            throw new Exception("Moderator cannot remove themselves");
 
         if (requesterId != userId && community.CreatedByUserID != requesterId)
-            throw new Exception("Only Admin can remove other members");
+            throw new Exception("Only Moderator can remove other members");
 
         _db.CommunityMembers.Remove(member);
         await _db.SaveChangesAsync();
@@ -384,10 +384,10 @@ public class CommunityRepository : ICommunityService
     public async Task<bool> IsUserMemberAsync(int communityId, int userId) =>
         await _db.CommunityMembers.AnyAsync(m => m.CommunityID == communityId && m.UserID == userId);
 
-    public async Task<bool> IsUserAdminAsync(int communityId, int userId)
+    public async Task<bool> IsUserModeratorAsync(int communityId, int userId)
     {
         var role = await GetUserRoleAsync(communityId, userId);
-        return role == CommunityRole.Admin.ToString();
+        return role == CommunityRole.Moderator.ToString();
     }
 
     public async Task DeleteCommunityAsync(int communityId, int requesterId)
@@ -399,7 +399,7 @@ public class CommunityRepository : ICommunityService
             throw new KeyNotFoundException("Community not found");
 
         if (community.CreatedByUserID != requesterId)
-            throw new UnauthorizedAccessException("Only Admin can delete");
+            throw new UnauthorizedAccessException("Only Moderator can delete");
 
         _db.CommunityMembers.RemoveRange(community.Members);
         _db.Communities.Remove(community);

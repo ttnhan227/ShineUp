@@ -6,7 +6,7 @@ namespace Server.Interfaces;
 
 public interface ICommunityService
 {
-    /// Tạo mới một cộng đồng (Admin mặc định là người tạo)
+    /// Tạo mới một cộng đồng (Moderator mặc định là người tạo)
 
     Task<CommunityDTO> CreateCommunityAsync(CreateCommunityDTO dto, int userId);
 
@@ -22,13 +22,13 @@ public interface ICommunityService
     /// Tham gia cộng đồng (role mặc định là Member)
     Task JoinCommunityAsync(int communityId, int userId);
 
-    /// Rời khỏi cộng đồng (nếu là admin duy nhất thì cấm)
+    /// Rời khỏi cộng đồng (nếu là Moderator duy nhất thì cấm)
     Task LeaveCommunityAsync(int communityId, int userId);
 
-    /// Chuyển quyền admin cho thành viên khác
-    Task TransferAdminAsync(int communityId, int currentAdminId, int newAdminId);
+    /// Chuyển quyền Moderator cho thành viên khác
+    Task TransferModeratorAsync(int communityId, int currentModeratorId, int newModeratorId);
 
-    /// Xoá thành viên ra khỏi cộng đồng (chỉ admin mới được làm)
+    /// Xoá thành viên ra khỏi cộng đồng (chỉ Moderator mới được làm)
     Task RemoveMemberAsync(int communityId, int userId, int requesterId);
 
     /// Lấy danh sách thành viên trong cộng đồng
@@ -39,12 +39,12 @@ public interface ICommunityService
     Task<List<Post>> GetCommunityPostsAsync(int communityId);
 
    
-    /// Cập nhật thông tin cộng đồng (chỉ admin được làm)
+    /// Cập nhật thông tin cộng đồng (chỉ Moderator được làm)
   
     Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId);
 
 
-    /// Xoá cộng đồng (chỉ admin được làm)
+    /// Xoá cộng đồng (chỉ Moderator được làm)
   
     Task DeleteCommunityAsync(int communityId, int requesterId);
 
@@ -54,12 +54,12 @@ public interface ICommunityService
     Task<bool> IsUserMemberAsync(int communityId, int userId);
 
    
-    /// Kiểm tra user có phải admin không
+    /// Kiểm tra user có phải Moderator không
   
-    Task<bool> IsUserAdminAsync(int communityId, int userId);
+    Task<bool> IsUserModeratorAsync(int communityId, int userId);
 
 
-    /// Lấy vai trò hiện tại của user trong cộng đồng (\"Admin\" / \"Member\" / null nếu không tham gia)
+    /// Lấy vai trò hiện tại của user trong cộng đồng (\"Moderator\" / \"Member\" / null nếu không tham gia)
 
     Task<string?> GetUserRoleAsync(int communityId, int userId);
 }

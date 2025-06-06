@@ -12,7 +12,7 @@ namespace Server.DTOs
         public DateTime CreatedAt { get; set; }
         public int CreatedByUserID { get; set; }
         public int? PrivacyID { get; set; }
-        public bool IsCurrentUserAdmin { get; set; }
+        public bool IsCurrentUserModerator { get; set; }
     
         public bool IsCurrentUserMember { get; set; }
         public List<int> MemberUserIds { get; set; }

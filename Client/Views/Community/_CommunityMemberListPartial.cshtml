@@ -33,9 +33,9 @@ else
                         <td>@(member.User?.Username ?? "N/A")</td>
                         <td>@(member.User?.Email ?? "N/A")</td>
                         <td>
-                            @if (member.Role == CommunityRole.Admin)
+                            @if (member.Role == CommunityRole.Moderator)
                             {
-                                <span class="badge bg-danger">Admin</span>
+                                <span class="badge bg-danger">Moderator</span>
                             }
                             else
                             {
@@ -57,7 +57,7 @@ else
                                             </button>
                                         </form>
                                     }
-                                    @if (member.UserID != currentUserId && member.Role != CommunityRole.Admin)
+                                    @if (member.UserID != currentUserId && member.Role != CommunityRole.Moderator)
                                     {
                                         <form method="post" asp-action="TransferAdmin" asp-route-communityId="@member.CommunityID" asp-route-newAdminId="@member.UserID">
                                             <button type="submit" class="btn btn-outline-warning" 
