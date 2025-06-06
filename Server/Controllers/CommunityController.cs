@@ -37,15 +37,25 @@ public class CommunityController : ControllerBase
     /// Lấy thông tin chi tiết của một cộng đồng theo ID
     /// Bao gồm: thông tin cơ bản, danh sách thành viên, vai trò của user hiện tại
     [HttpGet("{communityId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCommunityById(int communityId)
     {
         try
         {
-            int userId = GetUserId(); // Lấy userId từ token
+            int userId = 0; // Default to 0 for unauthenticated users
+            
+            try 
+            {
+                userId = GetUserId(); // Lấy userId từ token nếu có
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // User không đăng nhập, sử dụng userId = 0
+            }
+            
             if (communityId <= 0)
                 return BadRequest("Invalid community ID.");
-            if (userId <= 0)
-                return BadRequest("Invalid user ID.");
+                
             var community = await _communityService.GetCommunityDetailsAsync(communityId, userId);
             return Ok(community);
         }
@@ -53,10 +63,14 @@ public class CommunityController : ControllerBase
         {
             return NotFound("Community not found.");
         }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized("You need to be logged in to view this community.");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve community with ID {CommunityId}", communityId);
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, "Internal server error while retrieving community details.");
         }
     }
 
@@ -267,5 +281,13 @@ public class CommunityController : ControllerBase
         var role = await GetUserRoleAsync(communityId, userId);
         return role == CommunityRole.Admin.ToString();
     }
-    private int GetUserId() => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+    private int GetUserId() 
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        {
+            throw new UnauthorizedAccessException("User is not authenticated or invalid user ID.");
+        }
+        return userId;
+    }
 }
