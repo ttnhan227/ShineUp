@@ -4,7 +4,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Client.Models;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +34,6 @@ builder.Services.AddHttpClient("API", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
-
 // Register IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
@@ -45,19 +43,17 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
-    options.LoginPath = "/Auth/Login"; // Changed to Auth controller
-    options.LogoutPath = "/Auth/Logout"; // Changed to Auth controller
-    options.AccessDeniedPath = "/Auth/AccessDenied"; // Changed to Auth controller
+    options.LoginPath = "/Auth/Login";
+    options.LogoutPath = "/Auth/Logout";
+    options.AccessDeniedPath = "/Auth/AccessDenied";
     options.Cookie.Name = "ShineUpAuth";
-    options.ClaimsIssuer = "ShineUpClient"; // Explicitly set claims issuer
+    options.ClaimsIssuer = "ShineUpClient";
 
-    // Ensure NameIdentifier is correctly mapped
     options.Events.OnValidatePrincipal = async context =>
     {
         var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
         {
-            // If NameIdentifier is missing, try to re-authenticate or sign out
             context.RejectPrincipal();
             await context.HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
         }
@@ -68,48 +64,39 @@ builder.Services.AddSingleton(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
     var apiBaseUrl = configuration["ApiBaseUrl"];
-    
+
     var handler = new HttpClientHandler
     {
         UseCookies = true,
         AllowAutoRedirect = true
     };
-    
+
     var client = new HttpClient(handler);
     client.BaseAddress = new Uri(apiBaseUrl!);
     client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-    
+
     return client;
 });
 
 builder.Services.AddHttpContextAccessor();
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"];   
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
 builder.Services.AddHttpClient("BackendAPI", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
-// Cấu hình Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
 
-// Thay thế mặc định bằng Serilog
-builder.Host.UseSerilog();
+builder.Services.AddControllersWithViews();
 
-builder.Services.AddControllersWithViews(); // hoặc AddControllers cho Web API
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseSerilogRequestLogging(); // Middleware để log HTTP request
+
 app.UseHttpsRedirection();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -142,5 +129,7 @@ app.MapControllerRoute(
     name: "googleAuth",
     pattern: "Auth/google-auth",
     defaults: new { controller = "Auth", action = "GoogleAuth" });
-app.MapControllers(); // hoặc app.MapDefaultControllerRoute() cho MVC
+
+app.MapControllers();
+
 app.Run();
