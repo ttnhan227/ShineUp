@@ -488,8 +488,9 @@ namespace Client.Controllers
                                 {
                                     UserID = m.UserID,
                                     Username = m.Username,
-                                    FullName = m.FullName,
-                                    Email = m.Email
+                                    FullName = !string.IsNullOrEmpty(m.FullName) ? m.FullName : "User",
+                                    Email = m.Email,
+                                    ProfileImageURL = "" // Add default value for required property
                                 },
                                 CommunityID = responseData.CommunityID,
                                 Role = m.Role == "Moderator" ? CommunityRole.Moderator : CommunityRole.Member,

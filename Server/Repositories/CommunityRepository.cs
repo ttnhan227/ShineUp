@@ -247,6 +247,7 @@ public class CommunityRepository : ICommunityService
             {
                 UserID = m.UserID,
                 Username = m.User.Username,
+                FullName = m.User.FullName,
                 Email = m.User.Email,
                 Role = m.Role.ToString(),
                 JoinedAt = m.JoinedAt,
