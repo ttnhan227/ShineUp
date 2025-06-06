@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Net.Http;
+using System.Net;
 
 namespace Client.Controllers
 {
@@ -31,17 +32,17 @@ namespace Client.Controllers
 
         private HttpClient CreateAuthenticatedClient()
         {
-            var client = _httpClientFactory.CreateClient("BackendAPI");
-            var token = _httpContextAccessor.HttpContext?.User.FindFirstValue("JWT");
+            var client = _httpClientFactory.CreateClient("API");
+            var token = HttpContext.Request.Cookies["auth_token"];
 
-            if (string.IsNullOrEmpty(token))
-            {
-                _logger.LogWarning("JWT token not found in user claims");
-            }
-            else
+            if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 _logger.LogInformation("JWT token added to request headers");
+            }
+            else
+            {
+                _logger.LogWarning("JWT token not found in cookies");
             }
 
             client.DefaultRequestHeaders.Accept.Clear();
@@ -50,23 +51,76 @@ namespace Client.Controllers
             return client;
         }
 
-        private string? GetToken() => User.FindFirstValue(ClaimTypes.Authentication);
-
-        private int GetUserId()
+        private int? GetUserId()
         {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+            try
+            {
+                var token = HttpContext.Request.Cookies["auth_token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning("No auth token found in cookies");
+                    return null;
+                }
+
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    _logger.LogWarning("Invalid or missing user ID in token");
+                    return null;
+                }
+
+                return userId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user ID from token");
+                return null;
+            }
         }
 
         [HttpGet]
         public IActionResult Create()
         {
             if (!User.Identity.IsAuthenticated)
+            {
+                _logger.LogWarning("Unauthenticated user attempted to create a community");
                 return RedirectToAction("Login", "Auth");
+            }
+
+            var currentUserId = GetUserId();
+            if (currentUserId == null || currentUserId <= 0)
+            {
+                _logger.LogWarning("User not authenticated or invalid user ID");
+                return RedirectToAction("Login", "Auth");
+            }
+
+            _logger.LogInformation("Starting community creation process for user {UserId}", currentUserId);
+
+            ModelState.Remove("CreatedByUserID");
+            _logger.LogDebug("Model state is valid: {IsValid}", ModelState.IsValid);
+
+            if (!ModelState.IsValid)
+            {
+                var modelType = typeof(CommunityViewModel);
+                var properties = modelType.GetProperties();
+                var modelValues = string.Join("\n", properties
+                    .Select(p => $"{p.Name} = {p.GetValue(null) ?? "null"} (Type: {p.PropertyType.Name})"));
+
+                _logger.LogWarning("Model state is invalid. Model values:\n{ModelValues}", modelValues);
+                _logger.LogWarning("Validation errors: {Errors}",
+                    string.Join("; ", ModelState
+                        .Where(ms => ms.Value.Errors.Count > 0)
+                        .SelectMany(ms => ms.Value.Errors
+                            .Select(e => $"{ms.Key}: {e.ErrorMessage}"))));
+                return View(new CommunityViewModel());
+            }
 
             return View(new CommunityViewModel());
         }
-        
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Edit([FromQuery] int communityId)
@@ -80,7 +134,7 @@ namespace Client.Controllers
                 _logger.LogInformation("Fetching community details for editing. CommunityId: {CommunityId}", communityId);
                 var response = await client.GetAsync($"api/community/{communityId}");
                 var responseContent = await response.Content.ReadAsStringAsync();
-                
+
                 _logger.LogInformation("API Response Status: {StatusCode}", response.StatusCode);
                 _logger.LogDebug("API Response Content: {ResponseContent}", responseContent);
 
@@ -93,9 +147,9 @@ namespace Client.Controllers
 
                         if (community != null)
                         {
-                            _logger.LogInformation("Successfully deserialized community. ID: {CommunityId}, Name: {Name}", 
+                            _logger.LogInformation("Successfully deserialized community. ID: {CommunityId}, Name: {Name}",
                                 community.CommunityID, community.Name);
-                                
+
                             var editModel = new EditCommunityViewModel
                             {
                                 CommunityID = community.CommunityID,
@@ -104,7 +158,7 @@ namespace Client.Controllers
                                 CurrentCoverImageUrl = community.CoverImageUrl,
                                 PrivacyID = community.PrivacyID
                             };
-                            
+
                             return View(editModel);
                         }
                         else
@@ -118,7 +172,7 @@ namespace Client.Controllers
                         throw; // This will be caught by the outer catch block
                     }
                 }
-                
+
                 TempData["Error"] = "Community not found or you don't have permission to edit.";
                 return RedirectToAction("Details", new { communityId });
             }
@@ -129,7 +183,7 @@ namespace Client.Controllers
                 return RedirectToAction("Details", new { communityId });
             }
         }
-        
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -151,7 +205,7 @@ namespace Client.Controllers
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("Model state is invalid. CommunityId: {CommunityId}, Errors: {Errors}", communityId, 
+                _logger.LogWarning("Model state is invalid. CommunityId: {CommunityId}, Errors: {Errors}", communityId,
                     string.Join("; ", ModelState.Values
                         .SelectMany(v => v.Errors)
                         .Select(e => e.ErrorMessage)));
@@ -161,15 +215,15 @@ namespace Client.Controllers
             try
             {
                 using var client = CreateAuthenticatedClient();
-                
+
                 // Create multipart form data
                 using var formData = new MultipartFormDataContent();
-                
+
                 // Add model properties to form data
                 formData.Add(new StringContent(model.CommunityID.ToString()), "CommunityID");
                 formData.Add(new StringContent(model.Name), "Name");
                 formData.Add(new StringContent(model.Description ?? string.Empty), "Description");
-                
+
                 // Add cover image if provided
                 if (model.CoverImage != null && model.CoverImage.Length > 0)
                 {
@@ -178,19 +232,19 @@ namespace Client.Controllers
                     fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(model.CoverImage.ContentType);
                     formData.Add(fileContent, "CoverImage", model.CoverImage.FileName);
                 }
-                
+
                 var response = await client.PutAsync($"api/community/{communityId}", formData);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Success"] = "Community updated successfully.";
                     return RedirectToAction("Details", new { communityId });
                 }
-                
+
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Error updating community. Status: {StatusCode}, Response: {Response}", 
+                _logger.LogError("Error updating community. Status: {StatusCode}, Response: {Response}",
                     response.StatusCode, errorContent);
-                    
+
                 ModelState.AddModelError("", "An error occurred while updating the community. Please try again later.");
             }
             catch (Exception ex)
@@ -198,7 +252,7 @@ namespace Client.Controllers
                 _logger.LogError(ex, "Error updating community. CommunityId: {CommunityId}", communityId);
                 ModelState.AddModelError("", "A system error occurred. Please try again later.");
             }
-            
+
             // If we got this far, something failed, redisplay form
             return View(model);
         }
@@ -207,14 +261,14 @@ namespace Client.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CommunityViewModel model, IFormFile coverImage)
         {
-            if (!User.Identity.IsAuthenticated)
+            var userId = GetUserId();
+            if (userId == null)
             {
-                _logger.LogWarning("Unauthenticated user attempted to create a community");
+                TempData["Error"] = "You need to be logged in to create a community.";
                 return RedirectToAction("Login", "Auth");
             }
 
-            var currentUserId = GetUserId();
-            _logger.LogInformation("Starting community creation process for user {UserId}", currentUserId);
+            _logger.LogInformation("Starting community creation process for user {UserId}", userId);
 
             ModelState.Remove("CreatedByUserID");
             _logger.LogDebug("Model state is valid: {IsValid}", ModelState.IsValid);
@@ -237,9 +291,9 @@ namespace Client.Controllers
 
             try
             {
-                _logger.LogInformation("Current user ID: {UserId}", currentUserId);
+                _logger.LogInformation("Current user ID: {UserId}", userId);
 
-                if (currentUserId <= 0)
+                if (userId <= 0)
                 {
                     _logger.LogError("Invalid user ID when creating community");
                     ModelState.AddModelError(string.Empty, "Unable to identify user. Please log in again.");
@@ -251,7 +305,7 @@ namespace Client.Controllers
 
                 _logger.LogInformation("Preparing form data for community creation");
                 _logger.LogDebug("Name: {Name}, Description: {Description}, UserId: {UserId}",
-                    model.Name, model.Description, currentUserId);
+                    model.Name, model.Description, userId);
 
                 var nameContent = new StringContent(model.Name ?? string.Empty);
                 var descriptionContent = new StringContent(model.Description ?? string.Empty);
@@ -432,11 +486,14 @@ namespace Client.Controllers
         {
             if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
-            if (!User.Identity.IsAuthenticated)
-                return RedirectToAction("Login", "Auth");
-
             var userId = GetUserId();
-            ViewBag.CurrentUserId = userId;
+            if (userId == null)
+            {
+                TempData["Error"] = "You need to be logged in to view this page.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            ViewBag.CurrentUserId = userId.Value;
             ViewBag.UserRole = "None"; // Default role
 
             try
@@ -454,20 +511,20 @@ namespace Client.Controllers
                     {
                         // First try to get role from response
                         var userRole = responseData.UserRole ?? "None";
-                        
+
                         // If role is None, try to get it from members list
                         if (userRole == "None" && responseData.Members != null)
                         {
                             var currentUserMember = responseData.Members
-                                .FirstOrDefault(m => m.UserID == userId);
-                                
+                                .FirstOrDefault(m => m.UserID == userId.Value);
+
                             if (currentUserMember != null)
                             {
                                 userRole = currentUserMember.Role; // This will be "Moderator" or "Member"
                                 _logger.LogInformation("Set user role from members list: {Role}", userRole);
                             }
                         }
-                        
+
                         ViewBag.UserRole = userRole;
 
                         var viewModel = new CommunityDetailsViewModel
@@ -501,7 +558,7 @@ namespace Client.Controllers
                         };
 
                         ViewBag.UserRole = userRole;
-                        ViewBag.CurrentUserId = userId;
+                        ViewBag.CurrentUserId = userId.Value;
                         ViewBag.CommunityId = communityId; // Add this line to pass CommunityId to the view
                         return View(viewModel);
                     }
@@ -533,6 +590,13 @@ namespace Client.Controllers
         public async Task<IActionResult> Join(int communityId)
         {
             if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
+
+            var userId = GetUserId();
+            if (userId == null)
+            {
+                TempData["Error"] = "You need to be logged in to join a community.";
+                return RedirectToAction("Login", "Auth");
+            }
 
             try
             {
@@ -569,10 +633,17 @@ namespace Client.Controllers
         {
             if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
+            var userId = GetUserId();
+            if (userId == null)
+            {
+                TempData["Error"] = "You need to be logged in to leave a community.";
+                return RedirectToAction("Login", "Auth");
+            }
+
             try
             {
                 using var client = CreateAuthenticatedClient();
-                var response = await client.PostAsync($"/api/community/{communityId}/leave", null);
+                var response = await client.PostAsync($"api/community/{communityId}/leave", null);
 
                 if (response.IsSuccessStatusCode)
                 {
