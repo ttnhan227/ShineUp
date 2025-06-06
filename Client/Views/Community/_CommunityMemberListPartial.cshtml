@@ -6,7 +6,7 @@
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">Chưa có thành viên nào trong cộng đồng này.</div>
+    <div class="alert alert-info">There are no members in this community yet.</div>
 }
 else
 {
@@ -14,14 +14,14 @@ else
         <table class="table table-bordered table-hover">
             <thead class="table-light">
                 <tr>
-                    <th>Họ tên</th>
-                    <th>Tên đăng nhập</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
                     <th>Email</th>
-                    <th>Vai trò</th>
-                    <th>Ngày tham gia</th>
+                    <th>Role</th>
+                    <th>Join Date</th>
                     @if (role == "Admin")
                     {
-                        <th>Hành động</th>
+                        <th>Actions</th>
                     }
                 </tr>
             </thead>
@@ -35,11 +35,11 @@ else
                         <td>
                             @if (member.Role == CommunityRole.Admin)
                             {
-                                <span class="badge bg-danger">Quản trị viên</span>
+                                <span class="badge bg-danger">Admin</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Thành viên</span>
+                                <span class="badge bg-secondary">Member</span>
                             }
                         </td>
                         <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
@@ -51,8 +51,8 @@ else
                                     {
                                         <form method="post" asp-action="RemoveMember" asp-route-communityId="@member.CommunityID" asp-route-userId="@member.UserID" class="me-1">
                                             <button type="submit" class="btn btn-outline-danger" 
-                                                onclick="return confirm('Bạn có chắc muốn xoá thành viên này khỏi cộng đồng?');"
-                                                title="Xoá thành viên">
+                                                onclick="return confirm('Are you sure you want to remove this member from the community?');"
+                                                title="Remove Member">
                                                 <i class="fas fa-user-minus"></i>
                                             </button>
                                         </form>
@@ -61,8 +61,8 @@ else
                                     {
                                         <form method="post" asp-action="TransferAdmin" asp-route-communityId="@member.CommunityID" asp-route-newAdminId="@member.UserID">
                                             <button type="submit" class="btn btn-outline-warning" 
-                                                onclick="return confirm('Bạn có chắc muốn chuyển quyền quản trị cho thành viên này? Bạn sẽ trở thành thành viên thông thường.');"
-                                                title="Chuyển quyền quản trị">
+                                                onclick="return confirm('Are you sure you want to transfer admin rights to this member? You will become a regular member.');"
+                                                title="Transfer Admin Rights">
                                                 <i class="fas fa-user-shield"></i>
                                             </button>
                                         </form>

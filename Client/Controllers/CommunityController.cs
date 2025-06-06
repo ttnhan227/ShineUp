@@ -119,13 +119,13 @@ namespace Client.Controllers
                     }
                 }
                 
-                TempData["Error"] = "Không tìm thấy cộng đồng hoặc bạn không có quyền chỉnh sửa.";
+                TempData["Error"] = "Community not found or you don't have permission to edit.";
                 return RedirectToAction("Details", new { communityId });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading community for editing. CommunityId: {CommunityId}", communityId);
-                TempData["Error"] = "Đã xảy ra lỗi khi tải thông tin cộng đồng.";
+                TempData["Error"] = "An error occurred while loading community information.";
                 return RedirectToAction("Details", new { communityId });
             }
         }
@@ -145,7 +145,7 @@ namespace Client.Controllers
             if (model.CommunityID != communityId)
             {
                 _logger.LogWarning("Community ID mismatch. Model: {ModelId}, Form: {FormId}", model.CommunityID, communityId);
-                ModelState.AddModelError("", "Dữ liệu không hợp lệ");
+                ModelState.AddModelError("", "Invalid data");
                 return View(model);
             }
 
@@ -183,7 +183,7 @@ namespace Client.Controllers
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Cập nhật cộng đồng thành công.";
+                    TempData["Success"] = "Community updated successfully.";
                     return RedirectToAction("Details", new { communityId });
                 }
                 
@@ -191,12 +191,12 @@ namespace Client.Controllers
                 _logger.LogError("Error updating community. Status: {StatusCode}, Response: {Response}", 
                     response.StatusCode, errorContent);
                     
-                ModelState.AddModelError("", "Đã xảy ra lỗi khi cập nhật cộng đồng. Vui lòng thử lại sau.");
+                ModelState.AddModelError("", "An error occurred while updating the community. Please try again later.");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating community. CommunityId: {CommunityId}", communityId);
-                ModelState.AddModelError("", "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.");
+                ModelState.AddModelError("", "A system error occurred. Please try again later.");
             }
             
             // If we got this far, something failed, redisplay form
@@ -242,7 +242,7 @@ namespace Client.Controllers
                 if (currentUserId <= 0)
                 {
                     _logger.LogError("Invalid user ID when creating community");
-                    ModelState.AddModelError(string.Empty, "Không xác định được người dùng. Vui lòng đăng nhập lại.");
+                    ModelState.AddModelError(string.Empty, "Unable to identify user. Please log in again.");
                     return View(model);
                 }
 
@@ -286,7 +286,7 @@ namespace Client.Controllers
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error processing cover image");
-                        ModelState.AddModelError(string.Empty, "Có lỗi khi xử lý ảnh bìa. Vui lòng thử lại.");
+                        ModelState.AddModelError(string.Empty, "An error occurred while processing the cover image. Please try again.");
                         return View(model);
                     }
                 }
@@ -321,17 +321,17 @@ namespace Client.Controllers
                             _logger.LogInformation("Successfully parsed community response. New community ID: {CommunityId}",
                                 createdCommunity.CommunityID);
 
-                            TempData["Success"] = "Tạo cộng đồng thành công!";
+                            TempData["Success"] = "Community created successfully!";
                             return RedirectToAction(nameof(Details), new { communityId = createdCommunity.CommunityID });
                         }
 
                         _logger.LogError("Failed to deserialize created community from response. Response was empty or invalid.");
-                        ModelState.AddModelError(string.Empty, "Không thể xử lý phản hồi từ máy chủ.");
+                        ModelState.AddModelError(string.Empty, "Unable to process response from server.");
                     }
                     catch (JsonException ex)
                     {
                         _logger.LogError(ex, "Error deserializing created community. Response: {Response}", responseContent);
-                        ModelState.AddModelError(string.Empty, "Lỗi khi xử lý dữ liệu từ máy chủ.");
+                        ModelState.AddModelError(string.Empty, "Error processing data from server.");
                     }
                 }
                 else
@@ -365,8 +365,8 @@ namespace Client.Controllers
                     {
                         _logger.LogError(ex, "Error parsing error response");
                         errorMessage = response.StatusCode == System.Net.HttpStatusCode.Unauthorized
-                            ? "Bạn cần đăng nhập để thực hiện thao tác này."
-                            : "Có lỗi xảy ra khi tạo cộng đồng. Vui lòng thử lại sau.";
+                            ? "You need to log in to perform this action."
+                            : "An error occurred while creating the community. Please try again later.";
                     }
 
                     ModelState.AddModelError(string.Empty, errorMessage);
@@ -375,7 +375,7 @@ namespace Client.Controllers
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "Network error while creating community. StatusCode: {StatusCode}", ex.StatusCode);
-                ModelState.AddModelError(string.Empty, "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.");
+                ModelState.AddModelError(string.Empty, "Unable to connect to the server. Please check your network connection and try again.");
             }
             catch (JsonException ex)
             {
@@ -385,7 +385,7 @@ namespace Client.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating community");
-                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi không mong muốn khi tạo cộng đồng.");
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred while creating the community.");
             }
 
             _logger.LogInformation("Community creation process completed with errors");

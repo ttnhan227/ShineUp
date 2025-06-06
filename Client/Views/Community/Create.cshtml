@@ -1,13 +1,13 @@
 @model Client.Models.CommunityViewModel
 
 @{
-    ViewData["Title"] = "Tạo Cộng Đồng Mới";
+    ViewData["Title"] = "Create New Community";
 }
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-action="Index">Cộng Đồng</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Tạo Mới</li>
+        <li class="breadcrumb-item active" aria-current="page">Create New</li>
     </ol>
 </nav>
 
@@ -30,38 +30,38 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             
             <div class="mb-3">
-                <label asp-for="Name" class="form-label">Tên cộng đồng <span class="text-danger">*</span></label>
-                <input asp-for="Name" class="form-control" placeholder="Nhập tên cộng đồng" />
+                <label asp-for="Name" class="form-label">Community Name <span class="text-danger">*</span></label>
+                <input asp-for="Name" class="form-control" placeholder="Enter community name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             
             <div class="mb-3">
                 <label asp-for="Description" class="form-label">Mô tả</label>
-                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mô tả về cộng đồng của bạn"></textarea>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Describe your community"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             
             <div class="mb-3">
-                <label asp-for="PrivacyID" class="form-label">Chế độ riêng tư</label>
+                <label asp-for="PrivacyID" class="form-label">Privacy Settings</label>
                 <select asp-for="PrivacyID" class="form-select">
-                    <option value="1">Công khai (Mọi người có thể xem bài viết và tham gia)</option>
-                    <option value="3">Riêng tư (Chỉ thành viên mới xem được nội dung)</option>
+                    <option value="1">Public (Anyone can view posts and join)</option>
+                    <option value="3">Private (Only members can view content)</option>
                 </select>
                 <span asp-validation-for="PrivacyID" class="text-danger"></span>
             </div>
             
             <div class="mb-3">
-                <label for="coverImage" class="form-label">Ảnh bìa</label>
+                <label for="coverImage" class="form-label">Cover Image</label>
                 <input type="file" class="form-control" id="coverImage" name="coverImage" accept="image/*">
-                <div class="form-text">Tải lên ảnh bìa cho cộng đồng của bạn (tùy chọn)</div>
+                <div class="form-text">Upload a cover image for your community (optional)</div>
             </div>
             
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                 <a asp-action="Index" class="btn btn-outline-secondary me-md-2">
-                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                    <i class="fas fa-arrow-left me-1"></i> Back
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Tạo cộng đồng
+                    <i class="fas fa-save me-1"></i> Create Community
                 </button>
             </div>
         </form>
