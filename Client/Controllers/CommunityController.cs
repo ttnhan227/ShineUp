@@ -1,30 +1,46 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Client.DTOs;
-using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
+using Client.Models;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Client.Controllers
 {
     public class CommunityController : Controller
     {
-        private readonly IHttpClientFactory _clientFactory;
-        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommunityController> _logger;
-        private readonly string _apiBaseUrl;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CommunityController(IHttpClientFactory clientFactory, IConfiguration configuration, ILogger<CommunityController> logger)
+        public CommunityController(
+            IHttpClientFactory httpClientFactory,
+            ILogger<CommunityController> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
-            _clientFactory = clientFactory;
-            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
-            _apiBaseUrl = _configuration["ApiBaseUrl"] ?? throw new ArgumentNullException("ApiBaseUrl not configured");
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private HttpClient CreateAuthenticatedClient()
+        {
+            var client = _httpClientFactory.CreateClient("BackendAPI");
+            var token = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Authentication);
+            
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+            
+            // Ensure we're sending JSON
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            
+            return client;
         }
 
         private string? GetToken() => User.FindFirstValue(ClaimTypes.Authentication);
@@ -35,32 +51,88 @@ namespace Client.Controllers
             return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
         }
 
+        [HttpGet]
+        public IActionResult Create()
+        {
+            if (!User.Identity.IsAuthenticated)
+                return RedirectToAction("Login", "Account");
+
+            return View(new CommunityViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CommunityViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            try
+            {
+                using var client = CreateAuthenticatedClient();
+                var response = await client.PostAsJsonAsync("/api/community", model);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var createdCommunity = JsonSerializer.Deserialize<CommunityViewModel>(content, options);
+                    
+                    if (createdCommunity != null)
+                    {
+                        TempData["Success"] = "Tạo cộng đồng thành công!";
+                        return RedirectToAction(nameof(Details), new { communityId = createdCommunity.CommunityID });
+                    }
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Failed to create community. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                
+                ModelState.AddModelError(string.Empty, "Không thể tạo cộng đồng. Vui lòng thử lại sau.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating community");
+                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo cộng đồng.");
+            }
+            
+            return View(model);
+        }
+
         public async Task<IActionResult> Index()
         {
             try
             {
-                var client = _clientFactory.CreateClient();
-                var token = GetToken();
-
-                if (token != null)
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.GetAsync($"{_apiBaseUrl}/community");
+                using var client = CreateAuthenticatedClient();
+                var response = await client.GetAsync("/api/community");
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    var communities = await response.Content.ReadFromJsonAsync<List<CommunityDTO>>();
-                    return View(communities ?? new List<CommunityDTO>());
+                    var content = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var communities = JsonSerializer.Deserialize<List<CommunityViewModel>>(content, options);
+                    
+                    if (communities != null)
+                    {
+                        return View(communities);
+                    }
+                    
+                    _logger.LogWarning("Failed to deserialize communities response");
                 }
-
-                _logger.LogWarning("Không thể lấy danh sách cộng đồng. StatusCode: {StatusCode}", response.StatusCode);
+                else
+                {
+                    _logger.LogWarning("Failed to get communities. Status: {StatusCode}", response.StatusCode);
+                }
+                
                 TempData["Error"] = "Không thể lấy danh sách cộng đồng.";
-                return View(new List<CommunityDTO>());
+                return View(new List<CommunityViewModel>());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi trong Index()");
+                _logger.LogError(ex, "Error in Index()");
                 TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
-                return View(new List<CommunityDTO>());
+                return View(new List<CommunityViewModel>());
             }
         }
 
@@ -68,161 +140,250 @@ namespace Client.Controllers
         {
             if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
-            var token = GetToken();
-            if (token == null) return RedirectToAction("Login", "Account");
+            if (!User.Identity.IsAuthenticated)
+                return RedirectToAction("Login", "Account");
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.GetAsync($"{_apiBaseUrl}/community/{communityId}/details");
+                using var client = CreateAuthenticatedClient();
+                var response = await client.GetAsync($"/api/community/{communityId}");
+                
                 if (response.IsSuccessStatusCode)
                 {
+                    var content = await response.Content.ReadAsStringAsync();
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var stream = await response.Content.ReadAsStreamAsync();
-                    var detail = await JsonSerializer.DeserializeAsync<CommunityDetailsResponse>(stream, options);
+                    var responseData = JsonSerializer.Deserialize<CommunityDetailsResponse>(content, options);
 
-                    if (detail == null) return NotFound();
+                    if (responseData != null)
+                    {
+                        var userId = GetUserId();
+                        var userRole = responseData.UserRole;
 
-                    ViewBag.UserRole = detail.UserRole;
-                    ViewBag.CurrentUserId = GetUserId();
+                        var viewModel = new CommunityDetailsViewModel
+                        {
+                            Community = new CommunityViewModel
+                            {
+                                CommunityID = responseData.CommunityID,
+                                Name = responseData.Name,
+                                Description = responseData.Description,
+                                CreatedAt = responseData.CreatedAt,
+                                UpdatedAt = responseData.UpdatedAt
+                            },
+                            Members = responseData.Members.Select(m => new CommunityMemberViewModel
+                            {
+                                UserID = m.UserID,
+                                User = new UserViewModel
+                                {
+                                    UserID = m.UserID,
+                                    Username = m.Username,
+                                    FullName = m.FullName,
+                                    Email = m.Email
+                                },
+                                CommunityID = responseData.CommunityID,
+                                Role = m.Role == "Admin" ? CommunityRole.Admin : CommunityRole.Member,
+                                JoinedAt = m.JoinedAt,
+                                LastActiveAt = m.LastActiveAt
+                            }).ToList(),
+                            UserRole = userRole
+                        };
 
-                    return View(detail);
+                        ViewBag.UserRole = userRole;
+                        ViewBag.CurrentUserId = userId;
+                        return View(viewModel);
+                    }
+                    
+                    _logger.LogWarning("Failed to deserialize community details");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to get community details. Status: {StatusCode}", response.StatusCode);
                 }
 
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    return RedirectToAction("Login", "Account");
-
-                _logger.LogWarning("Không thể lấy thông tin chi tiết communityId={CommunityId}", communityId);
-                TempData["Error"] = "Lỗi khi lấy chi tiết cộng đồng.";
+                TempData["Error"] = "Không thể lấy thông tin chi tiết cộng đồng.";
                 return View();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi lấy chi tiết communityId={CommunityId}", communityId);
+                _logger.LogError(ex, "Error getting community details for communityId={CommunityId}", communityId);
                 TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return View();
             }
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Join(int communityId)
         {
-            var token = GetToken();
-            if (token == null) return RedirectToAction("Login", "Account");
+            if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.PostAsync($"{_apiBaseUrl}/community/{communityId}/join", null);
+                using var client = CreateAuthenticatedClient();
+                var response = await client.PostAsync($"/api/community/{communityId}/join", null);
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Đã tham gia cộng đồng.";
+                    TempData["Success"] = "Đã tham gia cộng đồng thành công.";
                     return RedirectToAction(nameof(Details), new { communityId });
                 }
-
-                TempData["Error"] = "Không thể tham gia cộng đồng.";
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Failed to join community. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                
+                TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest 
+                    ? errorContent 
+                    : "Không thể tham gia cộng đồng. Vui lòng thử lại sau.";
+                
                 return RedirectToAction(nameof(Details), new { communityId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tham gia communityId={CommunityId}", communityId);
-                TempData["Error"] = "Lỗi hệ thống.";
+                _logger.LogError(ex, "Error joining communityId={CommunityId}", communityId);
+                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return RedirectToAction(nameof(Details), new { communityId });
             }
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Leave(int communityId)
         {
-            var token = GetToken();
-            if (token == null) return RedirectToAction("Login", "Account");
+            if (communityId <= 0) return BadRequest("CommunityId không hợp lệ");
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.PostAsync($"{_apiBaseUrl}/community/{communityId}/leave", null);
+                using var client = CreateAuthenticatedClient();
+                var response = await client.PostAsync($"/api/community/{communityId}/leave", null);
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["Success"] = "Đã rời khỏi cộng đồng.";
+                    TempData["Success"] = "Đã rời khỏi cộng đồng thành công.";
                     return RedirectToAction(nameof(Index));
                 }
-
-                TempData["Error"] = "Không thể rời khỏi cộng đồng.";
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Failed to leave community. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                
+                TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest 
+                    ? errorContent 
+                    : "Không thể rời khỏi cộng đồng. Vui lòng thử lại sau.";
+                
                 return RedirectToAction(nameof(Details), new { communityId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi rời khỏi communityId={CommunityId}", communityId);
-                TempData["Error"] = "Lỗi hệ thống.";
+                _logger.LogError(ex, "Error leaving communityId={CommunityId}", communityId);
+                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return RedirectToAction(nameof(Details), new { communityId });
             }
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RemoveMember(int communityId, int userId)
         {
-            var token = GetToken();
-            if (token == null) return RedirectToAction("Login", "Account");
+            if (communityId <= 0 || userId <= 0) 
+                return BadRequest("Thông tin không hợp lệ");
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.DeleteAsync($"{_apiBaseUrl}/community/{communityId}/member/{userId}");
+                using var client = CreateAuthenticatedClient();
+                var response = await client.DeleteAsync($"/api/community/{communityId}/members/{userId}");
+                
                 if (response.IsSuccessStatusCode)
-                    TempData["Success"] = "Đã xoá thành viên khỏi cộng đồng.";
+                {
+                    TempData["Success"] = "Đã xoá thành viên khỏi cộng đồng thành công.";
+                }
                 else
-                    TempData["Error"] = "Không thể xoá thành viên.";
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Failed to remove member. Status: {StatusCode}, Response: {Response}", 
+                        response.StatusCode, errorContent);
+                    
+                    TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest 
+                        ? errorContent 
+                        : "Không thể xoá thành viên. Vui lòng thử lại sau.";
+                }
 
                 return RedirectToAction(nameof(Details), new { communityId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xoá userId={UserId} khỏi communityId={CommunityId}", userId, communityId);
-                TempData["Error"] = "Lỗi hệ thống.";
+                _logger.LogError(ex, "Error removing userId={UserId} from communityId={CommunityId}", userId, communityId);
+                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return RedirectToAction(nameof(Details), new { communityId });
             }
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> TransferAdmin(int communityId, int newAdminId)
         {
-            var token = GetToken();
-            if (token == null) return RedirectToAction("Login", "Account");
+            if (communityId <= 0 || newAdminId <= 0) 
+                return BadRequest("Thông tin không hợp lệ");
 
             try
             {
-                var client = _clientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await client.PostAsync($"{_apiBaseUrl}/community/{communityId}/transfer-admin/{newAdminId}", null);
+                using var client = CreateAuthenticatedClient();
+                var response = await client.PostAsJsonAsync($"/api/community/{communityId}/transfer-admin?newAdminId={newAdminId}", new { });
+                
                 if (response.IsSuccessStatusCode)
-                    TempData["Success"] = "Đã chuyển quyền quản trị.";
-                else
-                    TempData["Error"] = "Không thể chuyển quyền quản trị.";
-
+                {
+                    TempData["Success"] = "Đã chuyển quyền quản trị thành công.";
+                    return RedirectToAction(nameof(Details), new { communityId });
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Failed to transfer admin. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                
+                TempData["Error"] = response.StatusCode == System.Net.HttpStatusCode.BadRequest 
+                    ? errorContent 
+                    : "Không thể chuyển quyền quản trị. Vui lòng thử lại sau.";
+                
                 return RedirectToAction(nameof(Details), new { communityId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi chuyển quyền quản trị communityId={CommunityId} cho userId={UserId}", communityId, newAdminId);
-                TempData["Error"] = "Lỗi hệ thống.";
+                _logger.LogError(ex, "Error transferring admin for communityId={CommunityId} to userId={NewAdminId}", communityId, newAdminId);
+                TempData["Error"] = "Đã xảy ra lỗi hệ thống.";
                 return RedirectToAction(nameof(Details), new { communityId });
             }
         }
 
         public class CommunityDetailsResponse
         {
-            public CommunityDTO Community { get; set; }
-            public List<CommunityMemberDTO> Members { get; set; }
-            public string UserRole { get; set; }
+            public int CommunityID { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? UpdatedAt { get; set; }
+            public List<CommunityMemberResponse> Members { get; set; } = new();
+            public string UserRole { get; set; } = "None";
+        }
+
+        public class CommunityMemberResponse
+        {
+            public int UserID { get; set; }
+            public string Username { get; set; } = string.Empty;
+            public string FullName { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public string Role { get; set; } = "Member";
+            public DateTime JoinedAt { get; set; }
+            public DateTime? LastActiveAt { get; set; }
+        }
+        
+        public class ApiResponse<T>
+        {
+            public bool Success { get; set; }
+            public string? Message { get; set; }
+            public T? Data { get; set; }
         }
     }
 }

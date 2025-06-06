@@ -1,0 +1,66 @@
+@model Client.Models.CommunityViewModel
+
+@{
+    ViewData["Title"] = "Tạo Cộng Đồng Mới";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Cộng Đồng</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Tạo Mới</li>
+    </ol>
+</nav>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+            <i class="fas fa-plus-circle me-2"></i>@ViewData["Title"]
+        </h4>
+    </div>
+    <div class="card-body">
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Tên cộng đồng <span class="text-danger">*</span></label>
+                <input asp-for="Name" class="form-control" placeholder="Nhập tên cộng đồng" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Mô tả</label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mô tả về cộng đồng của bạn"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a asp-action="Index" class="btn btn-outline-secondary me-md-2">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Tạo cộng đồng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove(); 
+            });
+        }, 5000);
+    </script>
+}

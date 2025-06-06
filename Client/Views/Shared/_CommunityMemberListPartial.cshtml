@@ -1,50 +1,87 @@
-@model List<Client.DTOs.CommunityMemberDTO>
+@model List<Client.Models.CommunityMemberViewModel>
 @{
     string role = ViewBag.UserRole as string ?? "None";
     int currentUserId = ViewBag.CurrentUserId != null ? (int)ViewBag.CurrentUserId : 0;
 }
 
-<table class="table table-bordered">
-    <thead class="thead-light">
-        <tr>
-            <th>Họ tên</th>
-            <th>Tên đăng nhập</th>
-            <th>Email</th>
-            <th>Vai trò</th>
-            <th>Ngày tham gia</th>
-            @if (role == "Admin")
-            {
-                <th>Hành động</th>
-            }
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var member in Model)
-        {
-            <tr>
-                <td>@member.FullName</td>
-                <td>@member.Username</td>
-                <td>@member.Email</td>
-                <td>@member.Role</td>
-                <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
-                @if (role == "Admin")
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">Chưa có thành viên nào trong cộng đồng này.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Ngày tham gia</th>
+                    @if (role == "Admin")
+                    {
+                        <th>Hành động</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in Model)
                 {
-                    <td>
-                        @if (member.Role == "Member")
+                    <tr>
+                        <td>@(member.User?.FullName ?? "N/A")</td>
+                        <td>@(member.User?.Username ?? "N/A")</td>
+                        <td>@(member.User?.Email ?? "N/A")</td>
+                        <td>
+                            @if (member.Role == CommunityRole.Admin)
+                            {
+                                <span class="badge bg-danger">Quản trị viên</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Thành viên</span>
+                            }
+                        </td>
+                        <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
+                        @if (role == "Admin")
                         {
-                            <form method="post" asp-action="RemoveMember" asp-route-communityId="@member.CommunityID" asp-route-userId="@member.UserID" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc muốn xoá thành viên này?');">Xoá</button>
-                            </form>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    @if (member.Role == CommunityRole.Member)
+                                    {
+                                        <form method="post" asp-action="RemoveMember" asp-route-communityId="@member.CommunityID" asp-route-userId="@member.UserID" class="me-1">
+                                            <button type="submit" class="btn btn-outline-danger" 
+                                                onclick="return confirm('Bạn có chắc muốn xoá thành viên này khỏi cộng đồng?');"
+                                                title="Xoá thành viên">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (member.UserID != currentUserId && member.Role != CommunityRole.Admin)
+                                    {
+                                        <form method="post" asp-action="TransferAdmin" asp-route-communityId="@member.CommunityID" asp-route-newAdminId="@member.UserID">
+                                            <button type="submit" class="btn btn-outline-warning" 
+                                                onclick="return confirm('Bạn có chắc muốn chuyển quyền quản trị cho thành viên này? Bạn sẽ trở thành thành viên thông thường.');"
+                                                title="Chuyển quyền quản trị">
+                                                <i class="fas fa-user-shield"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
                         }
-                        @if (member.UserID != currentUserId && member.Role != "Admin")
-                        {
-                            <form method="post" asp-action="TransferAdmin" asp-route-communityId="@member.CommunityID" asp-route-newAdminId="@member.UserID" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Bạn có chắc muốn chuyển quyền quản trị?');">Chuyển quyền</button>
-                            </form>
-                        }
-                    </td>
+                    </tr>
                 }
-            </tr>
-        }
-    </tbody>
-</table>
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
