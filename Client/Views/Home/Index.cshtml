@@ -1,132 +1,361 @@
-﻿@{
+@{
     ViewData["Title"] = "Home";
 }
 
-<!-- CSS nội tuyến hoặc chuyển qua site.css nếu muốn -->
-<style>
-    .hero {
-        background: linear-gradient(to right, #7f00ff, #e100ff);
-        color: white;
-        padding: 120px 0;
-        text-align: center;
-    }
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" />
+    <style>
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/images/microphone_light.jpg') no-repeat center center/cover;
+            color: white;
+            padding: 180px 0 120px;
+            text-align: center;
+        }
 
         .hero h1 {
             font-size: 3.5rem;
-            font-weight: 700;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.9;
+        }
+
+        .talent-showcase {
+            position: relative;
+            padding: 80px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .talent-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+        .talent-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .talent-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .talent-card .card-body {
+            padding: 1.5rem;
+        }
+
+        .music-note {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .music-note.left {
+            left: 5%;
+            top: 10%;
+            width: 150px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .music-note.right {
+            right: 5%;
+            bottom: 10%;
+            width: 200px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .stats-box {
+            padding: 2.5rem 1.5rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .stats-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .stats-box h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .stats-box p {
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
             margin-bottom: 1.5rem;
         }
 
-    .btn-primary {
-        background-color: #ffc107;
-        border: none;
-        font-weight: bold;
-    }
+        .btn-cta {
+            background: white;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 12px 35px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
 
-    .section {
-        padding: 80px 0;
-    }
+        .btn-cta:hover {
+            background: transparent;
+            color: white;
+            border-color: white;
+            transform: translateY(-3px);
+        }
 
-    .icon-circle {
-        background-color: #f3e8ff;
-        width: 80px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-size: 2rem;
-        margin: auto;
-        color: #6f42c1;
-    }
+        .color-splash {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 0;
+        }
 
-    .section-title {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1.5rem;
-    }
+        .splash-1 {
+            top: -50px;
+            right: -50px;
+            width: 300px;
+            animation: float 8s ease-in-out infinite;
+        }
 
-    .stats-box {
-        background: #f8f9fa;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.08);
-        text-align: center;
-    }
-</style>
+        .splash-2 {
+            bottom: -30px;
+            left: -30px;
+            width: 250px;
+            animation: float 10s ease-in-out infinite;
+        }
 
-<!-- Hero Banner -->
-<div class="hero">
-    <div class="container">
-        <h1>Discover Talents. Vote. Shine.</h1>
-        <p>Join Vietnam’s leading platform for online talent competitions</p>
-        <a href="/Contests" class="btn btn-lg btn-primary shadow">Explore Contests</a>
+        @@keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+    </style>
+}
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container position-relative">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h1 class="display-4 fw-bold mb-4">Discover, Showcase & Shine</h1>
+                <p class="lead mb-5">Join Vietnam's premier platform for talent competitions. Showcase your skills, compete with the best, and get recognized!</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="/Contests" class="btn btn-primary btn-lg px-4 py-3">Explore Contests</a>
+                    <a href="#how-it-works" class="btn btn-outline-light btn-lg px-4 py-3">How It Works</a>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    <img src="/images/music_left.png" class="music-note left" alt="Music Note">
+    <img src="/images/music_right.png" class="music-note right" alt="Music Note">
+</section>
+
+<!-- Featured Categories -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Popular Talent Categories</h2>
+            <p class="text-muted">Discover and participate in various talent categories</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="talent-card">
+                    <img src="/images/Singing_Stars.jpg" alt="Singing Competition" class="img-fluid">
+                    <div class="card-body text-center">
+                        <h4 class="mb-3">Singing Stars</h4>
+                        <p class="text-muted">Showcase your vocal talent and compete with the best singers</p>
+                        <a href="/Contests?category=singing" class="btn btn-outline-primary">View Contests</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="talent-card">
+                    <img src="/images/Dance_Contest.jpg" alt="Dance Competition" class="img-fluid">
+                    <div class="card-body text-center">
+                        <h4 class="mb-3">Dance Battles</h4>
+                        <p class="text-muted">Move to the rhythm and impress the judges with your dance moves</p>
+                        <a href="/Contests?category=dance" class="btn btn-outline-primary">View Contests</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="talent-card">
+                    <img src="/images/Creative_Arts.jpg" alt="Creative Arts" class="img-fluid">
+                    <div class="card-body text-center">
+                        <h4 class="mb-3">Creative Arts</h4>
+                        <p class="text-muted">Show your creativity through various forms of visual arts</p>
+                        <a href="/Contests?category=arts" class="btn btn-outline-primary">View Contests</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- How It Works -->
-<div class="section bg-light text-center">
+<section id="how-it-works" class="py-5">
     <div class="container">
-        <h2 class="section-title text-primary">How It Works</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="icon-circle mb-3">📤</div>
-                <h5>Submit Your Video</h5>
-                <p>Join exciting contests by uploading your talent video.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="icon-circle mb-3">👍</div>
-                <h5>Get Votes</h5>
-                <p>Share your entry and receive votes from the community.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="icon-circle mb-3">🏆</div>
-                <h5>Win & Shine</h5>
-                <p>Top talents will be highlighted and rewarded.</p>
-            </div>
+        <div class="text-center mb-5">
+            <h2 class="section-title">How It Works</h2>
+            <p class="text-muted">Get started in just a few simple steps</p>
         </div>
-    </div>
-</div>
-
-<!-- Platform Stats -->
-<div class="section text-center">
-    <div class="container">
-        <h2 class="section-title text-success">ShineUp in Numbers</h2>
         <div class="row g-4">
-            <div class="col-md-3">
-                <div class="stats-box">
-                    <h3>+200K</h3>
-                    <p>Videos Submitted</p>
+            <div class="col-md-4">
+                <div class="text-center p-4 h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h4>1. Create Account</h4>
+                    <p class="text-muted">Sign up for free and create your profile to get started</p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-box">
-                    <h3>+1M</h3>
-                    <p>Votes Recorded</p>
+            <div class="col-md-4">
+                <div class="text-center p-4 h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-upload"></i>
+                    </div>
+                    <h4>2. Upload Your Talent</h4>
+                    <p class="text-muted">Record and upload your performance video</p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-box">
-                    <h3>99%</h3>
-                    <p>User Satisfaction</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-box">
-                    <h3>0.5s</h3>
-                    <p>Avg Load Time</p>
+            <div class="col-md-4">
+                <div class="text-center p-4 h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <h4>3. Compete & Win</h4>
+                    <p class="text-muted">Get votes, climb the leaderboard, and win exciting prizes</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Call to Action -->
-<div class="hero" style="padding: 60px 0;">
-    <h2>Ready to Shine?</h2>
-    <a href="/Auth/login" class="btn btn-warning btn-lg mt-3">Join Now</a>
-</div>
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stats-box">
+                    <h3 class="counter">200K+</h3>
+                    <p>Talented Members</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-box">
+                    <h3 class="counter">50+</h3>
+                    <p>Active Contests</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-box">
+                    <h3 class="counter">1M+</h3>
+                    <p>Votes Cast</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stats-box">
+                    <h3 class="counter">99%</h3>
+                    <p>Happy Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section text-center">
+    <div class="container position-relative">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="mb-4">Ready to Showcase Your Talent?</h2>
+                <p class="lead mb-5">Join thousands of talented individuals and get the recognition you deserve</p>
+                <a href="/Auth/login/" class="btn btn-cta btn-lg">Get Started for Free</a>
+            </div>
+        </div>
+        <img src="/images/color_splash1.png" class="color-splash splash-1" alt="Color Splash">
+        <img src="/images/Colorful_Music_Notes_Transparent_Image.png" class="color-splash splash-2" alt="Music Notes">
+    </div>
+</section>
+
+<script>
+    // Simple counter animation
+    document.addEventListener('DOMContentLoaded', function() {
+        const counters = document.querySelectorAll('.counter');
+        const speed = 200;
+
+        const animateCounter = (counter) => {
+            const target = +counter.getAttribute('data-target') || +counter.innerText.replace('+', '').replace('%', '');
+            const count = +counter.innerText.replace('+', '').replace('%', '');
+            const increment = target / speed;
+
+            if (count < target) {
+                counter.innerText = Math.ceil(count + increment) + (counter.innerText.includes('+') ? '+' : '') + (counter.innerText.includes('%') ? '%' : '');
+                setTimeout(() => animateCounter(counter), 1);
+            } else {
+                counter.innerText = target + (counter.innerText.includes('+') ? '+' : '') + (counter.innerText.includes('%') ? '%' : '');
+            }
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => {
+            observer.observe(counter);
+        });
+    });
+</script>
