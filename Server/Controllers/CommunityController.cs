@@ -85,9 +85,8 @@ public class CommunityController : ControllerBase
             var result = await _communityRepository.CreateCommunityAsync(dto, userId);
             return Ok(result);
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Failed to create community");
             return StatusCode(500, "Internal server error");
         }
     }
@@ -100,9 +99,8 @@ public class CommunityController : ControllerBase
             var result = await _communityRepository.GetAllCommunitiesAsync();
             return Ok(result);
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Failed to retrieve communities");
             return StatusCode(500, "Internal server error");
         }
     }
@@ -119,8 +117,7 @@ public class CommunityController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "JoinCommunity failed");
-            return BadRequest(ex.Message);
+            return BadRequest("Failed to join community");
         }
     }
 
@@ -134,70 +131,44 @@ public class CommunityController : ControllerBase
             await _communityRepository.LeaveCommunityAsync(communityId, userId);
             return NoContent();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogError(ex, "LeaveCommunity failed");
-            return BadRequest(ex.Message);
+            return BadRequest("Failed to leave community");
         }
     }
 
     [HttpPost("{communityId}/transfer-moderator")]
-    [Authorize]  // Only require authentication, not a specific role
+    [Authorize]
     public async Task<IActionResult> TransferModerator(int communityId, [FromQuery] int newModeratorId)
     {
         if (communityId <= 0 || newModeratorId <= 0)
-        {
-            _logger.LogWarning("Invalid parameters - CommunityId: {CommunityId}, NewModeratorId: {NewModeratorId}", 
-                communityId, newModeratorId);
             return BadRequest("Invalid community or user ID");
-        }
 
         try
         {
             int currentModeratorId = GetUserId();
-            _logger.LogInformation("User {UserId} attempting to transfer moderator role for community {CommunityId} to {NewModeratorId}", 
-                currentModeratorId, communityId, newModeratorId);
             
-            // Verify current user is a member of the community
+            // Verify current user is a member and moderator of the community
             bool isMember = await _communityRepository.IsUserMemberAsync(communityId, currentModeratorId);
-            if (!isMember)
-            {
-                _logger.LogWarning("User {UserId} is not a member of community {CommunityId}", currentModeratorId, communityId);
-                return Forbid("You are not a member of this community");
-            }
-
-            // Verify current user is a moderator of the community
             bool isModerator = await _communityRepository.IsUserModeratorAsync(communityId, currentModeratorId);
-            if (!isModerator)
-            {
-                _logger.LogWarning("User {UserId} is not a moderator of community {CommunityId}", currentModeratorId, communityId);
-                return Forbid("Only the current moderator can transfer moderator rights");
-            }
+            
+            if (!isMember || !isModerator)
+                return Forbid("You don't have permission to perform this action");
 
             // Verify new moderator is a member of the community
             bool isNewModeratorMember = await _communityRepository.IsUserMemberAsync(communityId, newModeratorId);
             if (!isNewModeratorMember)
-            {
-                _logger.LogWarning("New moderator {NewModeratorId} is not a member of community {CommunityId}", newModeratorId, communityId);
                 return BadRequest("The specified user is not a member of this community");
-            }
 
-            // Perform the transfer
             await _communityRepository.TransferModeratorAsync(communityId, currentModeratorId, newModeratorId);
-            
-            _logger.LogInformation("Successfully transferred moderator role for community {CommunityId} from {CurrentModeratorId} to {NewModeratorId}", 
-                communityId, currentModeratorId, newModeratorId);
-                
             return NoContent();
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning(ex, "Unauthorized moderator transfer attempt for community {CommunityId}", communityId);
             return Forbid(ex.Message);
         }
         catch (KeyNotFoundException ex)
         {
-            _logger.LogWarning(ex, "Community or user not found during moderator transfer for community {CommunityId}", communityId);
             return NotFound(ex.Message);
         }
         catch (ArgumentException ex)
@@ -220,10 +191,9 @@ public class CommunityController : ControllerBase
             var members = await _communityRepository.GetCommunityMembersAsync(communityId);
             return Ok(members);
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "GetCommunityMembers failed");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, "Failed to retrieve community members");
         }
     }
 
@@ -235,10 +205,9 @@ public class CommunityController : ControllerBase
             var posts = await _communityRepository.GetCommunityPostsAsync(communityId);
             return Ok(posts);
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "GetCommunityPosts failed");
-            return StatusCode(500, "Internal server error");
+            return StatusCode(500, "Failed to retrieve community posts");
         }
     }
 
