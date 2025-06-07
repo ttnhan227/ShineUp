@@ -3,13 +3,17 @@
     ViewData["Title"] = "Community";
 }
 
-<div class="container">
+@section Styles {
+    <link rel="stylesheet" href="~/css/communities.css" />
+}
+
+<div class="community-container">
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item active" aria-current="page">Cộng đồng</li>
+                        <li class="breadcrumb-item active" aria-current="page">Communities</li>
                     </ol>
                 </nav>
             </div>
@@ -36,38 +40,11 @@
                 </a>
             </div>
 
-            <div class="card">
-                <div class="card-body p-0">
+            <div class="community-card">
+                <div class="card-body">
                     @await Html.PartialAsync("_CommunityListPartial", Model)
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-@section Styles {
-    <style>
-        .card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
-        .badge {
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn i {
-            font-size: 0.9em;
-        }
-        .table th {
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
-    </style>
-}

@@ -9,17 +9,19 @@
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">There are no members in this community yet.</div>
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-people me-2"></i>
+        <div>There are no members in this community yet.</div>
+    </div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-light">
+        <table class="table table-hover align-middle">
+            <thead>
                 <tr>
-                    <th>Full Name</th>
+                    <th>Member</th>
                     <th>Username</th>
-                    <th>Email</th>
                     <th>Role</th>
                     <th>Join Date</th>
                     @if (currentUserRole == CommunityRole.Moderator)
@@ -28,65 +30,95 @@ else
                     }
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="border-top-0">
                 @foreach (var member in Model)
                 {
-                    <tr>
-                        <td>@(member.User?.FullName ?? "N/A")</td>
-                        <td>@(member.User?.Username ?? "N/A")</td>
-                        <td>@(member.User?.Email ?? "N/A")</td>
+                    <tr class="member-row">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-2">
+                                    <div class="avatar-placeholder bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 36px; height: 36px;">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">@(member.User?.FullName ?? "N/A")</div>
+                                    <div class="text-muted small">@(member.User?.Email ?? "")</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-muted">@@@(member.User?.Username ?? "N/A")</td>
                         <td>
                             @switch (member.Role)
                             {
                                 case CommunityRole.Moderator:
-                                    <span class="badge bg-danger">Moderator</span>
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-shield-alt me-1"></i>Moderator
+                                    </span>
                                     break;
                                 case CommunityRole.Member:
-                                    <span class="badge bg-primary">Member</span>
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-user me-1"></i>Member
+                                    </span>
                                     break;
                                 default:
                                     <span class="badge bg-secondary">@member.Role</span>
                                     break;
                             }
                         </td>
-                        <td>@member.JoinedAt.ToString("dd/MM/yyyy")</td>
+                        <td class="text-nowrap">
+                            <span class="text-muted small">@member.JoinedAt.ToString("MMM d, yyyy")</span>
+                        </td>
                         @if (currentUserRole == CommunityRole.Moderator && member.UserID != currentUserId)
                         {
                             <td class="text-end">
-                                <div class="d-flex gap-2 justify-content-end">
+                                <div class="btn-group" role="group">
                                     @if (member.Role == CommunityRole.Member)
                                     {
-                                        <form method="post" 
-                                              asp-controller="Community" 
-                                              asp-action="RemoveMember" 
-                                              asp-route-communityId="@ViewBag.CommunityId"
-                                              asp-route-userId="@member.UserID"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Are you sure you want to remove @(member.User?.FullName ?? member.User?.Username) from the community?');">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" 
-                                                    class="btn btn-danger btn-sm px-3 py-1 d-flex align-items-center"
-                                                    title="Remove Member">
-                                                <i class="fas fa-user-minus me-1"></i>
-                                                <span class="d-none d-md-inline">Remove</span>
-                                            </button>
-                                        </form>
-                                        
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger d-flex align-items-center me-1" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#removeMemberModal" 
+                                                data-member-id="@member.UserID" 
+                                                data-member-name="@member.User?.FullName"
+                                                title="Remove member">
+                                            <i class="bi bi-person-dash me-1"></i>
+                                            <span>Remove</span>
+                                        </button>
                                         <form method="post" 
                                               asp-controller="Community" 
                                               asp-action="TransferModerator" 
                                               asp-route-communityId="@ViewBag.CommunityId"
                                               asp-route-newModeratorId="@member.UserID"
-                                              class="d-inline">
+                                              class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to make @(member.User?.FullName ?? member.User?.Username) the new moderator?');">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" 
-                                                    class="btn btn-primary btn-sm px-3 py-1 d-flex align-items-center"
-                                                    onclick="return confirm('Are you sure you want to make @(member.User?.FullName ?? member.User?.Username) the new moderator?');"
-                                                    title="Make Moderator">
-                                                <i class="fas fa-user-shield me-1"></i>
-                                                <span class="d-none d-md-inline">Make Moderator</span>
+                                                    class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                                                    title="Make Moderator"
+                                                    onclick="return confirm('Are you sure you want to promote this member to moderator?');">
+                                                <i class="bi bi-shield-check me-1"></i>
+                                                <span>Make Moderator</span>
                                             </button>
                                         </form>
+                                    }
+                                    else if (member.Role != CommunityRole.Moderator)
+                                    {
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger d-flex align-items-center" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#removeMemberModal" 
+                                                data-member-id="@member.UserID" 
+                                                data-member-name="@member.User?.FullName"
+                                                title="Remove member">
+                                            <i class="bi bi-person-dash me-1"></i>
+                                            <span>Remove</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">No actions available</span>
                                     }
                                 </div>
                             </td>
@@ -98,56 +130,90 @@ else
     </div>
 }
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger mt-3">@TempData["Error"]</div>
-}
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span>@TempData["Success"]</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span>@TempData["Error"]</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Remove Member Modal -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-labelledby="removeMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeMemberModalLabel">
+                    <i class="fas fa-user-minus text-danger me-2"></i>Remove Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <span id="memberName" class="fw-bold"></span> from this community?</p>
+                <p class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i>
+                    <span>Cancel</span>
+                </button>
+                <form id="removeMemberForm" method="post" asp-action="RemoveMember">
+                    <input type="hidden" id="userIdToRemove" name="userId" />
+                    <input type="hidden" name="communityId" value="@ViewContext.RouteData.Values["communityId"]" />
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger d-flex align-items-center">
+                        <i class="bi bi-person-dash me-2"></i>
+                        <span>Remove Member</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Handle transfer moderator form submission
-            $('form[action*="TransferModerator"]').on('submit', function(e) {
-                e.preventDefault();
-                
-                if (!confirm($(this).find('button[type="submit"]').attr('data-confirm'))) {
-                    return false;
-                }
-                
-                var form = $(this);
-                var button = form.find('button[type="submit"]');
-                var originalText = button.html();
-                
-                // Disable button and show loading state
-                button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
-                
-                $.ajax({
-                    url: form.attr('action'),
-                    method: 'POST',
-                    data: form.serialize(),
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function(response) {
-                        // Reload the page to show updated member list and status message
-                        window.location.reload();
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'An error occurred while processing your request.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                        alert(errorMessage);
-                        button.prop('disabled', false).html(originalText);
-                    }
-                });
-                
-                return false;
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
+
+            // Handle remove member modal
+            var removeMemberModal = document.getElementById('removeMemberModal');
+            if (removeMemberModal) {
+                removeMemberModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var memberId = button.getAttribute('data-member-id');
+                    var memberName = button.getAttribute('data-member-name');
+                    
+                    document.getElementById('memberName').textContent = memberName || 'this member';
+                    document.getElementById('userIdToRemove').value = memberId;
+                });
+            }
+
+            // Auto-dismiss alerts after 5 seconds
+            window.setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
         });
     </script>
 }
