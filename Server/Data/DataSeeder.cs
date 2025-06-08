@@ -44,7 +44,7 @@ namespace Server.Data
                     Username = "recruiter1",
                     Email = "recruiter@example.com",
                     FullName = "Sarah Johnson",
-                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 3,
                     CreatedAt = new DateTime(2024, 12, 2, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
@@ -57,7 +57,7 @@ namespace Server.Data
                     Username = "dancer1",
                     Email = "dancer@example.com",
                     FullName = "Alex Chen",
-                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
                     CreatedAt = new DateTime(2024, 12, 17, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
@@ -70,7 +70,7 @@ namespace Server.Data
                     Username = "musician1",
                     Email = "musician@example.com",
                     FullName = "Jamal Williams",
-                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
                     CreatedAt = new DateTime(2024, 12, 22, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
@@ -83,6 +83,7 @@ namespace Server.Data
                     Username = "creator1",
                     Email = "creator@example.com",
                     FullName = "Taylor Smith",
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
@@ -95,6 +96,7 @@ namespace Server.Data
                     Username = "creator2",
                     Email = "creator2@example.com",
                     FullName = "Tom Hiddleston",
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
                     CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
