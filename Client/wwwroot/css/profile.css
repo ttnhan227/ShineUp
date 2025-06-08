@@ -67,6 +67,19 @@
     background: linear-gradient(135deg, var(--primary-color), #4AB3F4);
 }
 
+.cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+}
+
 .profile-avatar {
     position: absolute;
     bottom: -60px;
@@ -192,6 +205,28 @@
     color: var(--muted-color);
 }
 
+/* Social Media Links */
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 15px;
+    margin-right: 15px;
+    margin-bottom: 10px;
+    transition: color 0.2s ease;
+}
+
+.social-link i {
+    margin-right: 6px;
+    font-size: 18px;
+}
+
+.social-link:hover {
+    color: #0d8ae0; /* Slightly darker shade of primary color */
+    text-decoration: underline;
+}
+
 /* Profile Content */
 .profile-content {
     display: flex;
@@ -253,7 +288,8 @@
     color: #5e72e4; /* Matches auth.css */
 }
 
-.info-group input.form-control {
+.info-group input.form-control,
+.info-group select.custom-select {
     border-radius: 8px; /* Matches auth.css */
     border: 1px solid #e9ecef; /* Matches auth.css */
     padding: 0.75rem 1rem; /* Matches auth.css */
@@ -261,7 +297,8 @@
     transition: all 0.3s ease; /* Matches auth.css */
 }
 
-.info-group input.form-control:focus {
+.info-group input.form-control:focus,
+.info-group select.custom-select:focus {
     border-color: #5e72e4; /* Matches auth.css */
     box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25); /* Matches auth.css */
 }
@@ -605,5 +642,15 @@
     .card-footer .btn {
         width: 100%;
         justify-content: center;
+    }
+
+    .social-link {
+        margin-right: 10px;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .social-link i {
+        font-size: 16px;
     }
 }

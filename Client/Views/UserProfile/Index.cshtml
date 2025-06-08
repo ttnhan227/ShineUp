@@ -26,6 +26,14 @@
     <!-- Profile Header Section - Always visible, but with limited info for private profiles -->
     <div class="profile-header">
         <div class="profile-cover">
+            @if (!string.IsNullOrEmpty(Model.CoverPhotoUrl))
+            {
+                <img src="@Model.CoverPhotoUrl" alt="@Model.Username's cover photo" class="cover-image">
+            }
+            else
+            {
+                <div class="cover-placeholder"></div>
+            }
             <div class="profile-avatar">
                 @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                 {
@@ -128,6 +136,33 @@
                                 2 => "Private",
                                 _ => "Not specified"
                             })
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-link'></i> Social Media</label>
+                        <div class="info-value">
+                            @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                            {
+                                <a href="@Model.InstagramUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-instagram'></i> Instagram
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.YouTubeUrl))
+                            {
+                                <a href="@Model.YouTubeUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-youtube'></i> YouTube
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.TwitterUrl))
+                            {
+                                <a href="@Model.TwitterUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-twitter'></i> Twitter
+                                </a>
+                            }
+                            @if (string.IsNullOrEmpty(Model.InstagramUrl) && string.IsNullOrEmpty(Model.YouTubeUrl) && string.IsNullOrEmpty(Model.TwitterUrl))
+                            {
+                                <span>Not provided</span>
+                            }
                         </div>
                     </div>
                 </div>

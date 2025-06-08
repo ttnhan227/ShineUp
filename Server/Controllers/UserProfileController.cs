@@ -140,16 +140,28 @@ public class UserProfileController : ControllerBase
                  return Unauthorized("Invalid token: User ID claim is not a valid integer.");
             }
 
-            // Handle image upload if a file is provided
+            // Handle profile image upload if a file is provided
             if (updateProfile.ProfileImageFile != null && updateProfile.ProfileImageFile.Length > 0)
             {
                 var uploadResult = await _cloudinaryService.UploadImgAsync(updateProfile.ProfileImageFile);
                 if (uploadResult.Error != null)
                 {
-                    _logger.LogError($"Cloudinary image upload error: {uploadResult.Error.Message}");
-                    return BadRequest(new { message = "Image upload failed: " + uploadResult.Error.Message });
+                    _logger.LogError($"Cloudinary profile image upload error: {uploadResult.Error.Message}");
+                    return BadRequest(new { message = "Profile image upload failed: " + uploadResult.Error.Message });
                 }
                 updateProfile.ProfileImageUrl = EnsureFullImageUrl(uploadResult.SecureUrl.ToString());
+            }
+
+            // Handle cover photo upload if a file is provided
+            if (updateProfile.CoverPhotoFile != null && updateProfile.CoverPhotoFile.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImgAsync(updateProfile.CoverPhotoFile);
+                if (uploadResult.Error != null)
+                {
+                    _logger.LogError($"Cloudinary cover photo upload error: {uploadResult.Error.Message}");
+                    return BadRequest(new { message = "Cover photo upload failed: " + uploadResult.Error.Message });
+                }
+                updateProfile.CoverPhotoUrl = EnsureFullImageUrl(uploadResult.SecureUrl.ToString());
             }
 
             // Fetch existing user by currentUserId from token to ensure we're updating the correct user
@@ -168,7 +180,13 @@ public class UserProfileController : ControllerBase
                 Bio = updateProfile.Bio,
                 ProfileImageURL = updateProfile.ProfileImageUrl,
                 TalentArea = updateProfile.TalentArea,
-                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUserDto.ProfilePrivacy
+                ProfilePrivacy = updateProfile.ProfilePrivacy ?? existingUserDto.ProfilePrivacy,
+                // Social Media Links
+                InstagramUrl = updateProfile.InstagramUrl ?? existingUserDto.InstagramUrl,
+                YouTubeUrl = updateProfile.YouTubeUrl ?? existingUserDto.YouTubeUrl,
+                TwitterUrl = updateProfile.TwitterUrl ?? existingUserDto.TwitterUrl,
+                // Cover Photo
+                CoverPhotoUrl = updateProfile.CoverPhotoUrl ?? existingUserDto.CoverPhotoUrl
             };
 
             var updatedUser = await _userProfileRepository.UpdateProfile(userModel);
@@ -203,12 +221,18 @@ public class UserProfileController : ControllerBase
                 RoleID = updatedUser.RoleID,
                 TalentArea = updatedUser.TalentArea,
                 CreatedAt = updatedUser.CreatedAt,
-                IsActive = updatedUser.IsActive, // ensure all relevant fields are mapped
+                IsActive = updatedUser.IsActive,
                 Verified = updatedUser.Verified,
                 LastLoginTime = updatedUser.LastLoginTime,
                 ProfilePrivacy = updatedUser.ProfilePrivacy,
-                ProfileCompletionPercentage = existingUserDto.ProfileCompletionPercentage, // Recalculate or carry over
-                IsGoogleAccount = existingUserDto.IsGoogleAccount
+                ProfileCompletionPercentage = existingUserDto.ProfileCompletionPercentage, // Will be recalculated in GetUserProfile
+                IsGoogleAccount = existingUserDto.IsGoogleAccount,
+                // Social Media Links
+                InstagramUrl = updatedUser.InstagramUrl,
+                YouTubeUrl = updatedUser.YouTubeUrl,
+                TwitterUrl = updatedUser.TwitterUrl,
+                // Cover Photo
+                CoverPhotoUrl = updatedUser.CoverPhotoUrl
             };
 
             return Ok(userDto);

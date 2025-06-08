@@ -145,7 +145,13 @@ namespace Client.Controllers
                     Bio = userProfile.Bio,
                     ProfileImageURL = userProfile.ProfileImageURL,
                     TalentArea = userProfile.TalentArea,
-                    ProfilePrivacy = userProfile.ProfilePrivacy // Add this line
+                    ProfilePrivacy = userProfile.ProfilePrivacy,
+                    // Social Media Links
+                    InstagramUrl = userProfile.InstagramUrl,
+                    YouTubeUrl = userProfile.YouTubeUrl,
+                    TwitterUrl = userProfile.TwitterUrl,
+                    // Cover Photo
+                    CoverPhotoUrl = userProfile.CoverPhotoUrl
                 };
                 return View(profileViewModel);
             }
@@ -183,6 +189,7 @@ namespace Client.Controllers
 
             using var formData = new MultipartFormDataContent();
 
+            // Add basic profile info
             formData.Add(new StringContent(model.Username ?? string.Empty), "Username");
             formData.Add(new StringContent(model.FullName ?? string.Empty), "FullName");
             formData.Add(new StringContent(model.Email ?? string.Empty), "Email");
@@ -190,6 +197,12 @@ namespace Client.Controllers
             formData.Add(new StringContent(model.TalentArea ?? string.Empty), "TalentArea");
             formData.Add(new StringContent(model.ProfilePrivacy.ToString()), "ProfilePrivacy");
             
+            // Add social media links
+            formData.Add(new StringContent(model.InstagramUrl ?? string.Empty), "InstagramUrl");
+            formData.Add(new StringContent(model.YouTubeUrl ?? string.Empty), "YouTubeUrl");
+            formData.Add(new StringContent(model.TwitterUrl ?? string.Empty), "TwitterUrl");
+            
+            // Handle profile image
             if (!string.IsNullOrEmpty(model.ProfileImageURL) && model.ProfileImageFile == null)
             {
                 formData.Add(new StringContent(model.ProfileImageURL), "ProfileImageUrl");
@@ -201,6 +214,19 @@ namespace Client.Controllers
                 fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue(model.ProfileImageFile.ContentType);
                 formData.Add(fileStreamContent, "ProfileImageFile", model.ProfileImageFile.FileName);
             }
+            
+            // Handle cover photo
+            if (!string.IsNullOrEmpty(model.CoverPhotoUrl) && model.CoverPhotoFile == null)
+            {
+                formData.Add(new StringContent(model.CoverPhotoUrl), "CoverPhotoUrl");
+            }
+
+            if (model.CoverPhotoFile != null)
+            {
+                var coverPhotoStream = new StreamContent(model.CoverPhotoFile.OpenReadStream());
+                coverPhotoStream.Headers.ContentType = new MediaTypeHeaderValue(model.CoverPhotoFile.ContentType);
+                formData.Add(coverPhotoStream, "CoverPhotoFile", model.CoverPhotoFile.FileName);
+            }
 
             // UserID is not part of the URL anymore, server gets it from token
             var response = await client.PutAsync("api/UserProfile/update", formData);
@@ -211,12 +237,24 @@ namespace Client.Controllers
                 var updatedUser = JsonConvert.DeserializeObject<UserViewModel>(responseContent);
 
                 var identity = new ClaimsIdentity(User.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var existingClaim = identity.FindFirst("ProfileImageURL");
-                if (existingClaim != null)
+                // Update profile image claim if it exists
+                var profileImageClaim = identity.FindFirst("ProfileImageURL");
+                if (profileImageClaim != null)
                 {
-                    identity.RemoveClaim(existingClaim);
+                    identity.RemoveClaim(profileImageClaim);
                 }
                 identity.AddClaim(new Claim("ProfileImageURL", updatedUser.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U"));
+                
+                // Update cover photo claim if it exists
+                var coverPhotoClaim = identity.FindFirst("CoverPhotoUrl");
+                if (coverPhotoClaim != null)
+                {
+                    identity.RemoveClaim(coverPhotoClaim);
+                }
+                if (!string.IsNullOrEmpty(updatedUser.CoverPhotoUrl))
+                {
+                    identity.AddClaim(new Claim("CoverPhotoUrl", updatedUser.CoverPhotoUrl));
+                }
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 

@@ -47,35 +47,41 @@ public class UserProfileRepository : IUserProfileRepository
             CreatedAt = user.CreatedAt,
             IsActive = user.IsActive,
             Verified = user.Verified,
-            LastLoginTime = user.LastLoginTime?.ToUniversalTime(), // Convert to UTC
+            LastLoginTime = user.LastLoginTime, // Already in UTC from AuthRepository
             ProfilePrivacy = user.ProfilePrivacy,
             ProfileCompletionPercentage = completionPercentage,
-            IsGoogleAccount = isGoogleAccount
+            IsGoogleAccount = isGoogleAccount,
+            InstagramUrl = user.InstagramUrl,
+            YouTubeUrl = user.YouTubeUrl,
+            TwitterUrl = user.TwitterUrl,
+            CoverPhotoUrl = user.CoverPhotoUrl
         };
     }
 
     private int CalculateProfileCompletion(User user)
     {
-        var totalFields = 6; // Total number of fields to check
+        // Define the fields that count towards profile completion
         var completedFields = 0;
+        var totalFields = 10; // Total number of fields that count towards completion
 
         // Check each field and increment completedFields if it's filled
         if (!string.IsNullOrWhiteSpace(user.Username)) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.FullName)) completedFields++;
-        // We'll assume Email is always filled if user exists, but we will check verification status
-        // if (!string.IsNullOrWhiteSpace(user.Email)) completedFields++; // Email is a required field, so it's always counted as 'filled'
+        // Email verification counts as one field
+        if (user.Verified) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.Bio)) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.ProfileImageURL)) completedFields++;
         if (!string.IsNullOrWhiteSpace(user.TalentArea)) completedFields++;
+        // Social media links (count each one)
+        if (!string.IsNullOrWhiteSpace(user.InstagramUrl)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.YouTubeUrl)) completedFields++;
+        if (!string.IsNullOrWhiteSpace(user.TwitterUrl)) completedFields++;
+        // Cover photo
+        if (!string.IsNullOrWhiteSpace(user.CoverPhotoUrl)) completedFields++;
 
-        // Check if email is verified and count it towards completion
-        if (user.Verified) completedFields++;
-
-        // Check if Profile Privacy has been set (assuming default is Public)
-        // if (user.ProfilePrivacy != Models.ProfilePrivacy.Public) completedFields++; // Removed check for Profile Privacy
-
-        // Calculate percentage
-        return (int)((double)completedFields / totalFields * 100);
+        // Calculate percentage (ensure it doesn't exceed 100%)
+        var percentage = (int)((double)completedFields / totalFields * 100);
+        return Math.Min(percentage, 100); // Cap at 100%
     }
 
     public async Task<UserDTO?> GetUserProfileByUsername(string username)
@@ -106,10 +112,14 @@ public class UserProfileRepository : IUserProfileRepository
             CreatedAt = user.CreatedAt,
             IsActive = user.IsActive,
             Verified = user.Verified,
-            LastLoginTime = user.LastLoginTime?.ToUniversalTime(), // Convert to UTC
+            LastLoginTime = user.LastLoginTime, // Already in UTC from AuthRepository
             ProfilePrivacy = user.ProfilePrivacy,
             ProfileCompletionPercentage = completionPercentage,
-            IsGoogleAccount = isGoogleAccount
+            IsGoogleAccount = isGoogleAccount,
+            InstagramUrl = user.InstagramUrl,
+            YouTubeUrl = user.YouTubeUrl,
+            TwitterUrl = user.TwitterUrl,
+            CoverPhotoUrl = user.CoverPhotoUrl
         };
     }
 
@@ -156,6 +166,28 @@ public class UserProfileRepository : IUserProfileRepository
 
         // Update profile privacy if provided
         existingUser.ProfilePrivacy = userToUpdate.ProfilePrivacy;
+
+        // Update social media links if provided
+        if (userToUpdate.InstagramUrl != null)
+        {
+            existingUser.InstagramUrl = userToUpdate.InstagramUrl;
+        }
+
+        if (userToUpdate.YouTubeUrl != null)
+        {
+            existingUser.YouTubeUrl = userToUpdate.YouTubeUrl;
+        }
+
+        if (userToUpdate.TwitterUrl != null)
+        {
+            existingUser.TwitterUrl = userToUpdate.TwitterUrl;
+        }
+
+        // Update cover photo if provided
+        if (userToUpdate.CoverPhotoUrl != null)
+        {
+            existingUser.CoverPhotoUrl = userToUpdate.CoverPhotoUrl;
+        }
 
         try
         {

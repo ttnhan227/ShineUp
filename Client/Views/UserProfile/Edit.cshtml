@@ -106,11 +106,55 @@
                         </div>
 
                         <div class="info-group mb-4">
-                            <label class="form-label">
+                            <label asp-for="ProfileImageFile" class="form-label">
                                 <i class='bx bx-image'></i> Profile Image
                             </label>
                             <input asp-for="ProfileImageFile" type="file" class="form-control post-input" accept="image/*" />
                             <span asp-validation-for="ProfileImageFile" class="text-danger"></span>
+                            @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
+                            {
+                                <div class="mt-2">
+                                    <small>Current: <a href="@Model.ProfileImageURL" target="_blank">View Profile Image</a></small>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="info-group mb-4">
+                            <label asp-for="CoverPhotoFile" class="form-label">
+                                <i class='bx bx-image'></i> Cover Photo
+                            </label>
+                            <input asp-for="CoverPhotoFile" type="file" class="form-control post-input" accept="image/*" />
+                            <span asp-validation-for="CoverPhotoFile" class="text-danger"></span>
+                            @if (!string.IsNullOrEmpty(Model.CoverPhotoUrl))
+                            {
+                                <div class="mt-2">
+                                    <small>Current: <a href="@Model.CoverPhotoUrl" target="_blank">View Cover Photo</a></small>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="info-group mb-4">
+                            <label asp-for="InstagramUrl" class="form-label">
+                                <i class='bx bxl-instagram'></i> Instagram URL
+                            </label>
+                            <input asp-for="InstagramUrl" class="form-control post-input" type="url" />
+                            <span asp-validation-for="InstagramUrl" class="text-danger"></span>
+                        </div>
+
+                        <div class="info-group mb-4">
+                            <label asp-for="YouTubeUrl" class="form-label">
+                                <i class='bx bxl-youtube'></i> YouTube URL
+                            </label>
+                            <input asp-for="YouTubeUrl" class="form-control post-input" type="url" />
+                            <span asp-validation-for="YouTubeUrl" class="text-danger"></span>
+                        </div>
+
+                        <div class="info-group mb-4">
+                            <label asp-for="TwitterUrl" class="form-label">
+                                <i class='bx bxl-twitter'></i> Twitter URL
+                            </label>
+                            <input asp-for="TwitterUrl" class="form-control post-input" type="url" />
+                            <span asp-validation-for="TwitterUrl" class="text-danger"></span>
                         </div>
 
                         <div class="card-footer">
