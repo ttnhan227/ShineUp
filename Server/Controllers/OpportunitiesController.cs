@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
+using Server.Services;
 using System.Security.Claims;
 
 namespace Server.Controllers;
@@ -16,17 +19,23 @@ public class OpportunitiesController : ControllerBase
     private readonly INotificationRepository _notificationRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<OpportunitiesController> _logger;
+    private readonly IEmailService _emailService;
+    private readonly DatabaseContext _context;
 
     public OpportunitiesController(
         IOpportunityRepository opportunityRepository,
         INotificationRepository notificationRepository,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<OpportunitiesController> logger)
+        ILogger<OpportunitiesController> logger,
+        IEmailService emailService,
+        DatabaseContext context)
     {
         _opportunityRepository = opportunityRepository;
         _notificationRepository = notificationRepository;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _emailService = emailService;
+        _context = context;
     }
 
     private int GetCurrentUserId()
@@ -235,6 +244,19 @@ public class OpportunitiesController : ControllerBase
                 return NotFound(new { message = "Opportunity not found" });
             }
             
+            // Get the current application to get the user's email
+            var currentApplication = await _context.OpportunityApplications
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.ApplicationID == applicationId);
+                
+            if (currentApplication == null)
+            {
+                return NotFound(new { message = "Application not found" });
+            }
+            
+            var applicantEmail = currentApplication.User?.Email;
+            var applicantName = currentApplication.User?.FullName ?? "Applicant";
+            
             // Update the application status
             var application = await _opportunityRepository.UpdateApplicationStatusAsync(applicationId, updateDto, userId);
             
@@ -243,61 +265,158 @@ public class OpportunitiesController : ControllerBase
                 return NotFound(new { message = "Application not found" });
             }
             
-            // Send notification to the applicant
-            try
-            {
-                string notificationMessage;
-                var status = updateDto.Status.ToLower();
-                var opportunityTitle = opportunity.Title;
-                var recruiterName = User.FindFirst(ClaimTypes.Name)?.Value ?? "The recruitment team";
+            // Prepare notification and email content
+            string notificationMessage;
+            string emailSubject = "";
+            string emailBody = "";
+            
+            var status = updateDto.Status.ToLower();
+            var opportunityTitle = opportunity.Title;
+            var recruiterName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Our recruitment team";
+            var companyName = opportunity.PostedByUser?.FullName ?? "Our company";
 
-                switch (status)
-                {
-                    case "pending":
-                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. We've received your application and will review it shortly.";
-                        break;
-                    case "reviewing":
-                        notificationMessage = $"Great news! Your application for '{opportunityTitle}' is currently under review by our team.";
-                        break;
-                    case "shortlisted":
-                        notificationMessage = $"Congratulations! Your application for '{opportunityTitle}' has been shortlisted. We'll be in touch soon with next steps.";
-                        break;
-                    case "interviewing":
-                        notificationMessage = $"We're excited to move forward with your application! Let's schedule an interview for the '{opportunityTitle}' position.";
-                        break;
-                    case "accepted":
-                        notificationMessage = $"Congratulations! We're thrilled to offer you the '{opportunityTitle}' position. Please check your email for the offer details.";
-                        break;
-                    case "rejected":
-                        notificationMessage = $"Thank you for applying to '{opportunityTitle}'. Unfortunately, we've decided to move forward with other candidates at this time.";
-                        break;
-                    default:
-                        notificationMessage = $"There's been an update to your application for '{opportunityTitle}'. Status: {updateDto.Status}";
-                        break;
-                }
-
-                // Add review notes if available
-                if (!string.IsNullOrEmpty(updateDto.ReviewNotes))
-                {
-                    notificationMessage += $"\n\nNote from {recruiterName}: {updateDto.ReviewNotes}";
-                }
-                
-                var notificationDto = new CreateNotificationDTO
-                {
-                    UserID = application.UserID,
-                    Message = notificationMessage,
-                    Type = NotificationType.ApplicationUpdate,
-                    RelatedEntityId = applicationId,
-                    RelatedEntityType = "Application"
-                };
-                
-                await _notificationRepository.CreateNotificationAsync(notificationDto);
-            }
-            catch (Exception ex)
+            switch (status)
             {
-                // Log the error but don't fail the request
-                _logger.LogError(ex, "Failed to send notification for application status update");
+                case "pending":
+                    notificationMessage = $"Thank you for applying to '{opportunityTitle}'. We've received your application and will review it shortly.";
+                    emailSubject = $"Application Received: {opportunityTitle}";
+                    emailBody = $"""
+                        <h2>Thank you for your application!</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>We've received your application for the position of <strong>{opportunityTitle}</strong> at {companyName}.</p>
+                        <p>Our team will review your application and get back to you as soon as possible. You can check the status of your application in your dashboard at any time.</p>
+                        <p>If you have any questions, feel free to reply to this email.</p>
+                        <p>Best regards,<br/>{companyName} Team</p>
+                        """;
+                    break;
+                    
+                case "reviewing":
+                    notificationMessage = $"Great news! Your application for '{opportunityTitle}' is currently under review by our team.";
+                    emailSubject = $"Application Update: {opportunityTitle} is Under Review";
+                    emailBody = $"""
+                        <h2>Your Application is Being Reviewed</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>We're excited to let you know that your application for <strong>{opportunityTitle}</strong> at {companyName} is currently under review by our team.</p>
+                        <p>We appreciate your patience during this process. We'll be in touch soon with an update.</p>
+                        <p>Best regards,<br/>{companyName} Team</p>
+                        """;
+                    break;
+                    
+                case "shortlisted":
+                    notificationMessage = $"Congratulations! Your application for '{opportunityTitle}' has been shortlisted. We'll be in touch soon with next steps.";
+                    emailSubject = $"Congratulations! You've Been Shortlisted for {opportunityTitle}";
+                    emailBody = $"""
+                        <h2>Congratulations! You've Been Shortlisted</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>We're pleased to inform you that your application for <strong>{opportunityTitle}</strong> at {companyName} has been shortlisted!</p>
+                        <p>This is a significant achievement, and we were impressed by your qualifications and experience.</p>
+                        <p>Our team will be in touch shortly with the next steps in the selection process.</p>
+                        <p>Best regards,<br/>{companyName} Team</p>
+                        """;
+                    break;
+                    
+                case "interviewing":
+                    notificationMessage = $"We're excited to move forward with your application! Let's schedule an interview for the '{opportunityTitle}' position.";
+                    emailSubject = $"Interview Invitation: {opportunityTitle} at {companyName}";
+                    emailBody = $"""
+                        <h2>Interview Invitation</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>We were very impressed with your application for <strong>{opportunityTitle}</strong> and would like to invite you for an interview.</p>
+                        <p>Please let us know your availability for the next week, and we'll schedule a time that works for you.</p>
+                        <p>If you have any questions or need to reschedule, please don't hesitate to contact us.</p>
+                        <p>Best regards,<br/>{recruiterName}<br/>{companyName}</p>
+                        """;
+                    break;
+                    
+                case "accepted":
+                    notificationMessage = $"Congratulations! We're thrilled to offer you the '{opportunityTitle}' position. Please check your email for the offer details.";
+                    emailSubject = $"Congratulations! Offer for {opportunityTitle} at {companyName}";
+                    emailBody = $"""
+                        <h2>Congratulations! Job Offer</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>We are absolutely thrilled to offer you the position of <strong>{opportunityTitle}</strong> at {companyName}!</p>
+                        <p>Your skills and experience stood out among all applicants, and we believe you'll be a great addition to our team.</p>
+                        <p>Please find attached the official offer letter with all the details about your compensation, benefits, and start date.</p>
+                        <p>Please review the offer and let us know if you have any questions. We're excited to welcome you to the team!</p>
+                        <p>Best regards,<br/>{recruiterName}<br/>{companyName}</p>
+                        """;
+                    break;
+                    
+                case "rejected":
+                    notificationMessage = $"Thank you for applying to '{opportunityTitle}'. Unfortunately, we've decided to move forward with other candidates at this time.";
+                    emailSubject = $"Update on Your Application for {opportunityTitle}";
+                    emailBody = $"""
+                        <h2>Update on Your Application</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>Thank you for taking the time to apply for the <strong>{opportunityTitle}</strong> position at {companyName} and for sharing your experience with us.</p>
+                        <p>After careful consideration, we've decided to move forward with other candidates whose qualifications more closely match our current needs.</p>
+                        <p>We were impressed with your background and encourage you to apply for future openings that align with your skills and experience.</p>
+                        <p>We appreciate your interest in {companyName} and wish you all the best in your job search.</p>
+                        <p>Best regards,<br/>{companyName} Team</p>
+                        """;
+                    break;
+                    
+                default:
+                    notificationMessage = $"There's been an update to your application for '{opportunityTitle}'. Status: {updateDto.Status}";
+                    emailSubject = $"Update on Your Application for {opportunityTitle}";
+                    emailBody = $"""
+                        <h2>Application Status Update</h2>
+                        <p>Dear {applicantName},</p>
+                        <p>This is to inform you that there has been an update to your application for <strong>{opportunityTitle}</strong> at {companyName}.</p>
+                        <p><strong>Status:</strong> {updateDto.Status}</p>
+                        <p>You can check the latest status of your application by logging into your account.</p>
+                        <p>If you have any questions, feel free to reply to this email.</p>
+                        <p>Best regards,<br/>{companyName} Team</p>
+                        """;
+                    break;
             }
+
+            // Add review notes if available
+            if (!string.IsNullOrEmpty(updateDto.ReviewNotes))
+            {
+                notificationMessage += $"\n\nNote from {recruiterName}: {updateDto.ReviewNotes}";
+                emailBody = emailBody.Replace("</p>", "<br/><br/>");
+                emailBody += $"<p><strong>Note from {recruiterName}:</strong><br/>{updateDto.ReviewNotes}</p>";
+            }
+            
+            // Add a footer to the email
+            emailBody += """
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eaeaea;"/>
+                <p style="color: #666; font-size: 12px; line-height: 1.5;">
+                    This is an automated message. Please do not reply to this email. If you have any questions, 
+                    please contact us through the contact information provided in your application portal.
+                </p>
+                """;
+            
+            // Create notification for the applicant
+            var notificationDto = new CreateNotificationDTO
+            {
+                UserID = application.UserID,
+                Message = notificationMessage,
+                Type = NotificationType.ApplicationUpdate,
+                RelatedEntityId = applicationId,
+                RelatedEntityType = "Application"
+            };
+            
+            // Send notification and email in parallel
+            var notificationTask = _notificationRepository.CreateNotificationAsync(notificationDto);
+            
+            // Send email to the applicant if email is available
+            if (!string.IsNullOrEmpty(applicantEmail))
+            {
+                try 
+                {
+                    await _emailService.SendEmailAsync(applicantEmail, emailSubject, emailBody);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Failed to send email notification for application status update");
+                    // Continue even if email fails - we've already logged the error
+                }
+            }
+            
+            // Wait for notification to complete
+            await notificationTask;
             
             return Ok(application);
         }
