@@ -204,8 +204,8 @@ namespace Server.Data
                     IsRemote = true,
                     Type = OpportunityType.Freelance,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = DateTime.UtcNow.AddDays(30),
-                    CreatedAt = DateTime.UtcNow,
+                    ApplicationDeadline = referenceDate.AddDays(30),
+                    CreatedAt = referenceDate,
                     PostedByUserId = 1,
                     CategoryId = 3,
                     TalentArea = "Graphic Design"
@@ -219,8 +219,8 @@ namespace Server.Data
                     IsRemote = false,
                     Type = OpportunityType.Collaboration,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = DateTime.UtcNow.AddDays(45),
-                    CreatedAt = DateTime.UtcNow,
+                    ApplicationDeadline = referenceDate.AddDays(45),
+                    CreatedAt = referenceDate,
                     PostedByUserId = 4,
                     CategoryId = 3,
                     TalentArea = "Visual Arts"
@@ -236,7 +236,7 @@ namespace Server.Data
                     TalentOpportunityID = 1,
                     CoverLetter = "I have 5 years of experience in hip hop dance and have performed at multiple festivals.",
                     Status = ApplicationStatus.UnderReview,
-                    AppliedAt = DateTime.UtcNow.AddDays(-2),
+                    AppliedAt = referenceDate.AddDays(-2),
                     ReviewedAt = null,
                     ReviewNotes = null
                 },
@@ -247,7 +247,7 @@ namespace Server.Data
                     TalentOpportunityID = 2,
                     CoverLetter = "I specialize in creating atmospheric electronic music perfect for games.",
                     Status = ApplicationStatus.Pending,
-                    AppliedAt = DateTime.UtcNow.AddDays(-1),
+                    AppliedAt = referenceDate.AddDays(-1),
                     ReviewedAt = null,
                     ReviewNotes = null
                 },
@@ -258,7 +258,7 @@ namespace Server.Data
                     TalentOpportunityID = 3,
                     CoverLetter = "I'd love to bring my unique style to your downtown district!",
                     Status = ApplicationStatus.Pending,
-                    AppliedAt = DateTime.UtcNow,
+                    AppliedAt = referenceDate,
                     ReviewedAt = null,
                     ReviewNotes = null
                 }
@@ -273,7 +273,7 @@ namespace Server.Data
                     Message = "New application received for Lead Dancer position",
                     Type = NotificationType.ApplicationUpdate,
                     Status = NotificationStatus.Unread,
-                    CreatedAt = DateTime.UtcNow.AddHours(-2)
+                    CreatedAt = referenceDate.AddHours(-2)
                 },
                 new Notification
                 {
@@ -282,7 +282,7 @@ namespace Server.Data
                     Message = "Your application for Lead Dancer is under review",
                     Type = NotificationType.ApplicationUpdate,
                     Status = NotificationStatus.Read,
-                    CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    CreatedAt = referenceDate.AddDays(-1)
                 },
                 new Notification
                 {
@@ -291,7 +291,7 @@ namespace Server.Data
                     Message = "New music production opportunity matches your profile",
                     Type = NotificationType.OpportunityPosted,
                     Status = NotificationStatus.Unread,
-                    CreatedAt = DateTime.UtcNow.AddHours(-4)
+                    CreatedAt = referenceDate.AddHours(-4)
                 }
             );
         }
