@@ -37,6 +37,7 @@ namespace Server.Data
             );
 
             // Seed Users (Consolidated unique entries)
+            var referenceDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
@@ -46,7 +47,7 @@ namespace Server.Data
                     FullName = "Sarah Johnson",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
                     RoleID = 3,
-                    CreatedAt = DateTime.UtcNow.AddDays(-30),
+                    CreatedAt = referenceDate.AddDays(-30),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Talent Acquisition"
@@ -59,7 +60,7 @@ namespace Server.Data
                     FullName = "Alex Chen",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
                     RoleID = 1,
-                    CreatedAt = DateTime.UtcNow.AddDays(-15),
+                    CreatedAt = referenceDate.AddDays(-15),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Hip Hop Dance"
@@ -72,7 +73,7 @@ namespace Server.Data
                     FullName = "Jamal Williams",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
                     RoleID = 1,
-                    CreatedAt = DateTime.UtcNow.AddDays(-10),
+                    CreatedAt = referenceDate.AddDays(-10),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Music Production"
@@ -84,7 +85,7 @@ namespace Server.Data
                     Email = "creator@example.com",
                     FullName = "Taylor Smith",
                     RoleID = 1,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = referenceDate,
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Content Creation"
@@ -96,7 +97,7 @@ namespace Server.Data
                     Email = "creator2@example.com",
                     FullName = "Tom Hiddleston",
                     RoleID = 1,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = referenceDate,
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Content Creation"
@@ -158,8 +159,8 @@ namespace Server.Data
                     IsRemote = false,
                     Type = OpportunityType.Gig,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(14), DateTimeKind.Utc),
-                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-5), DateTimeKind.Utc),
+                    ApplicationDeadline = new DateTime(2025, 12, 31, 23, 59, 59, DateTimeKind.Utc),
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     PostedByUserId = 1,
                     CategoryId = 1,
                     TalentArea = "Hip Hop Dance"
@@ -173,8 +174,8 @@ namespace Server.Data
                     IsRemote = true,
                     Type = OpportunityType.Freelance,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(30), DateTimeKind.Utc),
-                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-3), DateTimeKind.Utc),
+                    ApplicationDeadline = new DateTime(2025, 12, 31, 23, 59, 59, DateTimeKind.Utc),
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     PostedByUserId = 1,
                     CategoryId = 2,
                     TalentArea = "Music Production"
@@ -188,8 +189,8 @@ namespace Server.Data
                     IsRemote = false,
                     Type = OpportunityType.Gig,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(21), DateTimeKind.Utc),
-                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-1), DateTimeKind.Utc),
+                    ApplicationDeadline = new DateTime(2025, 12, 31, 23, 59, 59, DateTimeKind.Utc),
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     PostedByUserId = 1,
                     CategoryId = 1,
                     TalentArea = "Hip Hop Dance"
