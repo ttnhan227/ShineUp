@@ -21,6 +21,17 @@ public class User
     
     public string? Bio { get; set; }
     public string? ProfileImageURL { get; set; }
+    
+    // Social Media Links
+    [Url]
+    public string? InstagramUrl { get; set; }
+    [Url]
+    public string? YouTubeUrl { get; set; }
+    [Url]
+    public string? TwitterUrl { get; set; }
+    
+    // Profile Media
+    public string? CoverPhotoUrl { get; set; }
 
     [ForeignKey("Role")] 
     public int RoleID { get; set; }

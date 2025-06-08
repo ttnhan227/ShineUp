@@ -162,8 +162,22 @@ public class AuthController : ControllerBase
             var user = await _googleAuthService.HandleGoogleUser(payload);
             
             // Update LastLoginTime for Google logins
-            user.LastLoginTime = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            var loginTime = DateTime.UtcNow;
+            
+            try 
+            {
+                // Use direct SQL to update the LastLoginTime
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE \"Users\" SET \"LastLoginTime\" = {loginTime} WHERE \"UserID\" = {user.UserID}");
+                
+                // Update the user object in memory
+                user.LastLoginTime = loginTime;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"[Google Login] Error saving LastLoginTime for user {user.UserID}");
+                throw;
+            }
 
             // For Google users without a password, they need to complete their profile
             bool needsPassword = string.IsNullOrEmpty(user.PasswordHash);

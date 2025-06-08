@@ -20,6 +20,15 @@ namespace Client.Models
         public int ProfileCompletionPercentage { get; set; }
         public bool IsGoogleAccount { get; set; }
         public bool IsPrivate { get; set; }
+        
+        // Social Media Links
+        public string? InstagramUrl { get; set; }
+        public string? YouTubeUrl { get; set; }
+        public string? TwitterUrl { get; set; }
+        
+        // Profile Media
+        public string? CoverPhotoUrl { get; set; }
+        
         public List<PostDetailsViewModel> Posts { get; set; } = new List<PostDetailsViewModel>();
     }
 }

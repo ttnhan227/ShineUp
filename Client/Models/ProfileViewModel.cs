@@ -20,6 +20,26 @@ namespace Client.Models
         public IFormFile? ProfileImageFile { get; set; } // Added for image upload
         [Display(Name = "Profile Privacy")]
         public int ProfilePrivacy { get; set; }
+        
+        // Social Media Links
+        [Url(ErrorMessage = "Please enter a valid URL")]
+        [Display(Name = "Instagram URL")]
+        public string? InstagramUrl { get; set; }
+        
+        [Url(ErrorMessage = "Please enter a valid URL")]
+        [Display(Name = "YouTube URL")]
+        public string? YouTubeUrl { get; set; }
+        
+        [Url(ErrorMessage = "Please enter a valid URL")]
+        [Display(Name = "Twitter URL")]
+        public string? TwitterUrl { get; set; }
+        
+        // Cover Photo
+        [Display(Name = "Cover Photo URL")]
+        public string? CoverPhotoUrl { get; set; }
+        
+        [Display(Name = "Upload New Cover Photo")]
+        public IFormFile? CoverPhotoFile { get; set; }
     }
     public class ChangePasswordViewModel
     {

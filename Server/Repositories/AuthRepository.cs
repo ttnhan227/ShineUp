@@ -69,9 +69,23 @@ public class AuthRepository : IAuthRepository
                 return null;
             }
 
-            // Update LastLoginTime
-            user.LastLoginTime = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            // Update LastLoginTime using direct SQL
+            var loginTime = DateTime.UtcNow;
+            
+            try 
+            {
+                // Use direct SQL to update the LastLoginTime
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE \"Users\" SET \"LastLoginTime\" = {loginTime} WHERE \"UserID\" = {user.UserID}");
+                
+                // Update the user object in memory
+                user.LastLoginTime = loginTime;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error saving LastLoginTime for user {user.UserID}");
+                throw;
+            }
 
             return user;
         }
