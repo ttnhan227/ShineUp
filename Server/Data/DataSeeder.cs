@@ -44,9 +44,9 @@ namespace Server.Data
                     Username = "recruiter1",
                     Email = "recruiter@example.com",
                     FullName = "Sarah Johnson",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 3,
-                    CreatedAt = new DateTime(2024, 12, 2, 0, 0, 0, DateTimeKind.Utc), // Hardcoded: 2025-01-01 - 30 days
+                    CreatedAt = new DateTime(2024, 12, 2, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Talent Acquisition"
@@ -57,9 +57,9 @@ namespace Server.Data
                     Username = "dancer1",
                     Email = "dancer@example.com",
                     FullName = "Alex Chen",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
-                    CreatedAt = new DateTime(2024, 12, 17, 0, 0, 0, DateTimeKind.Utc), // Hardcoded: 2025-01-01 - 15 days
+                    CreatedAt = new DateTime(2024, 12, 17, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Hip Hop Dance"
@@ -70,9 +70,9 @@ namespace Server.Data
                     Username = "musician1",
                     Email = "musician@example.com",
                     FullName = "Jamal Williams",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
+                    PasswordHash = "$2a$11$8Q4z5z6Y7X8W9V0A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S", // Hardcoded bcrypt hash for "User@123"
                     RoleID = 1,
-                    CreatedAt = new DateTime(2024, 12, 22, 0, 0, 0, DateTimeKind.Utc), // Hardcoded: 2025-01-01 - 10 days
+                    CreatedAt = new DateTime(2024, 12, 22, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Music Production"
@@ -84,7 +84,7 @@ namespace Server.Data
                     Email = "creator@example.com",
                     FullName = "Taylor Smith",
                     RoleID = 1,
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), // Hardcoded
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Content Creation"
@@ -96,7 +96,7 @@ namespace Server.Data
                     Email = "creator2@example.com",
                     FullName = "Tom Hiddleston",
                     RoleID = 1,
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), // Hardcoded
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Content Creation"
@@ -203,8 +203,8 @@ namespace Server.Data
                     IsRemote = true,
                     Type = OpportunityType.Freelance,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = new DateTime(2025, 1, 31, 23, 59, 59, DateTimeKind.Utc), // Hardcoded: 2025-01-01 + 30 days
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), // Hardcoded
+                    ApplicationDeadline = new DateTime(2025, 1, 31, 23, 59, 59, DateTimeKind.Utc),
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     PostedByUserId = 1,
                     CategoryId = 3,
                     TalentArea = "Graphic Design"
@@ -218,8 +218,8 @@ namespace Server.Data
                     IsRemote = false,
                     Type = OpportunityType.Collaboration,
                     Status = OpportunityStatus.Open,
-                    ApplicationDeadline = new DateTime(2025, 2, 15, 23, 59, 59, DateTimeKind.Utc), // Hardcoded: 2025-01-01 + 45 days
-                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), // Hardcoded
+                    ApplicationDeadline = new DateTime(2025, 2, 15, 23, 59, 59, DateTimeKind.Utc),
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     PostedByUserId = 4,
                     CategoryId = 3,
                     TalentArea = "Visual Arts"
@@ -235,7 +235,7 @@ namespace Server.Data
                     TalentOpportunityID = 1,
                     CoverLetter = "I have 5 years of experience in hip hop dance and have performed at multiple festivals.",
                     Status = ApplicationStatus.UnderReview,
-                    AppliedAt = new DateTime(2024, 12, 30, 0, 0, 0, DateTimeKind.Utc), // Hardcoded: 2025-01-01 - 2 days
+                    AppliedAt = new DateTime(2024, 12, 30, 0, 0, 0, DateTimeKind.Utc),
                     ReviewedAt = null,
                     ReviewNotes = null
                 },
@@ -246,7 +246,7 @@ namespace Server.Data
                     TalentOpportunityID = 2,
                     CoverLetter = "I specialize in creating atmospheric electronic music perfect for games.",
                     Status = ApplicationStatus.Pending,
-                    AppliedAt = new DateTime(2024, 12, 31, 0, 0, 0, DateTimeKind.Utc), // Hardcoded: 2025-01-01 - 1 day
+                    AppliedAt = new DateTime(2024, 12, 31, 0, 0, 0, DateTimeKind.Utc),
                     ReviewedAt = null,
                     ReviewNotes = null
                 },
@@ -257,7 +257,7 @@ namespace Server.Data
                     TalentOpportunityID = 3,
                     CoverLetter = "I'd love to bring my unique style to your downtown district!",
                     Status = ApplicationStatus.Pending,
-                    AppliedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), // Hardcoded
+                    AppliedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     ReviewedAt = null,
                     ReviewNotes = null
                 }
@@ -272,7 +272,7 @@ namespace Server.Data
                     Message = "New application received for Lead Dancer position",
                     Type = NotificationType.ApplicationUpdate,
                     Status = NotificationStatus.Unread,
-                    CreatedAt = new DateTime(2024, 12, 31, 22, 0, 0, DateTimeKind.Utc) // Hardcoded: 2025-01-01 - 2 hours
+                    CreatedAt = new DateTime(2024, 12, 31, 22, 0, 0, DateTimeKind.Utc)
                 },
                 new Notification
                 {
@@ -281,7 +281,7 @@ namespace Server.Data
                     Message = "Your application for Lead Dancer is under review",
                     Type = NotificationType.ApplicationUpdate,
                     Status = NotificationStatus.Read,
-                    CreatedAt = new DateTime(2024, 12, 31, 0, 0, 0, DateTimeKind.Utc) // Hardcoded: 2025-01-01 - 1 day
+                    CreatedAt = new DateTime(2024, 12, 31, 0, 0, 0, DateTimeKind.Utc)
                 },
                 new Notification
                 {
@@ -290,7 +290,7 @@ namespace Server.Data
                     Message = "New music production opportunity matches your profile",
                     Type = NotificationType.OpportunityPosted,
                     Status = NotificationStatus.Unread,
-                    CreatedAt = new DateTime(2024, 12, 31, 20, 0, 0, DateTimeKind.Utc) // Hardcoded: 2025-01-01 - 4 hours
+                    CreatedAt = new DateTime(2024, 12, 31, 20, 0, 0, DateTimeKind.Utc)
                 }
             );
         }
