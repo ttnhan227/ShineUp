@@ -23,6 +23,7 @@ public class UserProfileRepository : IUserProfileRepository
     {
         var user = await _context.Users
             .Include(u => u.Role)
+            .AsTracking()
             .SingleOrDefaultAsync(x => x.UserID == userId);
 
         if (user == null) return null;
@@ -88,6 +89,7 @@ public class UserProfileRepository : IUserProfileRepository
     {
         var user = await _context.Users
             .Include(u => u.Role)
+            .AsTracking()
             .SingleOrDefaultAsync(x => x.Username == username);
 
         if (user == null) return null;
