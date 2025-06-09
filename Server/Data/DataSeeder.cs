@@ -102,6 +102,19 @@ namespace Server.Data
                     IsActive = true,
                     Verified = true,
                     TalentArea = "Content Creation"
+                },
+            new User
+                {
+                    UserID = 6,
+                    Username = "Administrator",
+                    Email = "admin@example.com",
+                    FullName = "Tom Hiddleston",
+                    PasswordHash = "$2a$12$m8ez5m4AnAyK5WSi7Ec3a.E20i5wXDVRkjSFx01ycdGiCccWFUHD.", // Hardcoded bcrypt hash for "User@123"
+                    RoleID = 2,
+                    CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    IsActive = true,
+                    Verified = true,
+                    TalentArea = "ShineUp Admin"
                 }
             );
 
