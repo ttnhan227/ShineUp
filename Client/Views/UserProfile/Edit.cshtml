@@ -1,7 +1,7 @@
 @model Client.Models.ProfileViewModel
 
 @{
-    ViewData["Title"] = "Edit Profile";
+ViewData["Title"] = "Edit Profile";
 }
 
 <div class="profile-container">
@@ -18,20 +18,20 @@
                         </div>
                         @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                         {
-                            <img src="@Model.ProfileImageURL" alt="@Model.Username's profile image" id="profileImagePreview">
+                        <img src="@Model.ProfileImageURL" alt="@Model.Username's profile image" id="profileImagePreview">
                         }
                         else
                         {
-                            <div class="avatar-placeholder">
-                                <i class='bx bx-user'></i>
-                            </div>
+                        <div class="avatar-placeholder">
+                            <i class='bx bx-user'></i>
+                        </div>
                         }
                     </div>
                     <div class="profile-meta">
                         <h5 class="post-author">@Model.Username</h5>
                         @if (!string.IsNullOrEmpty(Model.TalentArea))
                         {
-                            <span class="talent-badge">@Model.TalentArea</span>
+                        <span class="talent-badge">@Model.TalentArea</span>
                         }
                     </div>
                 </div>
@@ -45,11 +45,11 @@
                     <div class="cover-image-container" id="coverImageTrigger">
                         @if (!string.IsNullOrEmpty(Model.CoverPhotoUrl))
                         {
-                            <img src="@Model.CoverPhotoUrl" alt="Cover photo" id="coverImagePreview">
+                        <img src="@Model.CoverPhotoUrl" alt="Cover photo" id="coverImagePreview">
                         }
                         else
                         {
-                            <div class="cover-placeholder">No Cover Photo</div>
+                        <div class="cover-placeholder">No Cover Photo</div>
                         }
                         <div class="cover-overlay">
                             <i class='bx bx-camera'></i> Change Cover Photo
@@ -59,10 +59,10 @@
                 <div class="card-body">
                     @if (TempData["SuccessMessage"] != null)
                     {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            @TempData["SuccessMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                     }
 
                     <form asp-action="Edit" method="post" enctype="multipart/form-data">
@@ -184,70 +184,81 @@
 </div>
 
 @section Scripts {
-    @@await Html.RenderPartialAsync("_ValidationScriptsPartial")
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const profileImageTrigger = document.getElementById('profileImageTrigger');
-            const coverImageTrigger = document.getElementById('coverImageTrigger');
-            const panel = document.getElementById('imageSelectionPanel');
-            const panelTitle = document.getElementById('panelTitle');
-            const panelPreview = document.getElementById('panelPreview');
-            const panelImageInput = document.getElementById('panelImageInput');
-            const panelSave = document.getElementById('panelSave');
-            const panelCancel = document.getElementById('closePanel');
-            const panelCancelBtn = document.getElementById('panelCancel');
-            const profileImageInput = document.getElementById('profileImageInput');
-            const coverImageInput = document.getElementById('coverImageInput');
-            const profileImagePreview = document.getElementById('profileImagePreview');
-            const coverImagePreview = document.getElementById('coverImagePreview');
+@await Html.PartialAsync("_ValidationScriptsPartial")
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const profileImageTrigger = document.getElementById('profileImageTrigger');
+        const coverImageTrigger = document.getElementById('coverImageTrigger');
+        const panel = document.getElementById('imageSelectionPanel');
+        const panelTitle = document.getElementById('panelTitle');
+        const panelPreview = document.getElementById('panelPreview');
+        const panelImageInput = document.getElementById('panelImageInput');
+        const panelSave = document.getElementById('panelSave');
+        const panelCancel = document.getElementById('closePanel');
+        const panelCancelBtn = document.getElementById('panelCancel');
+        const profileImageInput = document.getElementById('profileImageInput');
+        const coverImageInput = document.getElementById('coverImageInput');
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        const coverImagePreview = document.getElementById('coverImagePreview');
 
-            function openPanel(type, previewSrc) {
-                panelTitle.textContent = type === 'profile' ? 'Change Profile Image' : 'Change Cover Photo';
-                panelPreview.src = previewSrc || '';
-                panel.classList.add('open');
-                panelImageInput.value = '';
-            }
+        let currentPreviewSrc = ''; // Store the preview data URL
 
-            function closePanel() {
-                panel.classList.remove('open');
-                panelPreview.src = '';
-                panelImageInput.value = '';
-            }
+        function openPanel(type, previewSrc) {
+            panelTitle.textContent = type === 'profile' ? 'Change Profile Image' : 'Change Cover Photo';
+            panelPreview.src = previewSrc || '';
+            currentPreviewSrc = previewSrc || '';
+            panel.classList.add('open');
+            panelImageInput.value = '';
+        }
 
-            profileImageTrigger.addEventListener('click', function () {
-                openPanel('profile', profileImagePreview ? profileImagePreview.src : '');
-            });
+        function closePanel() {
+            panel.classList.remove('open');
+            panelPreview.src = '';
+            panelImageInput.value = '';
+            currentPreviewSrc = '';
+        }
 
-            coverImageTrigger.addEventListener('click', function () {
-                openPanel('cover', coverImagePreview ? coverImagePreview.src : '');
-            });
-
-            panelImageInput.addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        panelPreview.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            panelSave.addEventListener('click', function () {
-                if (panelImageInput.files[0]) {
-                    const isProfile = panelTitle.textContent.includes('Profile');
-                    const targetInput = isProfile ? profileImageInput : coverImageInput;
-                    const targetPreview = isProfile ? profileImagePreview : coverImagePreview;
-                    targetInput.files = panelImageInput.files;
-                    if (targetPreview && panelPreview.src) {
-                        targetPreview.src = panelPreview.src;
-                    }
-                }
-                closePanel();
-            });
-
-            panelCancel.addEventListener('click', closePanel);
-            panelCancelBtn.addEventListener('click', closePanel);
+        profileImageTrigger.addEventListener('click', function () {
+            openPanel('profile', profileImagePreview ? profileImagePreview.src : '');
         });
-    </script>
+
+        coverImageTrigger.addEventListener('click', function () {
+            openPanel('cover', coverImagePreview ? coverImagePreview.src : '');
+        });
+
+        panelImageInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    panelPreview.src = e.target.result;
+                    currentPreviewSrc = e.target.result; // Store the data URL
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        panelSave.addEventListener('click', function () {
+            if (panelImageInput.files[0]) {
+                const isProfile = panelTitle.textContent.includes('Profile');
+                const targetInput = isProfile ? profileImageInput : coverImageInput;
+                const targetPreview = isProfile ? profileImagePreview : coverImagePreview;
+
+                // Transfer file to target input using DataTransfer
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(panelImageInput.files[0]);
+                targetInput.files = dataTransfer.files;
+
+                // Update target preview
+                if (targetPreview && currentPreviewSrc) {
+                    targetPreview.src = currentPreviewSrc;
+                }
+            }
+            closePanel();
+        });
+
+        panelCancel.addEventListener('click', closePanel);
+        panelCancelBtn.addEventListener('click', closePanel);
+    });
+</script>
 }
