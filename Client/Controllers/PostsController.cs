@@ -68,7 +68,7 @@ public class PostsController : Controller
     [HttpPost("create")]
     [Route("Posts/CreatePost")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreatePost(CreatePostViewModel model, IFormFileCollection Images, IFormFileCollection Videos, int? CommunityID)
+    public async Task<IActionResult> CreatePost(CreatePostViewModel model, IFormFileCollection ImageFiles, IFormFileCollection VideoFiles, int? CommunityID)
     {
         _logger.LogInformation("Starting post creation process...");
         
@@ -119,7 +119,7 @@ public class PostsController : Controller
                 model.Title, model.CategoryID, model.PrivacyID, CommunityID);
                 
             _logger.LogInformation("Processing {ImageCount} images and {VideoCount} videos", 
-                Images?.Count ?? 0, Videos?.Count ?? 0);
+                ImageFiles?.Count ?? 0, VideoFiles?.Count ?? 0);
 
             // Create form data
             using var formData = new MultipartFormDataContent();
@@ -145,9 +145,9 @@ public class PostsController : Controller
             }
 
             // Add images
-            if (Images != null && Images.Count > 0)
+            if (ImageFiles != null && ImageFiles.Count > 0)
             {
-                foreach (var image in Images)
+                foreach (var image in ImageFiles)
                 {
                     if (image != null && image.Length > 0)
                     {
@@ -164,9 +164,9 @@ public class PostsController : Controller
             }
 
             // Add videos
-            if (Videos != null && Videos.Count > 0)
+            if (VideoFiles != null && VideoFiles.Count > 0)
             {
-                foreach (var video in Videos)
+                foreach (var video in VideoFiles)
                 {
                     if (video != null && video.Length > 0)
                     {

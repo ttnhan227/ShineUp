@@ -5,223 +5,203 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - ShineUp</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" asp-append-version="true"/>
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'/>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Client.styles.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/posts.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/contests.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/opportunities.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/communities.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- Add to your Layout or _ViewImports.cshtml -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
     @RenderSection("Styles", required: false)
-   <style>
-    :root {
-        --primary: #2a69b8;
-        --primary-dark: #1e4a8a;
-        --text-dark: #1a1a1a;
-        --text-muted: #5c6b7a;
-        --bg-light: #f5f7fa;
-        --bg-white: #ffffff;
-        --border: #e0e4e8;
-        --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        --transition: all 0.2s ease-in-out;
-    }
-
-    body {
-        background-color: var(--bg-light);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: var(--text-dark);
-        line-height: 1.5;
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-    header {
-        background: var(--bg-white);
-        border-bottom: 1px solid var(--border);
-        box-shadow: var(--shadow);
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-    }
-
-    .navbar {
-        padding: 0.75rem 1rem;
-    }
-
-    .navbar-brand {
-        color: var(--primary) !important;
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        text-decoration: none;
-    }
-
-    .nav-link {
-        color: var(--text-dark) !important;
-        font-weight: 500;
-        padding: 0.5rem 1rem !important;
-        border-radius: 12px;
-        transition: var(--transition);
-    }
-
-    .nav-link:hover {
-        background-color: rgba(42, 105, 184, 0.1);
-        color: var(--primary) !important;
-    }
-
-    .nav-link.active {
-        color: var(--primary) !important;
-        background-color: rgba(42, 105, 184, 0.05);
-    }
-
-    .profile-image-placeholder-sm {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: #e8ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .profile-image-placeholder-sm i {
-        font-size: 1.3rem;
-        color: var(--text-muted);
-    }
-
-    .dropdown-menu {
-        border: none;
-        border-radius: 8px;
-        box-shadow: var(--shadow);
-        margin-top: 0.5rem;
-    }
-
-    .dropdown-item {
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        border-radius: 6px;
-        transition: var(--transition);
-    }
-
-    .dropdown-item:hover {
-        background: var(--bg-light);
-        color: var(--primary);
-    }
-
-    .main-content-container {
-        max-width: 1240px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-        flex-grow: 1;
-    }
-
-    .footer {
-        background: var(--bg-white);
-        border-top: 1px solid var(--border);
-        padding: 1rem 0;
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        width: 100%;
-        margin-top: auto;
-    }
-
-    .footer .container-fluid {
-        max-width: 1240px;
-        padding: 0 1rem;
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .footer a {
-        color: var(--primary);
-        text-decoration: none;
-        transition: var(--transition);
-    }
-
-    .footer a:hover {
-        color: var(--primary-dark);
-    }
-
-    .notification-dropdown {
-        width: 360px;
-        max-height: 450px;
-        border-radius: 10px;
-        background: var(--bg-white);
-    }
-
-    .notification-item {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--border);
-        transition: var(--transition);
-    }
-
-    .notification-item:hover {
-        background: var(--bg-light);
-    }
-
-    .notification-item.unread {
-        background: rgba(42, 105, 184, 0.03);
-    }
-
-    .notification-time {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-    }
-
-    #unread-count {
-        font-size: 0.65rem;
-        padding: 0.2rem 0.45rem;
-        background: #dc3545;
-        border-radius: 10px;
-    }
-
-    .navbar-nav .talent-cta {
-        background: var(--primary);
-        color: var(--bg-white) !important;
-        border-radius: 8px;
-        padding: 0.5rem 1.25rem !important;
-        font-weight: 600;
-        text-decoration: none;
-        transition: var(--transition);
-    }
-
-    .navbar-nav .talent-cta:hover {
-        background: var(--primary-dark);
-        color: var(--bg-white) !important;
-    }
-
-    @@media (max-width: 576px) {
-        .footer .container-fluid {
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
+    <style>
+        :root {
+            --primary: #2a69b8; /* Professional blue for talent focus */
+            --primary-dark: #1e4a8a;
+            --text-dark: #1a1a1a;
+            --text-muted: #5c6b7a;
+            --bg-light: #f5f7fa;
+            --bg-white: #ffffff;
+            --border: #e0e4e8;
         }
-    }
 
-    /* Ensure footer doesn't overlap content */
-    body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
 
-    .main-content-container {
-        flex: 1 0 auto;
-    }
+        /* Header */
+        header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-    .footer {
-        flex-shrink: 0;
-    }
-</style>
+        .navbar {
+            padding: 0.75rem 1rem;
+        }
+
+        .navbar-brand {
+            color: var(--primary) !important;
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(42,105,184,0.1);
+            color: var(--primary) !important;
+        }
+
+        .nav-link.active {
+            color: var(--primary) !important;
+            background-color: rgba(42,105,184,0.05);
+        }
+
+        /* Profile Image */
+        .profile-image-placeholder-sm {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #e8ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-image-placeholder-sm i {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+        }
+
+        /* Dropdowns */
+        .dropdown-menu {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Main Content */
+        .main-content-container {
+            max-width: 1240px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-white);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Notifications */
+        .notification-dropdown {
+            width: 360px;
+            max-height: 450px;
+            border-radius: 10px;
+            background: var(--bg-white);
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: var(--bg-light);
+        }
+
+        .notification-item.unread {
+            background: rgba(42,105,184,0.03);
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        #unread-count {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.45rem;
+            background: #dc3545;
+            border-radius: 10px;
+        }
+
+        /* Talent-specific */
+        .navbar-nav .talent-cta {
+            background: var(--primary);
+            color: var(--bg-white) !important;
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem !important;
+            font-weight: 600;
+        }
+
+        .navbar-nav .talent-cta:hover {
+            background: var(--primary-dark);
+            color: var(--bg-white) !important;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -260,6 +240,8 @@
                     {
                     var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
                     var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
+
+                    <!-- Notification Dropdown -->
                     <li class="nav-item dropdown me-2">
                         <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class='bx bx-bell fs-4'></i>
@@ -280,6 +262,8 @@
                             </div>
                         </div>
                     </li>
+
+                    <!-- Profile Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             @if (!string.IsNullOrEmpty(profileImageUrl))
@@ -301,6 +285,7 @@
                                 <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
                                     <button type="submit" class="btn btn-link text-dark p-0 border-0 bg-transparent">Logout</button>
                                 </form>
+
                             </li>
                         </ul>
                     </li>
@@ -316,17 +301,17 @@
         </div>
     </nav>
 </header>
+
 <main role="main" class="main-content-container">
     @RenderBody()
 </main>
+
 <footer class="footer text-muted">
-    <div class="container-fluid">
-        <span>© 2025 ShineUp</span>
-        <a asp-area="" asp-controller="Home" asp-action="About">About</a>
-        <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        <a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
+    <div class="container-fluid px-4">
+        © 2025 ShineUp | <a asp-area="" asp-controller="Home" asp-action="About">About</a> | <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> | <a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
     </div>
 </footer>
+
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
@@ -338,6 +323,7 @@
         "positionClass": "toast-top-right",
         "timeOut": "5000"
     };
+
     document.addEventListener('DOMContentLoaded', function() {
         const notificationDropdown = document.getElementById('notificationDropdown');
         if (notificationDropdown) {
@@ -345,12 +331,17 @@
         }
         updateUnreadCount();
     });
+
     document.getElementById('logoutForm').addEventListener('submit', function () {
         localStorage.clear();
         sessionStorage.clear();
     });
+
+
+
+
     function updateUnreadCount() {
-        fetch('/notifications/GetUnreadCount')
+        fetch('/notifications/unread-count')
             .then(response => response.ok ? response.json() : Promise.reject('Failed to fetch unread count'))
             .then(data => {
                 const unreadCount = data.count || 0;
@@ -360,12 +351,16 @@
             })
             .catch(error => {
                 console.error('Error fetching unread count:', error);
-                document.getElementById('unread-count').style.display = 'none';
+                const badge = document.getElementById('unread-count');
+                if (badge) badge.style.display = 'none';
             });
     }
+
+
     function loadNotifications() {
         const notificationList = document.getElementById('notification-list');
         if (!notificationList) return;
+
         notificationList.innerHTML = `
             <div class="text-center p-3">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -373,6 +368,7 @@
                 </div>
                 <span class="ms-2">Loading notifications...</span>
             </div>`;
+
         fetch('/notifications/recent-notifications')
             .then(response => response.ok ? response.json() : Promise.reject('Failed to load notifications'))
             .then(notifications => {
@@ -384,6 +380,7 @@
                         </div>`;
                     return;
                 }
+
                 notificationList.innerHTML = notifications.map(notification => `
                     <div class="notification-item ${notification.status === 'Read' ? '' : 'unread'}" 
                          onclick="markAsRead(${notification.notificationID}, this)">
@@ -403,21 +400,27 @@
                     </div>`;
             });
     }
+
     function markAsRead(notificationId, element) {
-        fetch(`/notifications/MarkAsRead/${notificationId}`, {
+        fetch(`/notifications/mark-as-read/${notificationId}`, {
             method: 'POST',
             headers: {
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            }
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
         })
             .then(response => {
                 if (response.ok) {
-                    element.classList.remove('unread');
+                    if (element) {
+                        element.classList.remove('unread');
+                    }
                     updateUnreadCount();
                 }
             })
             .catch(error => console.error('Error marking notification as read:', error));
     }
+
     function formatTimeAgo(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -430,6 +433,7 @@
             hour: 3600,
             minute: 60
         };
+
         for (const [unit, secondsInUnit] of Object.entries(intervals)) {
             const interval = Math.floor(seconds / secondsInUnit);
             if (interval >= 1) {
@@ -438,6 +442,7 @@
         }
         return 'just now';
     }
+
     setInterval(updateUnreadCount, 30000);
 </script>
 @await RenderSectionAsync("Scripts", required: false)
@@ -445,5 +450,6 @@
 {
 @Html.Partial("_Chatbot")
 }
+
 </body>
 </html>

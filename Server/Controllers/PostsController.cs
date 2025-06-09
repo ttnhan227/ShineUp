@@ -169,12 +169,15 @@ public class PostsController : ControllerBase
 
             // Handle media files
             var formFiles = Request.Form.Files;
-            var mediaTypes = Request.Form["MediaTypes"].ToList();
+            var mediaTypes = Request.Form.ContainsKey("MediaTypes") 
+                ? Request.Form["MediaTypes"].ToList() 
+                : new List<string>();
 
             for (int i = 0; i < formFiles.Count; i++)
             {
                 var file = formFiles[i];
-                var mediaType = mediaTypes[i];
+                // Default to "image" if mediaTypes is empty or doesn't have enough items
+                var mediaType = i < mediaTypes.Count ? mediaTypes[i] : "image";
 
                 if (file.Length > 0)
                 {

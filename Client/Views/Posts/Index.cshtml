@@ -15,7 +15,7 @@
                         <h5 class="mb-0 fw-semibold">Create a Post</h5>
                     </div>
                     <div class="card-body">
-                        <form id="createPostForm" asp-action="Index" method="post" enctype="multipart/form-data">
+                        <form id="createPostForm" asp-action="CreatePost" asp-controller="Posts" method="post" enctype="multipart/form-data">
                             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                             <div class="mb-3">
@@ -34,11 +34,11 @@
                                 <div class="d-flex flex-wrap gap-2 flex-grow-1">
                                     <label for="imagesInput" class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Add photos">
                                         <i class='bx bx-image'></i> Photos
-                                        <input type="file" id="imagesInput" name="Images" class="d-none" multiple accept="image/*" />
+                                        <input type="file" id="imagesInput" name="ImageFiles" class="d-none" multiple accept="image/*" />
                                     </label>
                                     <label for="videosInput" class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Add videos">
                                         <i class='bx bx-video'></i> Videos
-                                        <input type="file" id="videosInput" name="Videos" class="d-none" multiple accept="video/*" />
+                                        <input type="file" id="videosInput" name="VideoFiles" class="d-none" multiple accept="video/*" />
                                     </label>
                                     <select class="form-select form-select-sm rounded-3" id="categorySelect" name="CategoryID">
                                         <option value="">Select Category</option>
@@ -363,7 +363,7 @@
                         $mediaItem.html(`
                             <div class="media-preview-item">
                                 ${content}
-                                <button type="button" class="btn-close position-absolute top-0 end-0 m-1" data-file-name="${file.name}"></button>
+                                <button type="button" class="btn-close position-absolute top-0 end-0 m-1" data-file-name="${file.name}" data-input-name="${inputName}"></button>
                             </div>
                         `);
                         $preview.append($mediaItem);
@@ -373,26 +373,25 @@
             }
 
             $('#imagesInput').on('change', function() {
-                updateMediaPreview(this.files, 'Images');
+                updateMediaPreview(this.files, 'ImageFiles');
             });
 
             $('#videosInput').on('change', function() {
-                updateMediaPreview(this.files, 'Videos');
+                updateMediaPreview(this.files, 'VideoFiles');
             });
 
             // Handle media removal
             $(document).on('click', '.btn-close', function() {
                 var fileName = $(this).data('file-name');
+                var inputName = $(this).data('input-name');
                 $(this).closest('.col-6').remove();
 
-                ['Images', 'Videos'].forEach(inputName => {
-                    var $input = $(`input[name="${inputName}"]`);
-                    var files = Array.from($input[0].files);
-                    var remainingFiles = files.filter(file => file.name !== fileName);
-                    var dataTransfer = new DataTransfer();
-                    remainingFiles.forEach(file => dataTransfer.items.add(file));
-                    $input[0].files = dataTransfer.files;
-                });
+                var $input = $(`input[name="${inputName}"]`);
+                var files = Array.from($input[0].files);
+                var remainingFiles = files.filter(file => file.name !== fileName);
+                var dataTransfer = new DataTransfer();
+                remainingFiles.forEach(file => dataTransfer.items.add(file));
+                $input[0].files = dataTransfer.files;
             });
 
             // Handle like toggle
