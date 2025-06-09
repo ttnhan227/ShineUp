@@ -1,48 +1,289 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Client.Models;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using Client.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Net;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Client.Models;
+using System.Text.Json.Serialization;
 
 namespace Client.Controllers;
 
+[Authorize]
+[Route("Posts")]
 public class PostsController : Controller
 {
     private readonly IHttpClientFactory _clientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<PostsController> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public PostsController(
-       IHttpClientFactory clientFactory,
-              IConfiguration configuration,
-              ILogger<PostsController> logger )
+        IHttpClientFactory clientFactory,
+        IConfiguration configuration,
+        ILogger<PostsController> logger)
     {
         _clientFactory = clientFactory;
         _configuration = configuration;
         _logger = logger;
+        _jsonOptions = new JsonSerializerOptions 
+        { 
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+    }
+
+    private async Task<HttpClient> GetAuthenticatedClient()
+    {
+        var client = _clientFactory.CreateClient("API");
+        
+        if (!User.Identity.IsAuthenticated)
+        {
+            _logger.LogWarning("User is not authenticated");
+            return null;
+        }
+        
+        var token = User.FindFirst("JWT")?.Value;
+        if (string.IsNullOrEmpty(token))
+        {
+            _logger.LogWarning("JWT token not found in claims");
+            return null;
+        }
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
+    }
+
+    // POST: Posts/Create
+    [Authorize]
+    [HttpPost("create")]
+    [Route("Posts/CreatePost")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePost(CreatePostViewModel model, IFormFileCollection ImageFiles, IFormFileCollection VideoFiles, int? CommunityID)
+    {
+        _logger.LogInformation("Starting post creation process...");
+        
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Model state is invalid. Errors: {Errors}", 
+                string.Join("; ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)));
+                    
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { 
+                    success = false, 
+                    message = "Validation failed",
+                    errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    )
+                });
+            }
+            
+            // Reload the view with validation errors for non-AJAX requests
+            return await Index();
+        }
+
+        try
+        {
+            _logger.LogInformation("Getting authenticated client...");
+            var client = await GetAuthenticatedClient();
+            
+            if (client == null)
+            {
+                _logger.LogWarning("Authentication failed - no valid client returned");
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Authentication required",
+                        redirect = Url.Action("Login", "Auth")
+                    });
+                }
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Log form data for debugging
+            _logger.LogInformation("Creating form data with Title: {Title}, CategoryID: {CategoryID}, PrivacyID: {PrivacyID}, CommunityID: {CommunityID}",
+                model.Title, model.CategoryID, model.PrivacyID, CommunityID);
+                
+            _logger.LogInformation("Processing {ImageCount} images and {VideoCount} videos", 
+                ImageFiles?.Count ?? 0, VideoFiles?.Count ?? 0);
+
+            // Create form data
+            using var formData = new MultipartFormDataContent();
+            
+            // Add post data
+            formData.Add(new StringContent(model.Title ?? ""), "Title");
+            formData.Add(new StringContent(model.Content ?? ""), "Content");
+            
+            if (model.CategoryID.HasValue)
+            {
+                formData.Add(new StringContent(model.CategoryID.Value.ToString()), "CategoryID");
+            }
+            
+            if (model.PrivacyID.HasValue)
+            {
+                formData.Add(new StringContent(model.PrivacyID.Value.ToString()), "PrivacyID");
+            }
+            
+            if (CommunityID.HasValue)
+            {
+                formData.Add(new StringContent(CommunityID.Value.ToString()), "CommunityID");
+                _logger.LogInformation("Added CommunityID: {CommunityID} to form data", CommunityID.Value);
+            }
+
+            // Add images
+            if (ImageFiles != null && ImageFiles.Count > 0)
+            {
+                foreach (var image in ImageFiles)
+                {
+                    if (image != null && image.Length > 0)
+                    {
+                        _logger.LogInformation("Processing image: {FileName} ({Length} bytes)", 
+                            image.FileName, image.Length);
+                            
+                        using var ms = new MemoryStream();
+                        await image.CopyToAsync(ms);
+                        var fileContent = new ByteArrayContent(ms.ToArray());
+                        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(image.ContentType);
+                        formData.Add(fileContent, "ImageFiles", image.FileName);
+                    }
+                }
+            }
+
+            // Add videos
+            if (VideoFiles != null && VideoFiles.Count > 0)
+            {
+                foreach (var video in VideoFiles)
+                {
+                    if (video != null && video.Length > 0)
+                    {
+                        _logger.LogInformation("Processing video: {FileName} ({Length} bytes)", 
+                            video.FileName, video.Length);
+                            
+                        using var ms = new MemoryStream();
+                        await video.CopyToAsync(ms);
+                        var fileContent = new ByteArrayContent(ms.ToArray());
+                        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(video.ContentType);
+                        formData.Add(fileContent, "VideoFiles", video.FileName);
+                    }
+                }
+            }
+
+            _logger.LogInformation("Sending request to API...");
+            var response = await client.PostAsync("api/posts", formData);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            _logger.LogInformation("API response: {StatusCode} - {Content}", 
+                response.StatusCode, responseContent);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var successMessage = "Post created successfully!";
+                _logger.LogInformation(successMessage);
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = successMessage,
+                        redirect = Url.Action("Index", "Posts")
+                    });
+                }
+                
+                TempData["SuccessMessage"] = successMessage;
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                string errorMessage;
+                try 
+                {
+                    var errorResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    errorMessage = errorResponse.GetProperty("title").GetString() ?? "Error creating post";
+                    
+                    if (errorResponse.TryGetProperty("errors", out var errors))
+                    {
+                        var errorList = new List<string>();
+                        foreach (var error in errors.EnumerateObject())
+                        {
+                            errorList.AddRange(error.Value.EnumerateArray().Select(e => e.GetString()));
+                        }
+                        errorMessage = string.Join(" ", errorList);
+                    }
+                }
+                catch
+                {
+                    errorMessage = responseContent ?? "An unknown error occurred";
+                }
+                
+                _logger.LogError("Error creating post: {StatusCode} - {ErrorMessage}", 
+                    response.StatusCode, errorMessage);
+                    
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = errorMessage,
+                        statusCode = response.StatusCode
+                    });
+                }
+                
+                ModelState.AddModelError(string.Empty, errorMessage);
+                return await Index();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error creating post");
+            var errorMessage = "An unexpected error occurred while creating the post.";
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { 
+                    success = false, 
+                    message = errorMessage,
+                    error = ex.Message
+                });
+            }
+            
+            ModelState.AddModelError(string.Empty, errorMessage);
+            return await Index();
+        }
     }
 
     // GET: Posts
-   public async Task<IActionResult> Index()
-{
-    try
+    [HttpGet("")]
+    [HttpGet("index")]
+    public async Task<IActionResult> Index()
     {
-        var client = _clientFactory.CreateClient("API");
-        var token = HttpContext.Request.Cookies["auth_token"];
-        if (!string.IsNullOrEmpty(token))
+        try
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
+            var client = _clientFactory.CreateClient("API");
+            var token = HttpContext.Request.Cookies["auth_token"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
 
-        // Get posts
-        var response = await client.GetAsync("api/posts");
-        if (!response.IsSuccessStatusCode)
-        {
-            return View("Error");
-        }
+            // Get posts
+            var response = await client.GetAsync("api/posts");
+            if (!response.IsSuccessStatusCode)
+            {
+                return View("Error");
+            }
 
         var content = await response.Content.ReadAsStringAsync();
         var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, new JsonSerializerOptions
@@ -196,6 +437,7 @@ public class PostsController : Controller
 }
 
     // GET: Posts/Details/5
+    [HttpGet("details/{id}")]
     public async Task<IActionResult> Details(int id)
     {
         try
@@ -324,6 +566,8 @@ public class PostsController : Controller
 
     // GET: Posts/Create
     [Authorize]
+    [HttpGet("create")]
+    [Route("Posts/Create")]
     public async Task<IActionResult> Create()
     {
         try
@@ -366,7 +610,7 @@ public class PostsController : Controller
 
     // POST: Posts/Create
     [Authorize]
-    [HttpPost]
+    [HttpPost("create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([FromForm] CreatePostViewModel model)
     {
@@ -503,6 +747,7 @@ public class PostsController : Controller
 
     // GET: Posts/Edit/5
     [Authorize]
+    [HttpGet("edit/{id}")]
     public async Task<IActionResult> Edit(int id)
     {
         try
@@ -543,7 +788,7 @@ public class PostsController : Controller
     }
 
     // POST: Posts/Edit/5
-    [HttpPost]
+    [HttpPost("edit/{id}")]
     [ValidateAntiForgeryToken]
     [Authorize]
     public async Task<IActionResult> Edit(int id, EditPostViewModel model, List<IFormFile> Images, List<IFormFile> Videos)
@@ -686,6 +931,7 @@ public class PostsController : Controller
     */
 
     // GET: Posts/Category/5
+    [HttpGet("category/{categoryId}")]
     public async Task<IActionResult> CategoryPosts(int categoryId)
     {
         try
@@ -790,7 +1036,7 @@ public class PostsController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("user/{userId}")]
     public async Task<IActionResult> UserPosts(int userId)
     {
         try
@@ -824,7 +1070,7 @@ public class PostsController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("user/{userId}/partial")]
     public async Task<IActionResult> UserPostsPartial(int userId)
     {
         try

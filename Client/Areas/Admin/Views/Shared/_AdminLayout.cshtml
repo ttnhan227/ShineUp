@@ -181,7 +181,8 @@
                     </button>
                     <div class="ms-auto d-flex align-items-center">
                         <span class="me-3">Welcome, @User.Identity?.Name</span>
-                        <form class="d-flex" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                        <form class="d-flex" asp-controller="Auth" asp-action="Logout" asp-route-returnUrl="~" method="post">
+                            @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                         </form>
                     </div>

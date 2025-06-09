@@ -127,6 +127,7 @@
                     @{
                         ViewBag.CurrentUserId = currentUserId;
                         ViewBag.UserRole = Model.CommunityRole.ToString();
+                        ViewBag.CommunityId = Model.Community.CommunityID;
                     }
                     @await Html.PartialAsync("_CommunityMemberListPartial", Model.Members)
                 </div>
