@@ -32,6 +32,98 @@ public class CommunityController : ControllerBase
             .Where(p => p.PrivacyID == 1 || p.PrivacyID == 3)
             .ToListAsync();
     }
+    
+    /// <summary>
+    /// Lấy danh sách cộng đồng mà người dùng hiện tại là thành viên
+    /// </summary>
+    /// <returns>Danh sách cộng đồng</returns>
+    [Authorize]
+    [HttpGet("user/memberships")]
+    public async Task<IActionResult> GetUserCommunities()
+    {
+        try
+        {
+            _logger.LogInformation("[DEBUG] GetUserCommunities endpoint called");
+            
+            // Log all claims for debugging
+            var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+            _logger.LogInformation($"[DEBUG] User claims: {string.Join(", ", claims)}");
+            
+            // Get user ID from claims
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            {
+                _logger.LogError("[DEBUG] User ID claim not found or invalid");
+                return Unauthorized("User ID not found in token");
+            }
+            
+            _logger.LogInformation($"[DEBUG] Fetching communities for user ID: {userId}");
+            
+            var communities = await _communityRepository.GetUserCommunitiesAsync(userId);
+            _logger.LogInformation($"[DEBUG] Found {communities?.Count() ?? 0} communities for user {userId}");
+            
+            return Ok(communities ?? new List<CommunityDTO>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"[DEBUG] Error in GetUserCommunities. Error: {ex.Message}");
+            return StatusCode(500, new { message = "An error occurred while retrieving your communities.", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách bài viết trong cộng đồng
+    /// </summary>
+    /// <param name="communityId">ID của cộng đồng</param>
+    /// <returns>Danh sách bài viết</returns>
+    [HttpGet("{communityId}/posts")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCommunityPosts(int communityId)
+    {
+        try
+        {
+            int? userId = null;
+            if (User.Identity.IsAuthenticated)
+            {
+                userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            }
+
+            var posts = await _communityRepository.GetCommunityPostsAsync(communityId, userId);
+            
+            var postDtos = posts.Select(p => new PostListResponseDto
+            {
+                PostID = p.PostID,
+                Title = p.Title,
+                Content = p.Content,
+                CreatedAt = p.CreatedAt,
+                UserID = p.UserID,
+                UserName = p.User.Username,
+                FullName = p.User.FullName,
+                CategoryName = p.Category?.CategoryName,
+                LikesCount = p.Likes?.Count ?? 0,
+                CommentsCount = p.Comments?.Count ?? 0,
+                MediaFiles = p.Images.Select(i => new MediaFileDTO
+                {
+                    Url = i.ImageURL?.Replace("http://", "https://"),
+                    Type = "image",
+                    PublicId = i.CloudPublicId
+                }).Concat(p.Videos.Select(v => new MediaFileDTO
+                {
+                    Url = v.VideoURL?.Replace("http://", "https://"),
+                    Type = "video",
+                    PublicId = v.CloudPublicId
+                })).ToList()
+            });
+
+
+            return Ok(postDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting community posts for community {CommunityId}", communityId);
+            return StatusCode(500, "Internal server error while retrieving community posts.");
+        }
+    }
 
     
     /// Lấy thông tin chi tiết của một cộng đồng theo ID
@@ -194,20 +286,6 @@ public class CommunityController : ControllerBase
         catch
         {
             return StatusCode(500, "Failed to retrieve community members");
-        }
-    }
-
-    [HttpGet("{communityId}/posts")]
-    public async Task<IActionResult> GetCommunityPosts(int communityId)
-    {
-        try
-        {
-            var posts = await _communityRepository.GetCommunityPostsAsync(communityId);
-            return Ok(posts);
-        }
-        catch
-        {
-            return StatusCode(500, "Failed to retrieve community posts");
         }
     }
 

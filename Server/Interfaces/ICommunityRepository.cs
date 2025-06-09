@@ -35,8 +35,10 @@ public interface ICommunityRepository
     Task<List<CommunityMemberDTO>> GetCommunityMembersAsync(int communityId);
 
     /// Lấy danh sách bài viết trong cộng đồng
-
-    Task<List<Post>> GetCommunityPostsAsync(int communityId);
+    /// <param name="communityId">ID của cộng đồng</param>
+    /// <param name="userId">ID của người dùng hiện tại (nếu có)</param>
+    /// <returns>Danh sách bài viết trong cộng đồng</returns>
+    Task<IEnumerable<Post>> GetCommunityPostsAsync(int communityId, int? userId = null);
 
    
     /// Cập nhật thông tin cộng đồng (chỉ Moderator được làm)
@@ -59,7 +61,10 @@ public interface ICommunityRepository
     Task<bool> IsUserModeratorAsync(int communityId, int userId);
 
 
-    /// Lấy vai trò hiện tại của user trong cộng đồng (\"Moderator\" / \"Member\" / null nếu không tham gia)
+    /// Lấy vai trò hiện tại của user trong cộng đồng ("Moderator" / "Member" / null nếu không tham gia)
 
     Task<string?> GetUserRoleAsync(int communityId, int userId);
+    
+    /// Lấy danh sách cộng đồng mà user là thành viên
+    Task<IEnumerable<CommunityDTO>> GetUserCommunitiesAsync(int userId);
 }

@@ -149,6 +149,67 @@ namespace Client.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreatePost(int communityId, [FromForm] string content, List<IFormFile> mediaFiles, int? privacyId = 1)
+        {
+            if (communityId <= 0)
+            {
+                return BadRequest("Invalid community ID.");
+            }
+
+            var currentUserId = GetUserId();
+            if (currentUserId == null)
+            {
+                return Unauthorized("You need to be logged in to create a post.");
+            }
+
+            try
+            {
+                using var client = CreateAuthenticatedClient();
+                using var formData = new MultipartFormDataContent();
+
+                formData.Add(new StringContent(content), "Content");
+                formData.Add(new StringContent(communityId.ToString()), "CommunityID");
+                formData.Add(new StringContent(privacyId?.ToString() ?? "1"), "PrivacyID");
+
+                // Add media files
+                if (mediaFiles != null && mediaFiles.Any())
+                {
+                    foreach (var file in mediaFiles)
+                    {
+                        using var ms = new MemoryStream();
+                        await file.CopyToAsync(ms);
+                        var fileBytes = ms.ToArray();
+                        formData.Add(new ByteArrayContent(fileBytes), "files", file.FileName);
+                        formData.Add(new StringContent("image"), "MediaTypes"); // Assuming all files are images for now
+                    }
+                }
+
+
+                var response = await client.PostAsync("api/posts", formData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Details", new { communityId });
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create post. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                
+                TempData["Error"] = "Failed to create post. Please try again.";
+                return RedirectToAction("Details", new { communityId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating post in community {CommunityId}", communityId);
+                TempData["Error"] = "An error occurred while creating the post.";
+                return RedirectToAction("Details", new { communityId });
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromForm] int communityId, EditCommunityViewModel model)
         {
             _logger.LogInformation("Edit community request received - CommunityId: {CommunityId}", communityId);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Client.Models;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using Client.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net;
 
@@ -90,6 +91,87 @@ public class PostsController : Controller
                 PropertyNameCaseInsensitive = true
             });
             ViewBag.Categories = new SelectList(categories, "CategoryID", "CategoryName");
+        }
+
+        // Get user's communities if authenticated
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            try 
+            {
+                _logger.LogInformation("Fetching user communities from API...");
+                
+                // Use the token from the cookie or from the User claims
+                var authToken = HttpContext.Request.Cookies["auth_token"] ?? 
+                               User.FindFirst("JWT")?.Value;
+                
+                if (string.IsNullOrEmpty(authToken))
+                {
+                    _logger.LogWarning("No auth token found in cookies or claims");
+                    ViewBag.UserCommunities = new SelectList(new List<object>());
+                }
+                else
+                {
+                    // Create a new client with the token
+                    var authClient = _clientFactory.CreateClient("API");
+                    authClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                    
+                    var communityResponse = await authClient.GetAsync("api/community/user/memberships");
+                    _logger.LogInformation($"Community API response status: {communityResponse.StatusCode}");
+                    
+                    if (communityResponse.IsSuccessStatusCode)
+                    {
+                        var communityContent = await communityResponse.Content.ReadAsStringAsync();
+                        var options = new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true,
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                        };
+                        
+                        var communities = JsonSerializer.Deserialize<List<CommunityViewModel>>(communityContent, options);
+                        
+                        if (communities?.Any() == true)
+                        {
+                            var communityList = communities
+                                .Where(c => c != null)
+                                .OrderBy(c => c.Name)
+                                .Select(c => new 
+                                {
+                                    Value = c.CommunityID.ToString(),
+                                    Text = c.Name
+                                })
+                                .ToList();
+                                
+                            ViewBag.UserCommunities = new SelectList(communityList, "Value", "Text");
+                            _logger.LogInformation($"Successfully loaded {communityList.Count} communities");
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No communities found for user");
+                            ViewBag.UserCommunities = new SelectList(new List<object>());
+                        }
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        _logger.LogWarning("Unauthorized access to communities. Token might be invalid or expired.");
+                        ViewBag.UserCommunities = new SelectList(new List<object>());
+                    }
+                    else
+                    {
+                        _logger.LogError($"Failed to fetch communities. Status: {response.StatusCode}");
+                        ViewBag.UserCommunities = new SelectList(new List<object>());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user communities");
+                ViewBag.UserCommunities = new SelectList(new List<object>());
+            }
+        }
+        else
+        {
+            _logger.LogInformation("User is not authenticated, not fetching communities");
+            ViewBag.UserCommunities = new SelectList(new List<object>());
         }
 
         // Get privacy options

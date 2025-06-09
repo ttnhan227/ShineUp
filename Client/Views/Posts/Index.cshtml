@@ -11,8 +11,29 @@ ViewData["Title"] = "Talent Showcase";
             @if (User.Identity.IsAuthenticated)
             {
             <div class="post-creation-card mb-4">
-                <div class="post-creation-header">
+                <div class="post-creation-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Share Your Talent</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="select-wrapper me-2" style="min-width: 200px;">
+                            <select class="form-select form-select-sm" id="communitySelect" name="CommunityID">
+                                <option value="">Tag a Community (Optional)</option>
+                                @if (ViewBag.UserCommunities != null)
+                                {
+                                    var items = ViewBag.UserCommunities as IEnumerable<SelectListItem>;
+                                    if (items != null)
+                                    {
+                                        foreach (var item in items)
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3" id="shareButton">
+                            <i class='bx bx-send me-1'></i>Share
+                        </button>
+                    </div>
                 </div>
                 <div class="post-creation-body">
                     <form id="createPostForm" asp-action="Create" method="post" enctype="multipart/form-data">
@@ -25,8 +46,8 @@ ViewData["Title"] = "Talent Showcase";
                         </div>
 
                         <div class="form-group mb-3">
-                                <textarea id="contentInput" name="Content" class="form-control post-input"
-                                          rows="3" placeholder="Share your talent story..."></textarea>
+                            <textarea id="contentInput" name="Content" class="form-control post-input"
+                                    rows="3" placeholder="Share your talent story..."></textarea>
                             <span validation-for="Content" class="text-danger"></span>
                         </div>
 
@@ -47,26 +68,38 @@ ViewData["Title"] = "Talent Showcase";
                                            multiple accept="video/*" />
                                 </label>
                                 <div class="select-wrapper">
-                                    <select class="custom-select" id="categorySelect" name="CategoryID">
+                                    <select class="form-select form-select-sm" id="categorySelect" name="CategoryID">
                                         <option value="">Select Category</option>
                                         @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                                         {
-                                        <option value="@category.Value">@category.Text</option>
+                                            <option value="@category.Value">@category.Text</option>
                                         }
                                     </select>
                                 </div>
                                 <div class="select-wrapper">
-                                    <select class="custom-select" id="privacySelect" name="PrivacyID">
+                                    <select class="form-select form-select-sm" id="privacySelect" name="PrivacyID">
                                         @foreach (var privacy in ViewBag.PrivacyOptions ?? new List<SelectListItem>())
                                         {
-                                        <option value="@privacy.Value">@privacy.Text</option>
+                                            <option value="@privacy.Value">@privacy.Text</option>
                                         }
                                     </select>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4">
-                                <i class='bx bx-send me-1'></i>Share
-                            </button>
+                            <style>
+                                .post-creation-header {
+                                    padding: 0.75rem 1.25rem;
+                                    border-bottom: 1px solid rgba(0,0,0,.125);
+                                    background-color: #f8f9fa;
+                                    border-top-left-radius: 0.5rem;
+                                    border-top-right-radius: 0.5rem;
+                                }
+                                .select-wrapper select {
+                                    font-size: 0.875rem;
+                                }
+                                #shareButton {
+                                    white-space: nowrap;
+                                }
+                            </style>
                         </div>
                     </form>
                 </div>
@@ -283,7 +316,151 @@ _ => "grid-4"
 @await Html.PartialAsync("_ValidationScriptsPartial")
 <script>
     $(function () {
+        // Debug: Log ViewBag data
+        console.log('ViewBag.UserCommunities:', @Html.Raw(Json.Serialize(ViewBag.UserCommunities)));
+        
+        // Debug: Log the actual select element and its options
+        var $communitySelect = $('#communitySelect');
+        console.log('Community select element:', $communitySelect.length > 0 ? 'Found' : 'Not found');
+        console.log('Number of options in select:', $communitySelect.find('option').length);
+        
+        // Debug: Log each option in the select
+        $communitySelect.find('option').each(function() {
+            console.log('Option - Value:', $(this).val(), 'Text:', $(this).text());
+        });
+        
+        // Debug: Check if the select is properly initialized
+        var $communitySelect = $('#communitySelect');
+        console.log('Community select element:', $communitySelect.length > 0 ? 'Found' : 'Not found');
+        if ($communitySelect.length > 0) {
+            console.log('Number of options in select:', $communitySelect.find('option').length);
+            console.log('Select HTML:', $communitySelect[0].outerHTML);
+        }
+        
+        // Show debug info in console
+        var debugInfo = $('#debugInfo');
+        if (debugInfo.length > 0) {
+            console.log('Debug Info:', debugInfo.html());
+            debugInfo.show(); // Make debug info visible
+        }
+        
         $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Handle post creation form submission
+        $('#createPostForm').on('submit', function (e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var $form = $(this);
+            
+            // Show loading state
+            var $submitBtn = $form.find('button[type="submit"]');
+            var originalBtnText = $submitBtn.html();
+            $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Posting...');
+            
+            // Add community ID to form data if selected
+            var communityId = $('#communitySelect').val();
+            if (communityId) {
+                formData.append('CommunityID', communityId);
+            }
+            
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    // Reset form and preview
+                    $form.trigger('reset');
+                    $('#mediaPreview').empty();
+                    // Show success message
+                    alert('Post created successfully!');
+                    // Reload the page to show the new post
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    // Show error message
+                    var errorMessage = xhr.responseJSON?.message || 'An error occurred while creating the post.';
+                    alert('Error: ' + errorMessage);
+                },
+                complete: function () {
+                    // Reset button state
+                    $submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
+
+        // Handle media preview for images
+        $('#imagesInput').on('change', function() {
+            var files = this.files;
+            var $preview = $('#mediaPreview');
+            $preview.empty();
+            
+            if (files.length > 4) {
+                alert('You can only upload up to 4 files at once.');
+                this.value = '';
+                return;
+            }
+            
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (!file.type.match('image.*')) continue;
+                
+                var reader = new FileReader();
+                reader.onload = (function(file) {
+                    return function(e) {
+                        var $img = $('<div class="col-6 col-md-3"><div class="media-preview-item"><img src="' + e.target.result + '" class="img-fluid" alt="' + file.name + '" /><button type="button" class="btn-close remove-media" data-file-name="' + file.name + '"></button></div></div>');
+                        $preview.append($img);
+                    };
+                })(file);
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle media preview for videos
+        $('#videosInput').on('change', function() {
+            var files = this.files;
+            var $preview = $('#mediaPreview');
+            
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (!file.type.match('video.*')) continue;
+                
+                var videoUrl = URL.createObjectURL(file);
+                var $video = $(
+                    '<div class="col-12 mb-2">' +
+                    '<video controls class="w-100">' +
+                    '<source src="' + videoUrl + '" type="' + file.type + '">' +
+                    'Your browser does not support the video tag.' +
+                    '</video>' +
+                    '<button type="button" class="btn-close remove-media" data-file-name="' + file.name + '"></button>' +
+                    '</div>'
+                );
+                $preview.append($video);
+            }
+        });
+        
+        // Handle media removal
+        $(document).on('click', '.remove-media', function() {
+            var fileName = $(this).data('file-name');
+            $(this).closest('.col-6, .col-12').remove();
+            
+            // Remove from file inputs
+            $('input[type="file"]').each(function() {
+                var $input = $(this);
+                var files = Array.from($input[0].files);
+                var remainingFiles = files.filter(file => file.name !== fileName);
+                
+                // Create new FileList (simulated with DataTransfer)
+                var dataTransfer = new DataTransfer();
+                remainingFiles.forEach(file => dataTransfer.items.add(file));
+                $input[0].files = dataTransfer.files;
+            });
+        });
 
         // Handle like toggle
         $('.toggle-like-form').on('submit', function (e) {
