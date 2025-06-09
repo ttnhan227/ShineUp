@@ -1,34 +1,74 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Client.Models;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using Client.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Net;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Client.Models;
+using System.Text.Json.Serialization;
 
 namespace Client.Controllers;
 
+[Authorize]
+[Route("Posts")]
 public class PostsController : Controller
 {
     private readonly IHttpClientFactory _clientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<PostsController> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public PostsController(
-       IHttpClientFactory clientFactory,
-              IConfiguration configuration,
-              ILogger<PostsController> logger )
+        IHttpClientFactory clientFactory,
+        IConfiguration configuration,
+        ILogger<PostsController> logger)
     {
         _clientFactory = clientFactory;
         _configuration = configuration;
         _logger = logger;
+        _jsonOptions = new JsonSerializerOptions 
+        { 
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+    }
+
+    private async Task<HttpClient> GetAuthenticatedClient()
+    {
+        var client = _clientFactory.CreateClient("API");
+        
+        if (!User.Identity.IsAuthenticated)
+        {
+            _logger.LogWarning("User is not authenticated");
+            return null;
+        }
+        
+        var token = User.FindFirst("JWT")?.Value;
+        if (string.IsNullOrEmpty(token))
+        {
+            _logger.LogWarning("JWT token not found in claims");
+            return null;
+        }
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 
     // POST: Posts/Create
-    [HttpPost]
+    [Authorize]
+    [HttpPost("create")]
+    [Route("Posts/CreatePost")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Index(CreatePostViewModel model, IFormFileCollection Images, IFormFileCollection Videos, int? CommunityID)
+    public async Task<IActionResult> CreatePost(CreatePostViewModel model, IFormFileCollection Images, IFormFileCollection Videos, int? CommunityID)
     {
         _logger.LogInformation("Starting post creation process...");
         
@@ -57,13 +97,12 @@ public class PostsController : Controller
 
         try
         {
-            _logger.LogInformation("Creating API client and setting up authentication...");
-            var client = _clientFactory.CreateClient("API");
-            var token = HttpContext.Request.Cookies["auth_token"];
+            _logger.LogInformation("Getting authenticated client...");
+            var client = await GetAuthenticatedClient();
             
-            if (string.IsNullOrEmpty(token))
+            if (client == null)
             {
-                _logger.LogWarning("No authentication token found");
+                _logger.LogWarning("Authentication failed - no valid client returned");
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     return Json(new { 
@@ -74,8 +113,6 @@ public class PostsController : Controller
                 }
                 return RedirectToAction("Login", "Auth");
             }
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Log form data for debugging
             _logger.LogInformation("Creating form data with Title: {Title}, CategoryID: {CategoryID}, PrivacyID: {PrivacyID}, CommunityID: {CommunityID}",
@@ -112,7 +149,7 @@ public class PostsController : Controller
             {
                 foreach (var image in Images)
                 {
-                    if (image.Length > 0)
+                    if (image != null && image.Length > 0)
                     {
                         _logger.LogInformation("Processing image: {FileName} ({Length} bytes)", 
                             image.FileName, image.Length);
@@ -121,7 +158,7 @@ public class PostsController : Controller
                         await image.CopyToAsync(ms);
                         var fileContent = new ByteArrayContent(ms.ToArray());
                         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(image.ContentType);
-                        formData.Add(fileContent, "Images", image.FileName);
+                        formData.Add(fileContent, "ImageFiles", image.FileName);
                     }
                 }
             }
@@ -131,7 +168,7 @@ public class PostsController : Controller
             {
                 foreach (var video in Videos)
                 {
-                    if (video.Length > 0)
+                    if (video != null && video.Length > 0)
                     {
                         _logger.LogInformation("Processing video: {FileName} ({Length} bytes)", 
                             video.FileName, video.Length);
@@ -140,7 +177,7 @@ public class PostsController : Controller
                         await video.CopyToAsync(ms);
                         var fileContent = new ByteArrayContent(ms.ToArray());
                         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(video.ContentType);
-                        formData.Add(fileContent, "Videos", video.FileName);
+                        formData.Add(fileContent, "VideoFiles", video.FileName);
                     }
                 }
             }
@@ -228,6 +265,8 @@ public class PostsController : Controller
     }
 
     // GET: Posts
+    [HttpGet("")]
+    [HttpGet("index")]
     public async Task<IActionResult> Index()
     {
         try
@@ -398,6 +437,7 @@ public class PostsController : Controller
 }
 
     // GET: Posts/Details/5
+    [HttpGet("details/{id}")]
     public async Task<IActionResult> Details(int id)
     {
         try
@@ -526,6 +566,8 @@ public class PostsController : Controller
 
     // GET: Posts/Create
     [Authorize]
+    [HttpGet("create")]
+    [Route("Posts/Create")]
     public async Task<IActionResult> Create()
     {
         try
@@ -568,7 +610,7 @@ public class PostsController : Controller
 
     // POST: Posts/Create
     [Authorize]
-    [HttpPost]
+    [HttpPost("create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([FromForm] CreatePostViewModel model)
     {
@@ -705,6 +747,7 @@ public class PostsController : Controller
 
     // GET: Posts/Edit/5
     [Authorize]
+    [HttpGet("edit/{id}")]
     public async Task<IActionResult> Edit(int id)
     {
         try
@@ -745,7 +788,7 @@ public class PostsController : Controller
     }
 
     // POST: Posts/Edit/5
-    [HttpPost]
+    [HttpPost("edit/{id}")]
     [ValidateAntiForgeryToken]
     [Authorize]
     public async Task<IActionResult> Edit(int id, EditPostViewModel model, List<IFormFile> Images, List<IFormFile> Videos)
@@ -888,6 +931,7 @@ public class PostsController : Controller
     */
 
     // GET: Posts/Category/5
+    [HttpGet("category/{categoryId}")]
     public async Task<IActionResult> CategoryPosts(int categoryId)
     {
         try
@@ -992,7 +1036,7 @@ public class PostsController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("user/{userId}")]
     public async Task<IActionResult> UserPosts(int userId)
     {
         try
@@ -1026,7 +1070,7 @@ public class PostsController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("user/{userId}/partial")]
     public async Task<IActionResult> UserPostsPartial(int userId)
     {
         try

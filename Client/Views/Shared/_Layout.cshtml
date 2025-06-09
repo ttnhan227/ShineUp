@@ -18,174 +18,210 @@
     <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
     @RenderSection("Styles", required: false)
-    <style>
-        :root {
-            --primary: #2a69b8; /* Matches profile.css --primary-color */
-            --primary-dark: #1e4a8a; /* Matches profile.css --primary-dark */
-            --text-dark: #1a1a1a; /* Matches profile.css --text-color */
-            --text-muted: #5c6b7a; /* Matches profile.css --muted-color */
-            --bg-light: #f5f7fa; /* Matches profile.css --background-color */
-            --bg-white: #ffffff; /* Matches profile.css --card-bg */
-            --border: #e0e4e8; /* Matches profile.css --border-color */
-            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Matches profile.css --shadow */
-            --transition: all 0.2s ease-in-out; /* Matches profile.css --transition */
-        }
+   <style>
+    :root {
+        --primary: #2a69b8;
+        --primary-dark: #1e4a8a;
+        --text-dark: #1a1a1a;
+        --text-muted: #5c6b7a;
+        --bg-light: #f5f7fa;
+        --bg-white: #ffffff;
+        --border: #e0e4e8;
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        --transition: all 0.2s ease-in-out;
+    }
 
-        body {
-            background-color: var(--bg-light);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: var(--text-dark);
-            line-height: 1.5;
-            margin: 0;
-        }
+    body {
+        background-color: var(--bg-light);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text-dark);
+        line-height: 1.5;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
 
-        header {
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+    header {
+        background: var(--bg-white);
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
 
-        .navbar {
-            padding: 0.75rem 1rem;
-        }
+    .navbar {
+        padding: 0.75rem 1rem;
+    }
 
-        .navbar-brand {
-            color: var(--primary) !important;
-            font-size: 1.6rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            text-decoration: none;
-        }
+    .navbar-brand {
+        color: var(--primary) !important;
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+    }
 
-        .nav-link {
-            color: var(--text-dark) !important;
-            font-weight: 500;
-            padding: 0.5rem 1rem !important;
-            border-radius: 12px;
-            transition: var(--transition);
-        }
+    .nav-link {
+        color: var(--text-dark) !important;
+        font-weight: 500;
+        padding: 0.5rem 1rem !important;
+        border-radius: 12px;
+        transition: var(--transition);
+    }
 
-        .nav-link:hover {
-            background-color: rgba(42, 105, 184, 0.1);
-            color: var(--primary) !important;
-        }
+    .nav-link:hover {
+        background-color: rgba(42, 105, 184, 0.1);
+        color: var(--primary) !important;
+    }
 
-        .nav-link.active {
-            color: var(--primary) !important;
-            background-color: rgba(42, 105, 184, 0.05);
-        }
+    .nav-link.active {
+        color: var(--primary) !important;
+        background-color: rgba(42, 105, 184, 0.05);
+    }
 
-        .profile-image-placeholder-sm {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: #e8ecef;
-            display: flex;
+    .profile-image-placeholder-sm {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e8ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .profile-image-placeholder-sm i {
+        font-size: 1.3rem;
+        color: var(--text-muted);
+    }
+
+    .dropdown-menu {
+        border: none;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: var(--transition);
+    }
+
+    .dropdown-item:hover {
+        background: var(--bg-light);
+        color: var(--primary);
+    }
+
+    .main-content-container {
+        max-width: 1240px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        flex-grow: 1;
+    }
+
+    .footer {
+        background: var(--bg-white);
+        border-top: 1px solid var(--border);
+        padding: 1rem 0;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        width: 100%;
+        margin-top: auto;
+    }
+
+    .footer .container-fluid {
+        max-width: 1240px;
+        padding: 0 1rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .footer a {
+        color: var(--primary);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .footer a:hover {
+        color: var(--primary-dark);
+    }
+
+    .notification-dropdown {
+        width: 360px;
+        max-height: 450px;
+        border-radius: 10px;
+        background: var(--bg-white);
+    }
+
+    .notification-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .notification-item:hover {
+        background: var(--bg-light);
+    }
+
+    .notification-item.unread {
+        background: rgba(42, 105, 184, 0.03);
+    }
+
+    .notification-time {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    #unread-count {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.45rem;
+        background: #dc3545;
+        border-radius: 10px;
+    }
+
+    .navbar-nav .talent-cta {
+        background: var(--primary);
+        color: var(--bg-white) !important;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem !important;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .navbar-nav .talent-cta:hover {
+        background: var(--primary-dark);
+        color: var(--bg-white) !important;
+    }
+
+    @@media (max-width: 576px) {
+        .footer .container-fluid {
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            gap: 0.5rem;
         }
+    }
 
-        .profile-image-placeholder-sm i {
-            font-size: 1.3rem;
-            color: var(--text-muted);
-        }
+    /* Ensure footer doesn't overlap content */
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
 
-        .dropdown-menu {
-            border: none;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            margin-top: 0.5rem;
-        }
+    .main-content-container {
+        flex: 1 0 auto;
+    }
 
-        .dropdown-item {
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            border-radius: 6px;
-            transition: var(--transition);
-        }
-
-        .dropdown-item:hover {
-            background: var(--bg-light);
-            color: var(--primary);
-        }
-
-        .main-content-container {
-            max-width: 1240px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .footer {
-            background: var(--bg-white);
-            border-top: 1px solid var(--border);
-            padding: 1.5rem 0;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            position: relative;
-            width: 100%;
-        }
-
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .footer a:hover {
-            color: var(--primary-dark);
-        }
-
-        .notification-dropdown {
-            width: 360px;
-            max-height: 450px;
-            border-radius: 10px;
-            background: var(--bg-white);
-        }
-
-        .notification-item {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-            transition: var(--transition);
-        }
-
-        .notification-item:hover {
-            background: var(--bg-light);
-        }
-
-        .notification-item.unread {
-            background: rgba(42, 105, 184, 0.03);
-        }
-
-        .notification-time {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        #unread-count {
-            font-size: 0.65rem;
-            padding: 0.2rem 0.45rem;
-            background: #dc3545;
-            border-radius: 10px;
-        }
-
-        .navbar-nav .talent-cta {
-            background: var(--primary);
-            color: var(--bg-white) !important;
-            border-radius: 8px;
-            padding: 0.5rem 1.25rem !important;
-            font-weight: 600;
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .navbar-nav .talent-cta:hover {
-            background: var(--primary-dark);
-            color: var(--bg-white) !important;
-        }
-    </style>
+    .footer {
+        flex-shrink: 0;
+    }
+</style>
 </head>
 <body>
 <header>
@@ -284,8 +320,11 @@
     @RenderBody()
 </main>
 <footer class="footer text-muted">
-    <div class="container-fluid px-4">
-        © 2025 ShineUp | <a asp-area="" asp-controller="Home" asp-action="About">About</a> | <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> | <a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
+    <div class="container-fluid">
+        <span>© 2025 ShineUp</span>
+        <a asp-area="" asp-controller="Home" asp-action="About">About</a>
+        <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        <a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
