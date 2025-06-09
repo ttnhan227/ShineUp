@@ -86,6 +86,7 @@ builder.Services.Configure<OpenRouterOptions>(builder.Configuration.GetSection("
 builder.Services.AddHttpClient<OpenRouterService>();
 
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

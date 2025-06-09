@@ -1,43 +1,41 @@
+using Client.Models;
 using Client.Service;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace Client.Controllers
 {
-    [Route("ChatBot")]
-    public class ChatBotController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ChatBotController : ControllerBase
     {
-        private readonly OpenRouterService _chatService;
+        private readonly OpenRouterService _openRouterService;
 
-        public ChatBotController(OpenRouterService chatService)
+        public ChatBotController(OpenRouterService openRouterService)
         {
-            _chatService = chatService;
+            _openRouterService = openRouterService;
         }
 
-        [HttpPost("Ask")]
-        public async Task<IActionResult> Ask([FromBody] ChatMessageRequest request)
+        [HttpPost]
+        public async Task<IActionResult> Chat([FromBody] ChatMessageDto request)
         {
-            if (string.IsNullOrWhiteSpace(request?.Message))
-                return BadRequest(new { error = "Message must not be empty." });
+            if (string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest("Message is required.");
 
             try
             {
-                var reply = await _chatService.AskAsync(request.Message);
-                return Ok(new { reply });
-            }
-            catch (HttpRequestException httpEx)
-            {
-                return StatusCode((int)HttpStatusCode.BadGateway, new { error = "Failed to connect to AI service", detail = httpEx.Message });
+                var reply = await _openRouterService.AskAsync(request.Message);
+                return Ok(new { message = reply });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Internal server error", detail = ex.Message });
+                // Log thực tế tại đây nếu cần (Serilog, NLog, etc.)
+                return StatusCode(500, $"Chatbot internal error: {ex.Message}");
             }
         }
     }
-
-    public class ChatMessageRequest
+    
+    public class ChatMessageDto
     {
         public string Message { get; set; }
     }
-}   
+}

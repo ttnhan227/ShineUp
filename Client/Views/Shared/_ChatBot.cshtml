@@ -1,183 +1,182 @@
-<div id="chatbot-toggle" onclick="toggleChatbot()">💬</div>
+@{
+    Layout = null;
+    var userId = User?.FindFirst("sub")?.Value ?? User?.FindFirst("nameidentifier")?.Value ?? "anonymous";
+}
 
-<div id="chatbot-box" style="display:none;">
-    <div id="chat-header">ChatBot</div>
-    <div id="chat-messages"></div>
-    <div id="chat-loading" style="display:none; text-align:center;">⏳ Loading...</div>
-    <div id="chat-input">
-        <input type="text" id="user-input" placeholder="Type your message..." />
-        <button onclick="sendMessage()">Send</button>
+<!-- Toggle ChatBot Button -->
+<button id="chatbot-toggle"
+        class="btn btn-light border border-secondary rounded-circle position-fixed bottom-0 end-0 m-4 shadow-sm"
+        onclick="toggleChatbot()"
+        title="Open ChatBot"
+        style="width: 60px; height: 60px;">
+    <i class="bi bi-chat-dots fs-4 text-secondary"></i>
+</button>
+
+<!-- ChatBot Box -->
+<div id="chatbot-box"
+     class="card position-fixed bottom-0 end-0 m-4 shadow-lg border-0"
+     style="width: 360px; display: none; z-index: 1050;">
+
+    <!-- Header -->
+    <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
+        <div class="fw-bold text-secondary"><i class="bi bi-robot me-1"></i>AI ChatBot</div>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary" onclick="clearCurrentChat()" title="Clear Chat">
+                <i class="bi bi-trash3"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="toggleChatbot()" title="Close Chat">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="chat-messages"
+         class="card-body bg-white px-3 py-2"
+         style="height: 300px; overflow-y: auto; font-size: 0.95rem;"
+         role="log"
+         aria-live="polite">
+    </div>
+
+    <!-- Loading -->
+    <div id="chat-loading" class="text-center text-muted py-2" style="display: none;">
+        <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+        <span class="ms-2 text-secondary">AI is typing...</span>
+    </div>
+
+    <!-- Input -->
+    <div class="card-footer p-2 bg-white border-top border-secondary">
+        <div class="input-group">
+            <input id="user-input"
+                   type="text"
+                   class="form-control form-control-sm border-secondary"
+                   placeholder="Type your message..."
+                   maxlength="1000"
+                   autocomplete="off" />
+            <button id="send-btn" class="btn btn-sm btn-outline-secondary" title="Send">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </div>
     </div>
 </div>
 
-<style>
-    #chatbot-toggle {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #007bff;
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        text-align: center;
-        line-height: 50px;
-        font-size: 24px;
-        cursor: pointer;
-        z-index: 1000;
-    }
-
-    #chatbot-box {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        width: 300px;
-        max-height: 400px;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-
-    #chat-header {
-        background: #007bff;
-        color: white;
-        padding: 10px;
-        border-radius: 10px 10px 0 0;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    #chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-    }
-
-    .user-message, .bot-message {
-        padding: 8px 12px;
-        margin: 5px 0;
-        border-radius: 12px;
-        max-width: 80%;
-    }
-
-    .user-message {
-        background: #d1e7dd;
-        text-align: right;
-        margin-left: auto;
-    }
-
-    .bot-message {
-        background: #f8d7da;
-        margin-right: auto;
-    }
-
-    #chat-input {
-        display: flex;
-        border-top: 1px solid #ccc;
-    }
-
-    #user-input {
-        flex: 1;
-        border: none;
-        padding: 10px;
-    }
-
-    #chat-input button {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-    }
-
-    #chat-loading {
-        font-style: italic;
-        color: gray;
-        font-size: 13px;
-    }
-    .user-message, .bot-message {
-        white-space: pre-wrap;
-    }
-
-</style>
 
 <script>
-    const chatKey = 'chatbot-history';
+    async function sendMessageToBot(message) {
+        try {
+            const response = await fetch("/api/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
 
-    function toggleChatbot() {
-        const chatbox = document.getElementById('chatbot-box');
-        chatbox.style.display = (chatbox.style.display === 'none') ? 'flex' : 'none';
-        if (chatbox.style.display === 'flex') loadChatHistory();
+            if (!response.ok) throw new Error(await response.text());
+
+            const data = await response.json();
+            return data.message;
+        } catch (err) {
+            console.error("❌ ChatBot Error:", err);
+            return "[ChatBot Error]: " + err.message;
+        }
     }
 
-    function appendMessage(message, type, isHtml = false) {
-        const container = document.getElementById('chat-messages');
-        const msg = document.createElement('div');
-        msg.className = type + '-message';
-        if (isHtml) {
-            msg.innerHTML = message;
-        } else {
-            msg.textContent = message;
+    const WELCOME_MESSAGE = "👋 Hi! I'm your AI assistant. How can I help you today? You can ask me about:\n" +
+        "• Finding talents\n" +
+        "• Posting opportunities\n" +
+        "• Agency services\n" +
+        "• General inquiries";
+
+    const elements = {
+        box: document.getElementById('chatbot-box'),
+        messages: document.getElementById('chat-messages'),
+        input: document.getElementById('user-input'),
+        sendBtn: document.getElementById('send-btn'),
+        loading: document.getElementById('chat-loading')
+    };
+
+    function toggleChatbot() {
+        const box = elements.box;
+        const wasHidden = box.style.display === 'none';
+        box.style.display = wasHidden ? 'block' : 'none';
+
+        if (wasHidden) {
+            elements.input.focus();
+            // Show welcome message if chat is empty
+            if (elements.messages.children.length === 0) {
+                appendMessage('bot', WELCOME_MESSAGE);
+            }
         }
+    }
+
+    function clearCurrentChat() {
+        if (confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch sử chat?")) {
+            document.getElementById("chat-messages").innerHTML = "";
+            localStorage.removeItem("chatbot-history-@userId");
+        }
+    }
+
+
+    function showLoading(show) {
+        document.getElementById("chat-loading").style.display = show ? "block" : "none";
+    }
+
+    function appendMessage(sender, message) {
+        const container = document.getElementById("chat-messages");
+        const msg = document.createElement("div");
+        msg.className = `alert ${sender === "user" ? "alert-primary text-end" : "alert-secondary text-start"} mb-2 py-1 px-2`;
+        msg.innerHTML = message.replace(/\n/g, "<br/>");
         container.appendChild(msg);
         container.scrollTop = container.scrollHeight;
     }
 
-    async function sendMessage() {
-        const input = document.getElementById('user-input');
-        const text = input.value.trim();
-        if (!text) return;
+    let isProcessing = false;
 
-        appendMessage(text, 'user');
-        saveMessage(text, 'user');
-        input.value = '';
+    async function handleSend() {
+        if (isProcessing) return;
 
-        document.getElementById('chat-loading').style.display = 'block';
+        const input = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const message = input.value.trim();
+
+        if (!message) return;
 
         try {
-            const response = await fetch('/ChatBot/Ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
-            });
+            isProcessing = true;
+            input.disabled = true;
+            sendBtn.disabled = true;
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
+            appendMessage("user", message);
+            input.value = "";
+            showLoading(true);
 
-            const data = await response.json();
-            let reply = data.reply || 'No reply from bot';
-
-            // Thay \n thành <br> để xuống dòng khi hiển thị HTML
-            reply = reply.replace(/\n/g, '<br>');
-
-            appendMessage(reply, 'bot', true);
-            saveMessage(data.reply, 'bot'); // lưu bản gốc
+            const reply = await sendMessageToBot(message);
+            appendMessage("bot", reply);
         } catch (error) {
-            appendMessage("❌ Error contacting bot.", 'bot');
-            saveMessage("❌ Error contacting bot.", 'bot');
+            appendMessage("bot", "⚠️ Something went wrong. Please try again.");
         } finally {
-            document.getElementById('chat-loading').style.display = 'none';
+            showLoading(false);
+            isProcessing = false;
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.focus();
         }
     }
-
-    function saveMessage(text, type) {
-        let history = JSON.parse(localStorage.getItem(chatKey) || '[]');
-        history.push({ text, type });
-        localStorage.setItem(chatKey, JSON.stringify(history));
-    }
-
-    function loadChatHistory() {
-        const history = JSON.parse(localStorage.getItem(chatKey) || '[]');
-        const container = document.getElementById('chat-messages');
-        container.innerHTML = '';
-        for (const msg of history) {
-            const isHtml = (msg.type === 'bot');
-            // bot message có thể có HTML xuống dòng
-            appendMessage(msg.text.replace(/\n/g, '<br>'), msg.type, isHtml);
+    window.addEventListener("load", () => {
+        const historyKey = "chatbot-history-@userId";
+        const container = document.getElementById("chat-messages");
+        const history = localStorage.getItem(historyKey);
+        if (history) {
+            container.innerHTML = history;
+            container.scrollTop = container.scrollHeight;
         }
-    }
+    });
+
+
+    document.getElementById("send-btn").addEventListener("click", handleSend);
+    document.getElementById("user-input").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !isProcessing) {
+            e.preventDefault();
+            handleSend();
+        }
+    });
 </script>
