@@ -6,15 +6,14 @@
 
 <div class="profile-container">
     <div class="row g-4">
-        <!-- Left Sidebar -->
         <div class="col-md-3">
             <div class="profile-details-card h-100">
                 <div class="card-header">
                     <h3><i class='bx bx-user-circle'></i> Profile Preview</h3>
                 </div>
                 <div class="card-body text-center">
-                    <div class="preview-avatar mb-3 mx-auto position-relative">
-                        <div class="image-overlay" data-bs-toggle="modal" data-bs-target="#profileImageModal">
+                    <div class="preview-avatar mb-3 mx-auto position-relative" id="profileImageTrigger">
+                        <div class="image-overlay">
                             <i class='bx bx-camera'></i> Change Profile Image
                         </div>
                         @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
@@ -39,12 +38,11 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="col-md-9">
             <div class="profile-details-card">
                 <div class="card-header position-relative">
                     <h3><i class='bx bx-edit'></i> Edit Profile</h3>
-                    <div class="cover-image-container" data-bs-toggle="modal" data-bs-target="#coverImageModal">
+                    <div class="cover-image-container" id="coverImageTrigger">
                         @if (!string.IsNullOrEmpty(Model.CoverPhotoUrl))
                         {
                             <img src="@Model.CoverPhotoUrl" alt="Cover photo" id="coverImagePreview">
@@ -81,7 +79,7 @@
                             <label asp-for="FullName" class="form-label">
                                 <i class='bx bx-user'></i> Full Name
                             </label>
-                            <input asp-for="FullName" class="form-control post-input" />
+                            <input asp-for="FullName" class="form-control" />
                             <span asp-validation-for="FullName" class="text-danger"></span>
                         </div>
 
@@ -89,7 +87,7 @@
                             <label asp-for="Email" class="form-label">
                                 <i class='bx bx-envelope'></i> Email
                             </label>
-                            <input asp-for="Email" class="form-control post-input" />
+                            <input asp-for="Email" class="form-control" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
@@ -97,7 +95,7 @@
                             <label asp-for="Bio" class="form-label">
                                 <i class='bx bx-info-circle'></i> Bio
                             </label>
-                            <textarea asp-for="Bio" class="form-control post-input" rows="4"></textarea>
+                            <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
                             <span asp-validation-for="Bio" class="text-danger"></span>
                         </div>
 
@@ -105,7 +103,7 @@
                             <label asp-for="TalentArea" class="form-label">
                                 <i class='bx bx-star'></i> Talent Area
                             </label>
-                            <input asp-for="TalentArea" class="form-control post-input" />
+                            <input asp-for="TalentArea" class="form-control" />
                             <span asp-validation-for="TalentArea" class="text-danger"></span>
                         </div>
 
@@ -135,7 +133,7 @@
                             <label asp-for="InstagramUrl" class="form-label">
                                 <i class='bx bxl-instagram'></i> Instagram URL
                             </label>
-                            <input asp-for="InstagramUrl" class="form-control post-input" type="url" />
+                            <input asp-for="InstagramUrl" class="form-control" type="url" />
                             <span asp-validation-for="InstagramUrl" class="text-danger"></span>
                         </div>
 
@@ -143,7 +141,7 @@
                             <label asp-for="YouTubeUrl" class="form-label">
                                 <i class='bx bxl-youtube'></i> YouTube URL
                             </label>
-                            <input asp-for="YouTubeUrl" class="form-control post-input" type="url" />
+                            <input asp-for="YouTubeUrl" class="form-control" type="url" />
                             <span asp-validation-for="YouTubeUrl" class="text-danger"></span>
                         </div>
 
@@ -151,7 +149,7 @@
                             <label asp-for="TwitterUrl" class="form-label">
                                 <i class='bx bxl-twitter'></i> Twitter URL
                             </label>
-                            <input asp-for="TwitterUrl" class="form-control post-input" type="url" />
+                            <input asp-for="TwitterUrl" class="form-control" type="url" />
                             <span asp-validation-for="TwitterUrl" class="text-danger"></span>
                         </div>
 
@@ -168,185 +166,88 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Profile Image Modal -->
-<div class="modal fade" id="profileImageModal" tabindex="-1" aria-labelledby="profileImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="profileImageModalLabel">Change Profile Image</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-3">
-                    <img id="profileModalPreview" src="@Model.ProfileImageURL" class="img-fluid" style="max-height: 200px;" alt="Profile preview">
-                </div>
-                <input type="file" class="form-control" id="profileImageModalInput" accept="image/*" />
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="profileImageSave">Save</button>
-            </div>
+    <div class="image-selection-panel" id="imageSelectionPanel">
+        <div class="panel-header">
+            <h3 id="panelTitle">Change Image</h3>
+            <button class="close-panel" id="closePanel">×</button>
         </div>
-    </div>
-</div>
-
-<!-- Cover Image Modal -->
-<div class="modal fade" id="coverImageModal" tabindex="-1" aria-labelledby="coverImageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="coverImageModalLabel">Change Cover Photo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-3">
-                    <img id="coverModalPreview" src="@Model.CoverPhotoUrl" class="img-fluid" style="max-height: 200px;" alt="Cover preview">
-                </div>
-                <input type="file" class="form-control" id="coverImageModalInput" accept="image/*" />
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="coverImageSave">Save</button>
-            </div>
+        <div class="panel-body">
+            <img id="panelPreview" src="" class="panel-preview" alt="Image preview">
+            <input type="file" class="form-control" id="panelImageInput" accept="image/*" />
+        </div>
+        <div class="panel-footer">
+            <button type="button" class="btn btn-primary" id="panelSave">Save</button>
+            <button type="button" class="btn btn-secondary" id="panelCancel">Cancel</button>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <style>
-        .preview-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-        }
-        .preview-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .image-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            flex-direction: column;
-            font-size: 14px;
-        }
-        .preview-avatar:hover .image-overlay {
-            opacity: 1;
-        }
-        .cover-image-container {
-            width: 100%;
-            height: 200px;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .cover-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .cover-placeholder {
-            width: 100%;
-            height: 100%;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-        }
-        .cover-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            flex-direction: column;
-            font-size: 14px;
-        }
-        .cover-image-container:hover .cover-overlay {
-            opacity: 1;
-        }
-    </style>
+    @@await Html.RenderPartialAsync("_ValidationScriptsPartial")
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Profile Image Preview
-            const profileModalInput = document.getElementById('profileImageModalInput');
-            const profileModalPreview = document.getElementById('profileModalPreview');
+            const profileImageTrigger = document.getElementById('profileImageTrigger');
+            const coverImageTrigger = document.getElementById('coverImageTrigger');
+            const panel = document.getElementById('imageSelectionPanel');
+            const panelTitle = document.getElementById('panelTitle');
+            const panelPreview = document.getElementById('panelPreview');
+            const panelImageInput = document.getElementById('panelImageInput');
+            const panelSave = document.getElementById('panelSave');
+            const panelCancel = document.getElementById('closePanel');
+            const panelCancelBtn = document.getElementById('panelCancel');
             const profileImageInput = document.getElementById('profileImageInput');
-            const profileImagePreview = document.getElementById('profileImagePreview');
-
-            profileModalInput.addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        profileModalPreview.src = e.target.result;
-                        if (profileImagePreview) {
-                            profileImagePreview.src = e.target.result;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            document.getElementById('profileImageSave').addEventListener('click', function () {
-                if (profileModalInput.files[0]) {
-                    profileImageInput.files = profileModalInput.files;
-                }
-                $('#profileImageModal').modal('hide');
-            });
-
-            // Cover Image Preview
-            const coverModalInput = document.getElementById('coverImageModalInput');
-            const coverModalPreview = document.getElementById('coverModalPreview');
             const coverImageInput = document.getElementById('coverImageInput');
+            const profileImagePreview = document.getElementById('profileImagePreview');
             const coverImagePreview = document.getElementById('coverImagePreview');
 
-            coverModalInput.addEventListener('change', function (e) {
+            function openPanel(type, previewSrc) {
+                panelTitle.textContent = type === 'profile' ? 'Change Profile Image' : 'Change Cover Photo';
+                panelPreview.src = previewSrc || '';
+                panel.classList.add('open');
+                panelImageInput.value = '';
+            }
+
+            function closePanel() {
+                panel.classList.remove('open');
+                panelPreview.src = '';
+                panelImageInput.value = '';
+            }
+
+            profileImageTrigger.addEventListener('click', function () {
+                openPanel('profile', profileImagePreview ? profileImagePreview.src : '');
+            });
+
+            coverImageTrigger.addEventListener('click', function () {
+                openPanel('cover', coverImagePreview ? coverImagePreview.src : '');
+            });
+
+            panelImageInput.addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function (e) {
-                        coverModalPreview.src = e.target.result;
-                        if (coverImagePreview) {
-                            coverImagePreview.src = e.target.result;
-                        }
+                        panelPreview.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
                 }
             });
 
-            document.getElementById('coverImageSave').addEventListener('click', function () {
-                if (coverModalInput.files[0]) {
-                    coverImageInput.files = coverModalInput.files;
+            panelSave.addEventListener('click', function () {
+                if (panelImageInput.files[0]) {
+                    const isProfile = panelTitle.textContent.includes('Profile');
+                    const targetInput = isProfile ? profileImageInput : coverImageInput;
+                    const targetPreview = isProfile ? profileImagePreview : coverImagePreview;
+                    targetInput.files = panelImageInput.files;
+                    if (targetPreview && panelPreview.src) {
+                        targetPreview.src = panelPreview.src;
+                    }
                 }
-                $('#coverImageModal').modal('hide');
+                closePanel();
             });
+
+            panelCancel.addEventListener('click', closePanel);
+            panelCancelBtn.addEventListener('click', closePanel);
         });
     </script>
 }

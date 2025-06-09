@@ -5,45 +5,44 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - ShineUp</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" asp-append-version="true"/>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Client.styles.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/posts.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/contests.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/opportunities.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/communities.css" asp-append-version="true"/>
-    <!-- Add to your Layout or _ViewImports.cshtml -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
+    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
     @RenderSection("Styles", required: false)
     <style>
         :root {
-            --primary: #2a69b8; /* Professional blue for talent focus */
-            --primary-dark: #1e4a8a;
-            --text-dark: #1a1a1a;
-            --text-muted: #5c6b7a;
-            --bg-light: #f5f7fa;
-            --bg-white: #ffffff;
-            --border: #e0e4e8;
+            --primary: #2a69b8; /* Matches profile.css --primary-color */
+            --primary-dark: #1e4a8a; /* Matches profile.css --primary-dark */
+            --text-dark: #1a1a1a; /* Matches profile.css --text-color */
+            --text-muted: #5c6b7a; /* Matches profile.css --muted-color */
+            --bg-light: #f5f7fa; /* Matches profile.css --background-color */
+            --bg-white: #ffffff; /* Matches profile.css --card-bg */
+            --border: #e0e4e8; /* Matches profile.css --border-color */
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Matches profile.css --shadow */
+            --transition: all 0.2s ease-in-out; /* Matches profile.css --transition */
         }
 
         body {
             background-color: var(--bg-light);
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text-dark);
             line-height: 1.5;
+            margin: 0;
         }
 
-        /* Header */
         header {
             background: var(--bg-white);
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -58,6 +57,7 @@
             font-size: 1.6rem;
             font-weight: 800;
             letter-spacing: -0.02em;
+            text-decoration: none;
         }
 
         .nav-link {
@@ -65,20 +65,19 @@
             font-weight: 500;
             padding: 0.5rem 1rem !important;
             border-radius: 12px;
-            transition: all 0.2s ease;
+            transition: var(--transition);
         }
 
         .nav-link:hover {
-            background-color: rgba(42,105,184,0.1);
+            background-color: rgba(42, 105, 184, 0.1);
             color: var(--primary) !important;
         }
 
         .nav-link.active {
             color: var(--primary) !important;
-            background-color: rgba(42,105,184,0.05);
+            background-color: rgba(42, 105, 184, 0.05);
         }
 
-        /* Profile Image */
         .profile-image-placeholder-sm {
             width: 34px;
             height: 34px;
@@ -94,11 +93,10 @@
             color: var(--text-muted);
         }
 
-        /* Dropdowns */
         .dropdown-menu {
             border: none;
             border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             margin-top: 0.5rem;
         }
 
@@ -106,7 +104,7 @@
             padding: 0.5rem 1rem;
             font-weight: 500;
             border-radius: 6px;
-            transition: background 0.2s;
+            transition: var(--transition);
         }
 
         .dropdown-item:hover {
@@ -114,47 +112,32 @@
             color: var(--primary);
         }
 
-        /* Buttons */
-        .btn-primary {
-            background: var(--primary);
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 0.5rem 1.25rem;
-            transition: all 0.2s;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Main Content */
         .main-content-container {
             max-width: 1240px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
 
-        /* Footer */
         .footer {
             background: var(--bg-white);
             border-top: 1px solid var(--border);
             padding: 1.5rem 0;
             font-size: 0.9rem;
             color: var(--text-muted);
+            position: relative;
+            width: 100%;
         }
 
         .footer a {
             color: var(--primary);
             text-decoration: none;
-            transition: color 0.2s;
+            transition: var(--transition);
         }
 
         .footer a:hover {
             color: var(--primary-dark);
         }
 
-        /* Notifications */
         .notification-dropdown {
             width: 360px;
             max-height: 450px;
@@ -165,7 +148,7 @@
         .notification-item {
             padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
+            transition: var(--transition);
         }
 
         .notification-item:hover {
@@ -173,7 +156,7 @@
         }
 
         .notification-item.unread {
-            background: rgba(42,105,184,0.03);
+            background: rgba(42, 105, 184, 0.03);
         }
 
         .notification-time {
@@ -188,13 +171,14 @@
             border-radius: 10px;
         }
 
-        /* Talent-specific */
         .navbar-nav .talent-cta {
             background: var(--primary);
             color: var(--bg-white) !important;
             border-radius: 8px;
             padding: 0.5rem 1.25rem !important;
             font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
         }
 
         .navbar-nav .talent-cta:hover {
@@ -230,88 +214,80 @@
                     </li>
                     @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
+                    </li>
                     }
                 </ul>
                 <ul class="navbar-nav align-items-center">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-                        var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
-
-                        <!-- Notification Dropdown -->
-                        <li class="nav-item dropdown me-2">
-                            <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class='bx bx-bell fs-4'></i>
-                                <span id="unread-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0" aria-labelledby="notificationDropdown">
-                                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-                                    <h6 class="mb-0 fw-bold">Notifications</h6>
-                                    <a href="/Notifications" class="text-primary small">View All</a>
-                                </div>
-                                <div id="notification-list" class="list-group list-group-flush">
-                                    <div class="text-center p-3">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                        <span class="ms-2">Loading notifications...</span>
+                    var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                    var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class='bx bx-bell fs-4'></i>
+                            <span id="unread-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0" aria-labelledby="notificationDropdown">
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <a href="/Notifications" class="text-primary small">View All</a>
+                            </div>
+                            <div id="notification-list" class="list-group list-group-flush">
+                                <div class="text-center p-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
                                     </div>
+                                    <span class="ms-2">Loading notifications...</span>
                                 </div>
                             </div>
-                        </li>
-
-                        <!-- Profile Dropdown -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                @if (!string.IsNullOrEmpty(profileImageUrl))
-                                {
-                                    <img src="@profileImageUrl" alt="Profile" class="rounded-circle me-2" style="width: 34px; height: 34px; object-fit: cover;" />
-                                }
-                                else
-                                {
-                                    <div class="profile-image-placeholder-sm me-2">
-                                        <i class='bx bx-user'></i>
-                                    </div>
-                                }
-                                <span class="fw-bold d-none d-lg-inline">@userEmail</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@User.Identity.Name">Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
-                                        <button type="submit" class="btn btn-link text-dark p-0 border-0 bg-transparent">Logout</button>
-                                    </form>
-
-                                </li>
-                            </ul>
-                        </li>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (!string.IsNullOrEmpty(profileImageUrl))
+                            {
+                            <img src="@profileImageUrl" alt="Profile" class="rounded-circle me-2" style="width: 34px; height: 34px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                            <div class="profile-image-placeholder-sm me-2">
+                                <i class='bx bx-user'></i>
+                            </div>
+                            }
+                            <span class="fw-bold d-none d-lg-inline">@userEmail</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@User.Identity.Name">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
+                                    <button type="submit" class="btn btn-link text-dark p-0 border-0 bg-transparent">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
                     }
                     else
                     {
-                        <li class="nav-item ms-2">
-                            <a class="nav-link btn btn-outline-primary talent-cta rounded-pill px-3" asp-controller="Auth" asp-action="Login">Login</a>
-                        </li>
+                    <li class="nav-item ms-2">
+                        <a class="nav-link btn btn-outline-primary talent-cta rounded-pill px-3" asp-controller="Auth" asp-action="Login">Login</a>
+                    </li>
                     }
                 </ul>
             </div>
         </div>
     </nav>
 </header>
-
 <main role="main" class="main-content-container">
     @RenderBody()
 </main>
-
 <footer class="footer text-muted">
     <div class="container-fluid px-4">
         © 2025 ShineUp | <a asp-area="" asp-controller="Home" asp-action="About">About</a> | <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> | <a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
     </div>
 </footer>
-
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
@@ -323,7 +299,6 @@
         "positionClass": "toast-top-right",
         "timeOut": "5000"
     };
-
     document.addEventListener('DOMContentLoaded', function() {
         const notificationDropdown = document.getElementById('notificationDropdown');
         if (notificationDropdown) {
@@ -331,15 +306,10 @@
         }
         updateUnreadCount();
     });
-
     document.getElementById('logoutForm').addEventListener('submit', function () {
         localStorage.clear();
         sessionStorage.clear();
     });
-
-    
-    
-
     function updateUnreadCount() {
         fetch('/notifications/GetUnreadCount')
             .then(response => response.ok ? response.json() : Promise.reject('Failed to fetch unread count'))
@@ -354,12 +324,9 @@
                 document.getElementById('unread-count').style.display = 'none';
             });
     }
-
-    
     function loadNotifications() {
         const notificationList = document.getElementById('notification-list');
         if (!notificationList) return;
-
         notificationList.innerHTML = `
             <div class="text-center p-3">
                 <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -367,7 +334,6 @@
                 </div>
                 <span class="ms-2">Loading notifications...</span>
             </div>`;
-
         fetch('/notifications/recent-notifications')
             .then(response => response.ok ? response.json() : Promise.reject('Failed to load notifications'))
             .then(notifications => {
@@ -379,7 +345,6 @@
                         </div>`;
                     return;
                 }
-
                 notificationList.innerHTML = notifications.map(notification => `
                     <div class="notification-item ${notification.status === 'Read' ? '' : 'unread'}" 
                          onclick="markAsRead(${notification.notificationID}, this)">
@@ -399,23 +364,21 @@
                     </div>`;
             });
     }
-
     function markAsRead(notificationId, element) {
-        fetch(`/notifications/MarkAsRead/${notificationId}`, { 
+        fetch(`/notifications/MarkAsRead/${notificationId}`, {
             method: 'POST',
             headers: {
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
             }
         })
-        .then(response => {
-            if (response.ok) {
-                element.classList.remove('unread');
-                updateUnreadCount();
-            }
-        })
-        .catch(error => console.error('Error marking notification as read:', error));
+            .then(response => {
+                if (response.ok) {
+                    element.classList.remove('unread');
+                    updateUnreadCount();
+                }
+            })
+            .catch(error => console.error('Error marking notification as read:', error));
     }
-
     function formatTimeAgo(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -428,7 +391,6 @@
             hour: 3600,
             minute: 60
         };
-
         for (const [unit, secondsInUnit] of Object.entries(intervals)) {
             const interval = Math.floor(seconds / secondsInUnit);
             if (interval >= 1) {
@@ -437,14 +399,12 @@
         }
         return 'just now';
     }
-
     setInterval(updateUnreadCount, 30000);
 </script>
 @await RenderSectionAsync("Scripts", required: false)
 @if (!Context.Request.Path.Value.ToLower().Contains("/login"))
 {
-    @Html.Partial("_Chatbot")
+@Html.Partial("_Chatbot")
 }
-
 </body>
 </html>

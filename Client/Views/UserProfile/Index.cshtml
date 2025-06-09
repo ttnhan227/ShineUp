@@ -1,49 +1,47 @@
 @model Client.Models.UserViewModel
 
 @{
-ViewData["Title"] = "User Profile";
+    ViewData["Title"] = "User Profile";
 }
 
 @{
-var isOwner = false;
-var currentUsername = User.Identity.Name;
+    var isOwner = false;
+    var currentUsername = User.Identity.Name;
 
-if (User.Identity.IsAuthenticated && !string.IsNullOrEmpty(currentUsername))
-{
-isOwner = string.Equals(currentUsername, Model.Username, StringComparison.OrdinalIgnoreCase);
+    if (User.Identity.IsAuthenticated && !string.IsNullOrEmpty(currentUsername))
+    {
+        isOwner = string.Equals(currentUsername, Model.Username, StringComparison.OrdinalIgnoreCase);
 
-// Debug information
-<script>
-    console.log('Current Username:', @Html.Raw(Json.Serialize(currentUsername)));
-    console.log('Profile Username:', @Html.Raw(Json.Serialize(Model.Username)));
-    console.log('Is Owner:', @isOwner.ToString().ToLower());
-    console.log('Is Private:', @Model.IsPrivate.ToString().ToLower());
-</script>
-}
+        <script>
+            console.log('Current Username:', @Html.Raw(Json.Serialize(currentUsername)));
+            console.log('Profile Username:', @Html.Raw(Json.Serialize(Model.Username)));
+            console.log('Is Owner:', @isOwner.ToString().ToLower());
+            console.log('Is Private:', @Model.IsPrivate.ToString().ToLower());
+        </script>
+    }
 }
 
 <div class="profile-container">
-    <!-- Profile Header Section - Always visible, but with limited info for private profiles -->
     <div class="profile-header">
         <div class="profile-cover">
             @if (!string.IsNullOrEmpty(Model.CoverPhotoUrl))
             {
-            <img src="@Model.CoverPhotoUrl" alt="@Model.Username's cover photo" class="cover-image">
+                <img src="@Model.CoverPhotoUrl" alt="@Model.Username's cover photo" class="cover-image">
             }
             else
             {
-            <div class="cover-placeholder"></div>
+                <div class="cover-placeholder">No Cover Photo</div>
             }
             <div class="profile-avatar">
                 @if (!string.IsNullOrEmpty(Model.ProfileImageURL))
                 {
-                <img src="@Model.ProfileImageURL" alt="@Model.Username's profile image">
+                    <img src="@Model.ProfileImageURL" alt="@Model.Username's profile image">
                 }
                 else
                 {
-                <div class="avatar-placeholder">
-                    <i class='bx bx-user'></i>
-                </div>
+                    <div class="avatar-placeholder">
+                        <i class='bx bx-user'></i>
+                    </div>
                 }
             </div>
         </div>
@@ -52,327 +50,319 @@ isOwner = string.Equals(currentUsername, Model.Username, StringComparison.Ordina
                 <h1>@Model.Username</h1>
                 @if (!string.IsNullOrEmpty(Model.TalentArea))
                 {
-                <p class="talent-area">@Model.TalentArea</p>
+                    <p class="talent-area">@Model.TalentArea</p>
                 }
                 @if (Model.IsGoogleAccount)
                 {
-                <div class="google-badge">
-                    <i class='bx bxl-google'></i>
-                    <span>Linked with Google</span>
-                </div>
+                    <div class="google-badge">
+                        <i class='bx bxl-google'></i>
+                        <span>Linked with Google</span>
+                    </div>
                 }
-
                 @if (Model.IsPrivate && !isOwner)
                 {
-                <div class="private-badge">
-                    <i class='bx bx-lock-alt'></i>
-                    <span>Private Profile</span>
-                </div>
+                    <div class="private-badge">
+                        <i class='bx bx-lock-alt'></i>
+                        <span>Private Profile</span>
+                    </div>
                 }
             </div>
-
             @if (Model.IsPrivate && !isOwner)
             {
-            <div class="private-profile-message">
-                <p>This user has a private profile. Only approved followers can see their full profile and posts.</p>
-            </div>
+                <div class="private-profile-message">
+                    <p>This user has a private profile. Only approved followers can see their full profile and posts.</p>
+                </div>
             }
             else
             {
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <span class="stat-value">@Model.Posts.Count</span>
-                    <span class="stat-label">Posts</span>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">@Model.Posts.Count</span>
+                        <span class="stat-label">Posts</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@Model.ProfileCompletionPercentage%</span>
+                        <span class="stat-label">Profile Complete</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@(Model.LastLoginTime?.ToString("MMM dd") ?? "Never")</span>
+                        <span class="stat-label">Last Login</span>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value">@Model.ProfileCompletionPercentage%</span>
-                    <span class="stat-label">Profile Complete</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">@(Model.LastLoginTime?.ToString("MMM dd") ?? "Never")</span>
-                    <span class="stat-label">Last Login</span>
-                </div>
-            </div>
             }
         </div>
     </div>
 
-    <!-- Profile Content Section -->
     @if (!Model.IsPrivate || isOwner)
     {
-    <div class="profile-content">
-        <!-- Profile Details Card -->
-        <div class="profile-details-card">
-            <div class="card-header">
-                <h3><i class='bx bx-user-circle'></i> Profile Information</h3>
-            </div>
-            <div class="card-body">
-                <div class="info-group">
-                    <label><i class='bx bx-envelope'></i> Email</label>
-                    <div class="info-value">
-                        <span>@Model.Email</span>
-                        <span class="badge verified">Verified</span>
+        <div class="profile-content">
+            <div class="profile-details-card">
+                <div class="card-header">
+                    <h3><i class='bx bx-user-circle'></i> Profile Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-group">
+                        <label><i class='bx bx-envelope'></i> Email</label>
+                        <div class="info-value">
+                            <span>@Model.Email</span>
+                            <span class="badge verified">Verified</span>
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-user'></i> Full Name</label>
+                        <div class="info-value">@(string.IsNullOrEmpty(Model.FullName) ? "Not provided" : Model.FullName)</div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-info-circle'></i> Bio</label>
+                        <div class="info-value">@(string.IsNullOrEmpty(Model.Bio) ? "Not provided" : Model.Bio)</div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-star'></i> Talent Area</label>
+                        <div class="info-value">@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
+                        <div class="info-value">
+                            @(Model.ProfilePrivacy switch
+                            {
+                                0 => "Public",
+                                1 => "Friends Only",
+                                2 => "Private",
+                                _ => "Not specified"
+                            })
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <label><i class='bx bx-link'></i> Social Media</label>
+                        <div class="info-value">
+                            @if (!string.IsNullOrEmpty(Model.InstagramUrl))
+                            {
+                                <a href="@Model.InstagramUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-instagram'></i> Instagram
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.YouTubeUrl))
+                            {
+                                <a href="@Model.YouTubeUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-youtube'></i> YouTube
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.TwitterUrl))
+                            {
+                                <a href="@Model.TwitterUrl" target="_blank" class="social-link">
+                                    <i class='bx bxl-twitter'></i> Twitter
+                                </a>
+                            }
+                            @if (string.IsNullOrEmpty(Model.InstagramUrl) && string.IsNullOrEmpty(Model.YouTubeUrl) && string.IsNullOrEmpty(Model.TwitterUrl))
+                            {
+                                <span>Not provided</span>
+                            }
+                        </div>
                     </div>
                 </div>
-                <div class="info-group">
-                    <label><i class='bx bx-user'></i> Full Name</label>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.FullName) ? "Not provided" : Model.FullName)</div>
-                </div>
-                <div class="info-group">
-                    <label><i class='bx bx-info-circle'></i> Bio</label>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.Bio) ? "Not provided" : Model.Bio)</div>
-                </div>
-                <div class="info-group">
-                    <label><i class='bx bx-star'></i> Talent Area</label>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</div>
-                </div>
-                <div class="info-group">
-                    <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
-                    <div class="info-value">
-                        @(Model.ProfilePrivacy switch
-                        {
-                        0 => "Public",
-                        1 => "Friends Only",
-                        2 => "Private",
-                        _ => "Not specified"
-                        })
-                    </div>
-                </div>
-                <div class="info-group">
-                    <label><i class='bx bx-link'></i> Social Media</label>
-                    <div class="info-value">
-                        @if (!string.IsNullOrEmpty(Model.InstagramUrl))
-                        {
-                        <a href="@Model.InstagramUrl" target="_blank" class="social-link">
-                            <i class='bx bxl-instagram'></i> Instagram
-                        </a>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.YouTubeUrl))
-                        {
-                        <a href="@Model.YouTubeUrl" target="_blank" class="social-link">
-                            <i class='bx bxl-youtube'></i> YouTube
-                        </a>
-                        }
-                        @if (!string.IsNullOrEmpty(Model.TwitterUrl))
-                        {
-                        <a href="@Model.TwitterUrl" target="_blank" class="social-link">
-                            <i class='bx bxl-twitter'></i> Twitter
-                        </a>
-                        }
-                        @if (string.IsNullOrEmpty(Model.InstagramUrl) && string.IsNullOrEmpty(Model.YouTubeUrl) && string.IsNullOrEmpty(Model.TwitterUrl))
-                        {
-                        <span>Not provided</span>
-                        }
-                    </div>
-                </div>
-            </div>
-            @if (isOwner)
-            {
-            <div class="card-footer">
-                <a asp-action="Edit" class="btn btn-primary">
-                    <i class='bx bx-edit'></i> Edit Profile
-                </a>
-                <a asp-action="ChangePassword" class="btn btn-secondary">
-                    <i class='bx bx-lock-alt'></i> Change Password
-                </a>
-            </div>
-            }
-        </div>
-
-        <!-- Posts Feed Card -->
-        <div class="posts-feed-card">
-            <div class="card-header">
-                <h3><i class='bx bx-news'></i> Recent Posts</h3>
-            </div>
-            <div class="card-body">
-                @if (Model.Posts.Any())
+                @if (isOwner)
                 {
-                <div class="posts-grid">
-                    @foreach (var post in Model.Posts)
-                    {
-                    <div class="post-card">
-                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none">
-                            <div class="post-header">
-                                <div class="post-avatar">
-                                    @if (!string.IsNullOrEmpty(post.ProfileImageURL))
-                                    {
-                                    <img src="@post.ProfileImageURL" alt="@post.FullName">
-                                    }
-                                    else
-                                    {
-                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    }
-                                </div>
-                                <div class="post-meta">
-                                    <div class="post-author">
-                                        @post.FullName
-                                        @if (!string.IsNullOrEmpty(post.CategoryName))
-                                        {
-                                        <span class="talent-badge">@post.CategoryName</span>
-                                        }
-                                    </div>
-                                    <div class="post-info">
-                                        <span>@@@post.Username.ToLower().Replace(" ", "")</span>
-                                        <span>·</span>
-                                        <span>@post.CreatedAt.ToString("MMM dd")</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="post-content">
-                                <h5 class="post-title">@post.Title</h5>
-                                <p class="post-text">@post.Content</p>
-                                @if (post.MediaFiles != null && post.MediaFiles.Any())
-                                {
-                                <div class="media-grid">
-                                    @if (post.MediaFiles.Count == 1)
-                                    {
-                                    var media = post.MediaFiles[0];
-                                    <div class="media-item">
-                                        @if (media.Type == "image")
-                                        {
-                                        <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
-                                        }
-                                        else if (media.Type == "video")
-                                        {
-                                        <video controls preload="metadata">
-                                            <source src="@media.Url" type="video/mp4">
-                                        </video>
-                                        }
-                                    </div>
-                                    }
-                                    else
-                                    {
-                                    <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
-                                        @foreach (var media in post.MediaFiles.Take(4))
-                                        {
-                                        <div class="media-item">
-                                            @if (media.Type == "image")
-                                            {
-                                            <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
-                                            }
-                                            else if (media.Type == "video")
-                                            {
-                                            <video controls preload="metadata">
-                                                <source src="@media.Url" type="video/mp4">
-                                            </video>
-                                            }
-                                            @if (post.MediaFiles.Count > 4 && media == post.MediaFiles.Skip(3).First())
-                                            {
-                                            <div class="media-overlay">
-                                                +@(post.MediaFiles.Count - 4)
-                                            </div>
-                                            }
-                                        </div>
-                                        }
-                                    </div>
-                                    }
-                                </div>
-                                }
-                                <div class="post-actions">
-                                    <div class="post-action">
-                                        <i class='bx bx-comment'></i>
-                                        <span>@post.CommentsCount</span>
-                                    </div>
-                                    <div class="post-action">
-                                        <i class='bx bx-repost'></i>
-                                        <span>Share</span>
-                                    </div>
-                                    <div class="post-action">
-                                        <i class='bx bx-heart'></i>
-                                        <span>@post.LikesCount</span>
-                                    </div>
-                                    <div class="post-action">
-                                        <i class='bx bx-bar-chart'></i>
-                                        <span>Stats</span>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="card-footer">
+                        <a asp-action="Edit" class="btn btn-primary">
+                            <i class='bx bx-edit'></i> Edit Profile
+                        </a>
+                        <a asp-action="VerifyCurrentPassword" class="btn btn-secondary">
+                            <i class='bx bx-lock-alt'></i> Change Password
                         </a>
                     </div>
+                }
+            </div>
+
+            <div class="posts-feed-card">
+                <div class="card-header">
+                    <h3><i class='bx bx-news'></i> Recent Posts</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.Posts.Any())
+                    {
+                        <div class="posts-grid">
+                            @foreach (var post in Model.Posts)
+                            {
+                                <div class="post-card">
+                                    <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none">
+                                        <div class="post-header">
+                                            <div class="post-avatar">
+                                                @if (!string.IsNullOrEmpty(post.ProfileImageURL))
+                                                {
+                                                    <img src="@post.ProfileImageURL" alt="@post.FullName">
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="post-meta">
+                                                <div class="post-author">
+                                                    @post.FullName
+                                                    @if (!string.IsNullOrEmpty(post.CategoryName))
+                                                    {
+                                                        <span class="talent-badge">@post.CategoryName</span>
+                                                    }
+                                                </div>
+                                                <div class="post-info">
+                                                    <span>@@@post.Username.ToLower().Replace(" ", "")</span>
+                                                    <span>·</span>
+                                                    <span>@post.CreatedAt.ToString("MMM dd")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="post-content">
+                                            <h5 class="post-title">@post.Title</h5>
+                                            <p class="post-text">@post.Content</p>
+                                            @if (post.MediaFiles != null && post.MediaFiles.Any())
+                                            {
+                                                <div class="media-grid">
+                                                    @if (post.MediaFiles.Count == 1)
+                                                    {
+                                                        var media = post.MediaFiles[0];
+                                                        <div class="media-item">
+                                                            @if (media.Type == "image")
+                                                            {
+                                                                <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                            }
+                                                            else if (media.Type == "video")
+                                                            {
+                                                                <video controls preload="metadata">
+                                                                    <source src="@media.Url" type="video/mp4">
+                                                                </video>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
+                                                            @foreach (var media in post.MediaFiles.Take(4))
+                                                            {
+                                                                <div class="media-item">
+                                                                    @if (media.Type == "image")
+                                                                    {
+                                                                        <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                                    }
+                                                                    else if (media.Type == "video")
+                                                                    {
+                                                                        <video controls preload="metadata">
+                                                                            <source src="@media.Url" type="video/mp4">
+                                                                        </video>
+                                                                    }
+                                                                    @if (post.MediaFiles.Count > 4 && media == post.MediaFiles.Skip(3).First())
+                                                                    {
+                                                                        <div class="media-overlay">
+                                                                            +@(post.MediaFiles.Count - 4)
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            <div class="post-actions">
+                                                <div class="post-action">
+                                                    <i class='bx bx-comment'></i>
+                                                    <span>@post.CommentsCount</span>
+                                                </div>
+                                                <div class="post-action">
+                                                    <i class='bx bx-repost'></i>
+                                                    <span>Share</span>
+                                                </div>
+                                                <div class="post-action">
+                                                    <i class='bx bx-heart'></i>
+                                                    <span>@post.LikesCount</span>
+                                                </div>
+                                                <div class="post-action">
+                                                    <i class='bx bx-bar-chart'></i>
+                                                    <span>Stats</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="no-posts">
+                            <i class='bx bx-news'></i>
+                            <p>No posts yet. Start sharing your talent!</p>
+                        </div>
                     }
                 </div>
-                }
-                else
-                {
-                <div class="no-posts">
-                    <i class='bx bx-news'></i>
-                    <p>No posts yet. Start sharing your talent!</p>
-                </div>
-                }
             </div>
         </div>
-    </div>
     }
 
-    <!-- Image Popup -->
     <div class="image-popup" id="imagePopup">
-        <span class="close-btn" id="closePopup">&times;</span>
+        <span class="close-btn" id="closePopup">×</span>
         <img id="popupImage" src="" alt="Full-size image">
     </div>
 </div>
 
 @section Scripts {
-@await Html.PartialAsync("_ValidationScriptsPartial")
-<script>
-    // Convert Last Login Time to local time
-    document.addEventListener('DOMContentLoaded', function () {
-        const lastLoginTimeElement = document.querySelector('.stat-value:last-child');
-        if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
-            try {
-                const utcTime = lastLoginTimeElement.textContent.trim();
-                const localTime = new Date(utcTime);
-                if (isNaN(localTime.getTime())) {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const lastLoginTimeElement = document.querySelector('.stat-value:last-child');
+            if (lastLoginTimeElement && lastLoginTimeElement.textContent !== 'Never') {
+                try {
+                    const utcTime = lastLoginTimeElement.textContent.trim();
+                    const localTime = new Date(utcTime);
+                    if (isNaN(localTime.getTime())) {
+                        lastLoginTimeElement.textContent = 'Never';
+                        return;
+                    }
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
+                } catch (error) {
+                    console.error('Error formatting date:', error);
                     lastLoginTimeElement.textContent = 'Never';
-                    return;
                 }
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                lastLoginTimeElement.textContent = 'Never';
             }
-        }
 
-        // Image popup functionality
-        const images = document.querySelectorAll('.clickable-image');
-        const popup = document.getElementById('imagePopup');
-        const popupImage = document.getElementById('popupImage');
-        const closeBtn = document.getElementById('closePopup');
+            const images = document.querySelectorAll('.clickable-image');
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            const closeBtn = document.getElementById('closePopup');
 
-        images.forEach(image => {
-            image.addEventListener('click', function (e) {
-                e.preventDefault();
-                popupImage.src = this.dataset.fullsize;
-                popup.style.display = 'flex';
+            images.forEach(image => {
+                image.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    popupImage.src = this.dataset.fullsize;
+                    popup.style.display = 'flex';
+                });
             });
-        });
 
-        closeBtn.addEventListener('click', function () {
-            popup.style.display = 'none';
-            popupImage.src = '';
-        });
-
-        popup.addEventListener('click', function (e) {
-            if (e.target === popup) {
+            closeBtn.addEventListener('click', function () {
                 popup.style.display = 'none';
                 popupImage.src = '';
-            }
+            });
+
+            popup.addEventListener('click', function (e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popupImage.src = '';
+                }
+            });
         });
-    });
-</script>
+    </script>
 }
 
 @functions {
-private string GetGridClass(int mediaCount)
-{
-return (mediaCount > 4 ? 4 : mediaCount) switch
-{
-2 => "grid-2",
-3 => "grid-3",
-4 => "grid-4",
-_ => "grid-1"
-};
-}
+    private string GetGridClass(int mediaCount)
+    {
+        return (mediaCount > 4 ? 4 : mediaCount) switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            4 => "grid-4",
+            _ => "grid-1"
+        };
+    }
 }
