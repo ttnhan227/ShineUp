@@ -282,6 +282,41 @@ namespace Client.Areas.Admin.Controllers
             }
         }
 
+        // POST: Admin/ContestManagement/DeclareWinner/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeclareWinner(int id, int contestId)
+        {
+            if (id <= 0 || contestId <= 0)
+                return BadRequest("Invalid entry or contest ID.");
+                
+            var token = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            try
+            {
+                var client = GetAuthenticatedClient(token);
+                var response = await client.PostAsync($"{_apiBaseUrl}/entries/{id}/declare-winner", null);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        return NotFound("Entry or contest not found.");
+                        
+                    return BadRequest("Failed to declare winner. The contest might already be closed.");
+                }
+                
+                TempData["SuccessMessage"] = "Winner declared successfully and contest is now closed.";
+                return RedirectToAction("Details", new { id = contestId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "An error occurred while declaring the winner.");
+                return RedirectToAction("Details", new { id = contestId });
+            }
+        }
+
         private HttpClient GetAuthenticatedClient(string token)
         {
             var client = _httpClientFactory.CreateClient("API");

@@ -158,7 +158,25 @@
                                                     <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#mediaModal_@entry.EntryID" data-bs-toggle="tooltip" title="View Entry">
                                                         <i class='bx bx-show'></i>
                                                     </button>
-
+                                                    
+                                                    @if (!Model.IsClosed)
+                                                    {
+                                                        <!-- Declare Winner Button -->
+                                                        <form asp-area="Admin" asp-controller="ContestManagement" asp-action="DeclareWinner" asp-route-id="@entry.EntryID" asp-route-contestId="@Model.ContestID" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-success" 
+                                                                    onclick="return confirm('Are you sure you want to declare this entry as the winner? This will close the contest.')"
+                                                                    data-bs-toggle="tooltip" title="Declare Winner">
+                                                                <i class='bx bx-trophy'></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    else if (entry.IsWinner)
+                                                    {
+                                                        <span class="badge bg-success ms-2">
+                                                            <i class='bx bx-trophy'></i> Winner
+                                                        </span>
+                                                    }
                                                     <!-- Media Preview Modal -->
                                                     <div class="modal fade" id="mediaModal_@entry.EntryID" tabindex="-1" aria-hidden="true">
                                                         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -179,16 +197,6 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    @if (!entry.IsWinner)
-                                                    {
-                                                        <form asp-action="DeclareWinner" asp-route-id="@entry.EntryID" method="post" class="d-inline">
-                                                            @Html.AntiForgeryToken()
-                                                            <input type="hidden" name="contestId" value="@Model.ContestID" />
-                                                            <button type="submit" class="btn btn-success" data-bs-toggle="tooltip" title="Declare Winner">
-                                                                <i class='bx bx-trophy'></i>
-                                                            </button>
-                                                        </form>
-                                                    }
                                                     <!-- Delete Entry Button with Confirmation -->
                                                     <button type="button" class="btn btn-danger delete-entry" 
                                                             data-entry-id="@entry.EntryID" 

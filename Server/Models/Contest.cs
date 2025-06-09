@@ -12,6 +12,9 @@ public class Contest
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
+    // Contest status
+    public bool IsClosed { get; set; }
+
     // Navigation property
     public ICollection<ContestEntry> ContestEntries { get; set; }
 }

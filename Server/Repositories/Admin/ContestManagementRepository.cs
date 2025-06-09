@@ -55,6 +55,7 @@ public class ContestManagementRepository : IContestManagementRepository
             Description = c.Description,
             StartDate = c.StartDate,
             EndDate = c.EndDate,
+            IsClosed = c.IsClosed,
             ContestEntries = c.ContestEntries.Select(e => new ContestEntryDTO
             {
                 EntryID = e.EntryID,
@@ -68,7 +69,8 @@ public class ContestManagementRepository : IContestManagementRepository
                 MediaUrl = e.MediaUrl,
                 MediaType = e.MediaType,
                 VoteCount = voteCounts.TryGetValue(e.EntryID, out var count) ? count : 0,
-                HasVoted = false
+                HasVoted = false,
+                IsWinner = e.IsWinner
             }).ToList()
         });
     }
@@ -120,7 +122,8 @@ public class ContestManagementRepository : IContestManagementRepository
                 MediaUrl = !string.IsNullOrEmpty(e.VideoID) ? (e.Video?.VideoURL) : (e.Image?.ImageURL),
                 MediaType = !string.IsNullOrEmpty(e.VideoID) ? "video" : "image",
                 VoteCount = voteCounts.TryGetValue(e.EntryID, out var count) ? count : 0,
-                HasVoted = false
+                HasVoted = false,
+                IsWinner = e.IsWinner
             }).ToList()
         };
 
@@ -209,13 +212,51 @@ public class ContestManagementRepository : IContestManagementRepository
 
     public async Task<ContestStatsDTO> GetContestStatsAsync(int contestId)
     {
-        var entries = await _contestEntryRepositories.GetEntriesByContestAsync(contestId);
-        
+        var contest = await _context.Contests
+            .Include(c => c.ContestEntries)
+            .FirstOrDefaultAsync(c => c.ContestID == contestId);
+
+        if (contest == null)
+            return null;
+
         return new ContestStatsDTO
         {
-            TotalEntries = entries.Count,
-            UniqueParticipants = entries.Select(e => e.UserID).Distinct().Count(),
-            LastEntryDate = entries.Max(e => e.SubmissionDate)
+            TotalEntries = contest.ContestEntries.Count,
+            UniqueParticipants = contest.ContestEntries.Select(e => e.UserID).Distinct().Count(),
+            LastEntryDate = contest.ContestEntries.Any() ? contest.ContestEntries.Max(e => e.SubmissionDate) : null
         };
+    }
+    
+    public async Task<bool> DeclareWinnerAsync(int entryId)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            // Get the entry with its contest
+            var entry = await _context.ContestEntries
+                .Include(e => e.Contest)
+                .FirstOrDefaultAsync(e => e.EntryID == entryId);
+                
+            if (entry == null || entry.Contest == null)
+                return false;
+                
+            // Mark the contest as closed
+            entry.Contest.IsClosed = true;
+            
+            // Mark this entry as winner
+            entry.IsWinner = true;
+            
+            // Save changes
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw; // Re-throw to be handled by the controller
+        }
     }
 }

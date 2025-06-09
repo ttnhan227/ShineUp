@@ -26,6 +26,9 @@ namespace Client.Areas.Admin.Models
         // Navigation property - this will be mapped from ContestEntries in the DTO
         public ICollection<ContestEntryViewModel> ContestEntries { get; set; } = new List<ContestEntryViewModel>();
         
+        // Contest status
+        public bool IsClosed { get; set; }
+        
         // Helper properties
         public int EntryCount => ContestEntries?.Count ?? 0;
         public int TotalEntries => EntryCount; // Alias for EntryCount for consistency
@@ -36,8 +39,9 @@ namespace Client.Areas.Admin.Models
         {
             TotalVotes = ContestEntries?.Sum(e => e.VoteCount) ?? 0;
         }
-        public bool IsActive => DateTime.Now >= StartDate && DateTime.Now <= EndDate;
-        public string Status => IsActive ? "Active" : (DateTime.Now < StartDate ? "Upcoming" : "Ended");
+        
+        public bool IsActive => !IsClosed && DateTime.Now >= StartDate && DateTime.Now <= EndDate;
+        public string Status => IsClosed ? "Closed" : (IsActive ? "Active" : (DateTime.Now < StartDate ? "Upcoming" : "Ended"));
         
         [Display(Name = "Time Remaining")]
         public string TimeRemaining 

@@ -22,6 +22,9 @@ public interface IContestManagementRepository
     
     // Contest Stats
     Task<ContestStatsDTO> GetContestStatsAsync(int contestId);
+    
+    // Contest Winner
+    Task<bool> DeclareWinnerAsync(int entryId);
 }
 
 public class ContestStatsDTO

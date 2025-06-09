@@ -25,4 +25,7 @@ public class ContestEntryDTO
     // Voting properties
     public int VoteCount { get; set; }
     public bool HasVoted { get; set; }
+    
+    // Winner status
+    public bool IsWinner { get; set; }
 }

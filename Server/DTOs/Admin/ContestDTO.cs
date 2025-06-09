@@ -24,6 +24,8 @@ public class AdminContestDTO
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
     
+    public bool IsClosed { get; set; }
+    
     // Navigation property with DTO
     public ICollection<ContestEntryDTO> ContestEntries { get; set; } = new List<ContestEntryDTO>();
 }

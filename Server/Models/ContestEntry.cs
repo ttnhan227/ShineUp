@@ -49,6 +49,8 @@ public class ContestEntry
     [StringLength(500)]
     public string? Description { get; set; }
 
+    public bool IsWinner { get; set; }
+
     public DateTime SubmissionDate { get; set; }
     
     // Helper property to get the media URL regardless of type
