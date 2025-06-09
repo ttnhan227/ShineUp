@@ -44,7 +44,9 @@
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Entries</th>
+                                <th>Votes</th>
                                 <th>Status</th>
+                                <th>Time Remaining</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -56,20 +58,22 @@
                                     <td>@contest.StartDate.ToString("g")</td>
                                     <td>@contest.EndDate.ToString("g")</td>
                                     <td>@contest.EntryCount</td>
+                                    <td>@contest.TotalVotes</td>
                                     <td>
-                                        @if (DateTime.Now < contest.StartDate)
+                                        @if (contest.Status == "Upcoming")
                                         {
-                                            <span class="badge bg-info">Upcoming</span>
+                                            <span class="badge bg-info">@contest.Status</span>
                                         }
-                                        else if (DateTime.Now > contest.EndDate)
+                                        else if (contest.Status == "Ended")
                                         {
-                                            <span class="badge bg-secondary">Ended</span>
+                                            <span class="badge bg-secondary">@contest.Status</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-success">Active</span>
+                                            <span class="badge bg-success">@contest.Status</span>
                                         }
                                     </td>
+                                    <td>@contest.TimeRemaining</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a asp-action="Details" asp-route-id="@contest.ContestID" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">

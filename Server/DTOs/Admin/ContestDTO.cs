@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Server.Models;
+using Server.DTOs;
 
 namespace Server.DTOs.Admin;
 
@@ -11,12 +11,11 @@ public class AdminContestDTO
 
     [Required]
     [StringLength(100, ErrorMessage = "Title cannot be longer than 100 characters")]
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     [Required]
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
-    
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime StartDate { get; set; }
@@ -25,8 +24,6 @@ public class AdminContestDTO
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
     
-  
-    
-    // Navigation property
-    public ICollection<ContestEntry> ContestEntries { get; set; }
+    // Navigation property with DTO
+    public ICollection<ContestEntryDTO> ContestEntries { get; set; } = new List<ContestEntryDTO>();
 }

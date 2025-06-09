@@ -55,6 +55,9 @@ public class ContestEntry
     [NotMapped]
     public string MediaUrl => Video?.VideoURL ?? Image?.ImageURL ?? string.Empty;
     
+    // Navigation property for votes
+    public ICollection<Vote> Votes { get; set; } = new List<Vote>();
+    
     // Helper property to get or set the media type
     [NotMapped]
     public string MediaType 

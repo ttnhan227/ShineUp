@@ -35,13 +35,21 @@ namespace Client.Areas.Admin.Controllers
             try
             {
                 var client = GetAuthenticatedClient(token);
-                var response = await client.GetAsync(_apiBaseUrl);
+                // Update the endpoint to include entries with their vote counts
+                var response = await client.GetAsync($"{_apiBaseUrl}?includeEntries=true");
                 
                 if (!response.IsSuccessStatusCode)
                     return View(new List<ContestViewModel>());
 
                 var json = await response.Content.ReadAsStringAsync();
                 var contests = JsonConvert.DeserializeObject<List<ContestViewModel>>(json);
+                
+                // Calculate total votes for each contest
+                foreach (var contest in contests)
+                {
+                    contest.CalculateTotalVotes();
+                }
+                
                 return View(contests);
             }
             catch (Exception ex)
@@ -63,19 +71,28 @@ namespace Client.Areas.Admin.Controllers
             try
             {
                 var client = GetAuthenticatedClient(token);
-                var response = await client.GetAsync($"{_apiBaseUrl}/{id}");
+                // Ensure we're including entries with their vote counts
+                var response = await client.GetAsync($"{_apiBaseUrl}/{id}?includeEntries=true");
                 
                 if (!response.IsSuccessStatusCode)
                     return NotFound();
 
                 var json = await response.Content.ReadAsStringAsync();
                 var contest = JsonConvert.DeserializeObject<ContestDetailViewModel>(json);
+                
+                // Calculate total votes
+                if (contest != null)
+                {
+                    contest.CalculateTotalVotes();
+                }
+                
                 return View(contest);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ModelState.AddModelError("", "An error occurred while retrieving contest details.");
-                return RedirectToAction(nameof(Index));
+                // Log the exception
+                ModelState.AddModelError("", "An error occurred while retrieving the contest details.");
+                return View(new ContestDetailViewModel());
             }
         }
 

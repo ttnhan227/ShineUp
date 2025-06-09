@@ -30,39 +30,101 @@ public class ContestManagementRepository : IContestManagementRepository
 
     public async Task<IEnumerable<AdminContestDTO>> GetAllContestsAsync()
     {
-        return await _context.Contests
+        // First, get all contests with their entries and users
+        var contests = await _context.Contests
             .Include(c => c.ContestEntries)
+                .ThenInclude(e => e.User)
             .OrderByDescending(c => c.StartDate)
-            .Select(c => new AdminContestDTO
-            {
-                ContestID = c.ContestID,
-                Title = c.Title,
-                Description = c.Description,
-                StartDate = c.StartDate,
-                EndDate = c.EndDate,
-                ContestEntries = c.ContestEntries
-            })
             .ToListAsync();
+
+        // Get all entry IDs to fetch their vote counts in a single query
+        var entryIds = contests.SelectMany(c => c.ContestEntries).Select(e => e.EntryID).ToList();
+        
+        // Get vote counts for all entries in one query
+        var voteCounts = await _context.Votes
+            .Where(v => entryIds.Contains(v.EntryID))
+            .GroupBy(v => v.EntryID)
+            .Select(g => new { EntryID = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.EntryID, x => x.Count);
+
+        // Map to DTOs and set vote counts
+        return contests.Select(c => new AdminContestDTO
+        {
+            ContestID = c.ContestID,
+            Title = c.Title,
+            Description = c.Description,
+            StartDate = c.StartDate,
+            EndDate = c.EndDate,
+            ContestEntries = c.ContestEntries.Select(e => new ContestEntryDTO
+            {
+                EntryID = e.EntryID,
+                ContestID = e.ContestID,
+                UserID = e.UserID,
+                UserName = e.User?.Username ?? "Unknown",
+                UserAvatar = e.User?.ProfileImageURL,
+                Title = e.Title,
+                Description = e.Description,
+                SubmissionDate = e.SubmissionDate,
+                MediaUrl = e.MediaUrl,
+                MediaType = e.MediaType,
+                VoteCount = voteCounts.TryGetValue(e.EntryID, out var count) ? count : 0,
+                HasVoted = false
+            }).ToList()
+        });
     }
 
     public async Task<AdminContestDTO?> GetContestByIdAsync(int id)
     {
+        // Get the contest with its entries and related data
         var contest = await _context.Contests
             .Include(c => c.ContestEntries)
+                .ThenInclude(e => e.User)
+            .Include(c => c.ContestEntries)
+                .ThenInclude(e => e.Video)
+            .Include(c => c.ContestEntries)
+                .ThenInclude(e => e.Image)
             .FirstOrDefaultAsync(c => c.ContestID == id);
 
         if (contest == null)
             return null;
 
-        return new AdminContestDTO
+        // Get entry IDs to fetch their vote counts
+        var entryIds = contest.ContestEntries.Select(e => e.EntryID).ToList();
+        
+        // Get vote counts for all entries in one query
+        var voteCounts = await _context.Votes
+            .Where(v => entryIds.Contains(v.EntryID))
+            .GroupBy(v => v.EntryID)
+            .Select(g => new { EntryID = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.EntryID, x => x.Count);
+
+        var contestDto = new AdminContestDTO
         {
             ContestID = contest.ContestID,
             Title = contest.Title,
             Description = contest.Description,
             StartDate = contest.StartDate,
             EndDate = contest.EndDate,
-            ContestEntries = contest.ContestEntries
+            ContestEntries = contest.ContestEntries.Select(e => new ContestEntryDTO
+            {
+                EntryID = e.EntryID,
+                ContestID = e.ContestID,
+                UserID = e.UserID,
+                UserName = e.User?.Username ?? "Unknown",
+                UserAvatar = e.User?.ProfileImageURL,
+                VideoID = e.VideoID,
+                ImageID = e.ImageID,
+                Title = e.Title,
+                Description = e.Description,
+                SubmissionDate = e.SubmissionDate,
+                MediaUrl = !string.IsNullOrEmpty(e.VideoID) ? (e.Video?.VideoURL) : (e.Image?.ImageURL),
+                MediaType = !string.IsNullOrEmpty(e.VideoID) ? "video" : "image",
+                VoteCount = voteCounts.TryGetValue(e.EntryID, out var count) ? count : 0,
+                HasVoted = false
+            }).ToList()
         };
+
+        return contestDto;
     }
 
     public async Task<AdminContestDTO> CreateContestAsync(AdminCreateContestDTO createContestDto, int createdBy)
