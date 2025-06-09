@@ -20,3 +20,131 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* ========== ShineUp THEME VARIABLES ========== */
+:root {
+    --primary-color: #6f42c1;
+    --secondary-color: #20c997;
+    --accent-color: #ffb347;
+    --text-dark: #22223b;
+    --text-light: #6c757d;
+    --bg-light: #f8f9fa;
+    --bg-gradient: linear-gradient(135deg, #6f42c1 0%, #20c997 100%);
+}
+
+/* ========== Global ========== */
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    color: var(--text-dark);
+    background: var(--bg-light);
+    scroll-behavior: smooth;
+}
+
+/* ========== Section ========== */
+.section {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 2rem;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+/* ========== Button ========== */
+.btn-cta {
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s;
+    border: none;
+}
+
+    .btn-cta:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+.btn-outline-cta {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 50px;
+    padding: 10px 28px;
+    transition: all 0.3s;
+}
+
+    .btn-outline-cta:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+/* ========== Utilities ========== */
+.text-gradient {
+    background: var(--bg-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.rounded-xl {
+    border-radius: 1rem;
+}
+
+.shadow-soft {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ========== Animations ========== */
+@keyframes slideInDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 1s ease-out forwards;
+}
+
+.slide-in-down {
+    animation: slideInDown 1s ease-out;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .btn-cta {
+        padding: 10px 24px;
+        font-size: 1rem;
+    }
+}

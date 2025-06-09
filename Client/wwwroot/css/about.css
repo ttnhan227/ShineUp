@@ -1,21 +1,6 @@
-﻿/* About pages styling */
-.custom-shape-divider {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
-}
+﻿/* ===== ONLY FOR About Page ===== */
 
-.custom-shape-divider svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 1.3px);
-    height: 80px;
-}
-
-
+/* Hero title animation */
 .hero-title {
     animation: slideInDown 1.2s ease-out;
 }
@@ -25,28 +10,53 @@
     opacity: 0;
 }
 
+/* Feature Card */
+.feature-card {
+    border-radius: 12px;
+    transition: all 0.4s ease;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+    .feature-card:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(32, 201, 151, 0.2);
+        border: 1px solid rgba(32, 201, 151, 0.2);
+    }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2);
+            color: var(--primary-color);
+        }
+
 .feature-icon {
     font-size: 2.5rem;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, color 0.3s;
 }
 
-.feature-card:hover .feature-icon {
-    transform: scale(1.2);
-}
-
+/* Team Card */
 .team-card {
     position: relative;
     overflow: hidden;
-    border-radius: 15px;
+    border-radius: 1rem;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
+
+    .team-card img {
+        object-fit: cover;
+        height: 320px;
+        width: 100%;
+        border-radius: 1rem;
+    }
 
 .team-card-overlay {
     position: absolute;
     bottom: -100%;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    background: linear-gradient(to top right, rgba(0,0,0,0.85), rgba(0,0,0,0.2));
     padding: 2rem;
     transition: all 0.3s ease;
 }
@@ -55,76 +65,43 @@
     bottom: 0;
 }
 
+/* Stat Card */
 .counter-value {
     font-size: 2.5rem;
     font-weight: bold;
     color: var(--secondary-color);
 }
 
-.stat-card {
-    animation: fadeIn 0.8s ease-out forwards;
-    opacity: 0;
+.stat-card i {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
 }
 
+/* Parallax Background */
 .parallax-section {
+    background: linear-gradient(120deg, #6f42c1, #20c997);
     background-attachment: fixed;
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
 }
 
+/* Wave Animation */
 .wave-animation {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 100px;
-    background: url('data:image/svg+xml,...') repeat-x;
-    animation: wave 10s linear infinite;
+    background: url('/images/wave-light.svg') repeat-x;
+    background-size: cover;
+    opacity: 0.4;
+    animation: wave 8s linear infinite;
+    z-index: 1;
 }
 
-/* About - Google Map & Location Section */
-.about-map {
-    width: 100%;
-    height: 400px;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 767.98px) {
-    .about-map {
-        height: 300px;
-    }
-}
-
-.location-section {
-    background-color: #f8f9fa;
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-}
-
-    .location-section h3 {
-        font-size: 1.75rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-
-    .location-section p {
-        font-size: 1rem;
-        color: #555;
-        line-height: 1.6;
-    }
-
-    .location-section a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-        .location-section a:hover {
-            text-decoration: underline;
-        }
-
-@@keyframes wave {
+@keyframes wave {
     0% {
         background-position-x: 0;
     }
@@ -133,3 +110,109 @@
         background-position-x: 1000px;
     }
 }
+
+/* Map */
+.about-map {
+    width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    border: 2px solid var(--primary-color);
+}
+
+/* Location */
+.location-section a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* Optional Enhancements */
+.float-animated {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.section-animated {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: fadeInUp 1s ease forwards;
+}
+
+    .section-animated.appeared {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mission box style */
+.mission-box {
+    background: linear-gradient(to right, #f9f9f9, #eef4fa);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+}
+
+/* Background section with animated gradient */
+.bg-special {
+    background: linear-gradient(145deg, #6f42c1, #20c997);
+    background-size: 150% 150%;
+    animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/*Hiệu ứng ripple button CTA - cho nút Get Started*/
+.btn-cta {
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-cta::after {
+        content: "";
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.2);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        border-radius: 50%;
+        transition: transform 0.5s ease;
+        pointer-events: none;
+    }
+
+    .btn-cta:active::after {
+        transform: translate(-50%, -50%) scale(1);
+        transition: 0s;
+    }

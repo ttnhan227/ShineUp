@@ -1,236 +1,264 @@
-@{
+﻿@{
     ViewData["Title"] = "Home";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/home.css" />
+    <!-- AOS Animation & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
     <style>
+        :root {
+            --primary-color: #6f42c1;
+            --secondary-color: #20c997;
+            --accent-color: #ffb347;
+            --text-dark: #22223b;
+            --text-light: #6c757d;
+            --bg-light: #f8f9fa;
+            --bg-gradient: linear-gradient(135deg, #6f42c1 0%, #20c997 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+        }
+
         .hero {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/images/microphone_light.jpg') no-repeat center center/cover;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(32, 201, 151, 0.5)), url('/images/microphone_light.jpg') center/cover no-repeat;
             color: white;
-            padding: 180px 0 120px;
             text-align: center;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .hero p {
-            font-size: 1.4rem;
-            margin-bottom: 2rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            opacity: 0.9;
-        }
-
-        .talent-showcase {
+            padding: 180px 0 120px;
             position: relative;
-            padding: 80px 0;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
+
+            .hero h1 {
+                font-size: 3.5rem;
+                font-weight: 800;
+                text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.25);
+                animation: fadeInDown 1s ease-out;
+            }
+
+            .hero p {
+                font-size: 1.3rem;
+                max-width: 700px;
+                margin: 0 auto 2rem;
+                opacity: 0.95;
+                animation: fadeInUp 1.3s ease-out;
+            }
+
+        .btn-primary, .btn-outline-primary, .btn-cta {
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease-in-out;
+        }
+
+            .btn-primary:hover, .btn-cta:hover {
+                background: var(--secondary-color);
+                color: #fff;
+                transform: translateY(-3px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+            .btn-outline-primary:hover {
+                background: var(--primary-color);
+                color: #fff;
+            }
 
         .talent-card {
-            background: white;
-            border-radius: 15px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            background: white;
         }
 
-        .talent-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
+            .talent-card:hover {
+                transform: scale(1.03);
+                box-shadow: 0 20px 40px rgba(111, 66, 193, 0.2);
+            }
 
-        .talent-card img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-        }
+                /* Ảnh nổi nhẹ và dịch lên trên khi hover */
+                .talent-card:hover img {
+                    transform: scale(1.05) translateY(-2px);
+                }
 
-        .talent-card .card-body {
-            padding: 1.5rem;
-        }
+            /* Transition để hình ảnh mượt khi di chuyển */
+            .talent-card img {
+                height: 220px;
+                object-fit: cover;
+                transition: transform 0.3s;
+            }
 
-        .music-note {
-            position: absolute;
-            opacity: 0.1;
-            z-index: 0;
-        }
-
-        .music-note.left {
-            left: 5%;
-            top: 10%;
-            width: 150px;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .music-note.right {
-            right: 5%;
-            bottom: 10%;
-            width: 200px;
-            animation: float 8s ease-in-out infinite;
+        .section-title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
         }
 
         .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
-            transition: all 0.3s ease;
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            transition: transform 0.3s;
         }
+
+            .feature-icon:hover {
+                transform: scale(1.2);
+                color: var(--primary-color);
+            }
 
         .stats-box {
-            padding: 2.5rem 1.5rem;
+            padding: 2rem 1.5rem;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
         }
 
-        .stats-box::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .stats-box h3 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .stats-box p {
-            color: var(--text-light);
-            margin-bottom: 0;
-        }
+            .stats-box:hover {
+                transform: translateY(-5px);
+            }
 
         .cta-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--bg-gradient);
             color: white;
             padding: 80px 0;
             position: relative;
             overflow: hidden;
         }
 
-        .cta-section h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
+            .cta-section h2 {
+                font-size: 2.5rem;
+                font-weight: 700;
+            }
 
         .btn-cta {
             background: white;
             color: var(--primary-color);
-            font-weight: 600;
-            padding: 12px 35px;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
+            padding: 12px 30px;
+            border: 2px solid white;
         }
 
-        .btn-cta:hover {
-            background: transparent;
-            color: white;
-            border-color: white;
-            transform: translateY(-3px);
-        }
+            .btn-cta:hover {
+                background: transparent;
+                color: white;
+            }
 
-        .color-splash {
-            position: absolute;
-            opacity: 0.1;
-            z-index: 0;
-        }
-
-        .splash-1 {
-            top: -50px;
-            right: -50px;
-            width: 300px;
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .splash-2 {
-            bottom: -30px;
-            left: -30px;
-            width: 250px;
-            animation: float 10s ease-in-out infinite;
+        .floating {
+            animation: float 6s ease-in-out infinite;
         }
 
         @@keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
+            0%
+
+        {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-15px);
+        }
+
+        100% {
+            transform: translateY(0);
+        }
+
+        }
+
+        @@keyframes fadeInDown {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        @@keyframes fadeInUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        @@media (max-width: 768px) {
+            .hero h1
+
+        {
+            font-size: 2.2rem;
+        }
+
+        .hero p {
+            font-size: 1rem;
+        }
+
         }
     </style>
 }
 
 <!-- Hero Section -->
 <section class="hero">
-    <div class="container position-relative">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <h1 class="display-4 fw-bold mb-4">Discover, Showcase & Shine</h1>
-                <p class="lead mb-5">Join Vietnam's premier platform for talent competitions. Showcase your skills, compete with the best, and get recognized!</p>
-                <div class="d-flex gap-3 justify-content-center">
-                    <a href="/Contests" class="btn btn-primary btn-lg px-4 py-3">Explore Contests</a>
-                    <a href="#how-it-works" class="btn btn-outline-light btn-lg px-4 py-3">How It Works</a>
-                </div>
-            </div>
+    <div class="container">
+        <h1>Discover, Showcase & Shine</h1>
+        <p>Join Vietnam's premier platform for talent competitions. Showcase your skills, compete with the best, and get recognized!</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/Contests" class="btn btn-primary btn-lg">Explore Contests</a>
+            <a href="#how-it-works" class="btn btn-outline-primary btn-lg">How It Works</a>
         </div>
     </div>
-    <img src="/images/music_left.png" class="music-note left" alt="Music Note">
-    <img src="/images/music_right.png" class="music-note right" alt="Music Note">
 </section>
 
 <!-- Featured Categories -->
 <section class="py-5 bg-light">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Popular Talent Categories</h2>
-            <p class="text-muted">Discover and participate in various talent categories</p>
-        </div>
+    <div class="container text-center">
+        <h2 class="section-title mb-4" data-aos="fade-up">Popular Talent Categories</h2>
         <div class="row g-4">
-            <div class="col-md-4">
+            <div class="col-md-4" data-aos="fade-right">
                 <div class="talent-card">
-                    <img src="/images/Singing_Stars.jpg" alt="Singing Competition" class="img-fluid">
-                    <div class="card-body text-center">
-                        <h4 class="mb-3">Singing Stars</h4>
+                    <img src="/images/Singing_Stars.jpg" alt="Singing" />
+                    <div class="p-3">
+                        <h4>Singing Stars</h4>
                         <p class="text-muted">Showcase your vocal talent and compete with the best singers</p>
                         <a href="/Contests?category=singing" class="btn btn-outline-primary">View Contests</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" data-aos="fade-up">
                 <div class="talent-card">
-                    <img src="/images/Dance_Contest.jpg" alt="Dance Competition" class="img-fluid">
-                    <div class="card-body text-center">
-                        <h4 class="mb-3">Dance Battles</h4>
+                    <img src="/images/Dance_Contest.jpg" alt="Dance" />
+                    <div class="p-3">
+                        <h4>Dance Battles</h4>
                         <p class="text-muted">Move to the rhythm and impress the judges with your dance moves</p>
                         <a href="/Contests?category=dance" class="btn btn-outline-primary">View Contests</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" data-aos="fade-left">
                 <div class="talent-card">
-                    <img src="/images/Creative_Arts.jpg" alt="Creative Arts" class="img-fluid">
-                    <div class="card-body text-center">
-                        <h4 class="mb-3">Creative Arts</h4>
+                    <img src="/images/Creative_Arts.jpg" alt="Arts" />
+                    <div class="p-3">
+                        <h4>Creative Arts</h4>
                         <p class="text-muted">Show your creativity through various forms of visual arts</p>
                         <a href="/Contests?category=arts" class="btn btn-outline-primary">View Contests</a>
                     </div>
@@ -242,38 +270,23 @@
 
 <!-- How It Works -->
 <section id="how-it-works" class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">How It Works</h2>
-            <p class="text-muted">Get started in just a few simple steps</p>
-        </div>
+    <div class="container text-center">
+        <h2 class="section-title mb-4" data-aos="fade-up">How It Works</h2>
         <div class="row g-4">
-            <div class="col-md-4">
-                <div class="text-center p-4 h-100">
-                    <div class="feature-icon">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
-                    <h4>1. Create Account</h4>
-                    <p class="text-muted">Sign up for free and create your profile to get started</p>
-                </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="feature-icon"><i class="bi bi-person-plus"></i></div>
+                <h4>1. Create Account</h4>
+                <p class="text-muted">Sign up for free and create your profile to get started</p>
             </div>
-            <div class="col-md-4">
-                <div class="text-center p-4 h-100">
-                    <div class="feature-icon">
-                        <i class="bi bi-upload"></i>
-                    </div>
-                    <h4>2. Upload Your Talent</h4>
-                    <p class="text-muted">Record and upload your performance video</p>
-                </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="feature-icon"><i class="bi bi-upload"></i></div>
+                <h4>2. Upload Talent</h4>
+                <p class="text-muted">Record and upload your performance video</p>
             </div>
-            <div class="col-md-4">
-                <div class="text-center p-4 h-100">
-                    <div class="feature-icon">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <h4>3. Compete & Win</h4>
-                    <p class="text-muted">Get votes, climb the leaderboard, and win exciting prizes</p>
-                </div>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="300">
+                <div class="feature-icon"><i class="bi bi-trophy"></i></div>
+                <h4>3. Compete & Win</h4>
+                <p class="text-muted">Get votes, climb the leaderboard, and win prizes</p>
             </div>
         </div>
     </div>
@@ -282,26 +295,26 @@
 <!-- Stats Section -->
 <section class="py-5 bg-light">
     <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
+        <div class="row g-4 text-center">
+            <div class="col-md-3 col-6" data-aos="flip-left">
                 <div class="stats-box">
                     <h3 class="counter">200K+</h3>
-                    <p>Talented Members</p>
+                    <p>Members</p>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6" data-aos="flip-left" data-aos-delay="100">
                 <div class="stats-box">
                     <h3 class="counter">50+</h3>
-                    <p>Active Contests</p>
+                    <p>Contests</p>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6" data-aos="flip-left" data-aos-delay="200">
                 <div class="stats-box">
                     <h3 class="counter">1M+</h3>
-                    <p>Votes Cast</p>
+                    <p>Votes</p>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-3 col-6" data-aos="flip-left" data-aos-delay="300">
                 <div class="stats-box">
                     <h3 class="counter">99%</h3>
                     <p>Happy Users</p>
@@ -313,49 +326,30 @@
 
 <!-- CTA Section -->
 <section class="cta-section text-center">
-    <div class="container position-relative">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <h2 class="mb-4">Ready to Showcase Your Talent?</h2>
-                <p class="lead mb-5">Join thousands of talented individuals and get the recognition you deserve</p>
-                <a href="/Auth/login/" class="btn btn-cta btn-lg">Get Started for Free</a>
-            </div>
-        </div>
-        <img src="/images/color_splash1.png" class="color-splash splash-1" alt="Color Splash">
-        <img src="/images/Colorful_Music_Notes_Transparent_Image.png" class="color-splash splash-2" alt="Music Notes">
+    <div class="container">
+        <h2 data-aos="fade-up">Ready to Showcase Your Talent?</h2>
+        <p class="lead" data-aos="fade-up" data-aos-delay="150">Join thousands of talented individuals and get the recognition you deserve</p>
+        <a href="/Auth/login/" class="btn btn-cta btn-lg mt-3" data-aos="zoom-in" data-aos-delay="300">Get Started for Free</a>
+        <img src="/images/color_splash1.png" class="floating mt-4" width="100" />
     </div>
 </section>
 
-<script>
-    // Simple counter animation
-    document.addEventListener('DOMContentLoaded', function() {
-        const counters = document.querySelectorAll('.counter');
-        const speed = 200;
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
 
-        const animateCounter = (counter) => {
-            const target = +counter.getAttribute('data-target') || +counter.innerText.replace('+', '').replace('%', '');
-            const count = +counter.innerText.replace('+', '').replace('%', '');
-            const increment = target / speed;
-
-            if (count < target) {
-                counter.innerText = Math.ceil(count + increment) + (counter.innerText.includes('+') ? '+' : '') + (counter.innerText.includes('%') ? '%' : '');
-                setTimeout(() => animateCounter(counter), 1);
-            } else {
-                counter.innerText = target + (counter.innerText.includes('+') ? '+' : '') + (counter.innerText.includes('%') ? '%' : '');
-            }
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    animateCounter(entry.target);
-                    observer.unobserve(entry.target);
+    <!-- Smooth scroll to section -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
-        }, { threshold: 0.5 });
-
-        counters.forEach(counter => {
-            observer.observe(counter);
         });
-    });
-</script>
+    </script>
+}
