@@ -904,14 +904,16 @@ namespace Client.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TransferModerator(int communityId, int newModeratorId)
         {
-            _logger.LogInformation("TransferModerator request - CommunityId: {CommunityId}, NewModeratorId: {NewModeratorId}", 
-                communityId, newModeratorId);
+             _logger.LogInformation("TransferModerator request - CommunityId: {CommunityId}, NewModeratorId: {NewModeratorId}", 
+        communityId, newModeratorId);
 
-            if (communityId <= 0 || newModeratorId <= 0)
-            {
-                TempData["Error"] = "Invalid request parameters.";
-                return RedirectToAction("Details", new { id = communityId });
-            }
+    if (communityId <= 0 || newModeratorId <= 0)
+    {
+        TempData["Error"] = "Invalid request parameters.";
+        // Fix: Use communityId instead of id in the route values
+        return RedirectToAction("Details", new { communityId = communityId });
+    }
+
 
             var currentUserId = GetUserId();
             if (currentUserId == null)
