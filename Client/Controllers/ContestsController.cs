@@ -14,11 +14,40 @@ public class ContestsController : Controller
 {
     private readonly IHttpClientFactory _clientFactory;
     private readonly ILogger<ContestsController> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ContestsController(IHttpClientFactory clientFactory, ILogger<ContestsController> logger)
+    public ContestsController(
+        IHttpClientFactory clientFactory, 
+        ILogger<ContestsController> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _clientFactory = clientFactory;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
+    }
+    
+    private HttpClient CreateAuthenticatedClient()
+    {
+        var client = _clientFactory.CreateClient("API");
+        
+        var token = HttpContext.Request.Cookies["auth_token"];
+        
+        if (string.IsNullOrEmpty(token) && User.Identity is ClaimsIdentity identity)
+        {
+            var jwtClaim = identity.FindFirst("JWT");
+            token = jwtClaim?.Value;
+        }
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            client.DefaultRequestHeaders.Remove("Authorization");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        client.DefaultRequestHeaders.Accept.Clear();
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        return client;
     }
 
     public async Task<IActionResult> Index()
@@ -26,10 +55,22 @@ public class ContestsController : Controller
         try
         {
             var client = _clientFactory.CreateClient("API");
+            // First try to get token from cookie
             var token = HttpContext.Request.Cookies["auth_token"];
+            
+            // If not found in cookie, try to get from claims
+            if (string.IsNullOrEmpty(token) && User.Identity.IsAuthenticated)
+            {
+                token = User.FindFirst("JWT")?.Value;
+            }
+            
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+            else if (User.Identity.IsAuthenticated)
+            {
+                _logger.LogWarning("JWT token not found in cookies or claims for authenticated user");
             }
 
             var response = await client.GetAsync("api/Contests");
@@ -56,13 +97,7 @@ public class ContestsController : Controller
     {
         try
         {
-            var client = _clientFactory.CreateClient("API");
-            var token = HttpContext.Request.Cookies["auth_token"];
-            if (!string.IsNullOrEmpty(token))
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
+            var client = CreateAuthenticatedClient();
             var contestResponse = await client.GetAsync($"api/Contests/{id}");
             if (!contestResponse.IsSuccessStatusCode)
             {
@@ -99,15 +134,12 @@ public class ContestsController : Controller
         try
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new InvalidOperationException("User ID claim missing"));
-            var client = _clientFactory.CreateClient("API");
-            var token = HttpContext.Request.Cookies["auth_token"];
-            if (string.IsNullOrEmpty(token))
+            var client = CreateAuthenticatedClient();
+            if (client.DefaultRequestHeaders.Authorization == null)
             {
                 _logger.LogWarning("JWT token missing for contest submission");
                 return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id }) });
             }
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var checkResponse = await client.GetAsync($"api/ContestEntries/user/{userId}/contest/{id}");
             if (checkResponse.IsSuccessStatusCode)
@@ -161,15 +193,12 @@ public class ContestsController : Controller
                 return View(model);
             }
 
-            var client = _clientFactory.CreateClient("API");
-            var token = HttpContext.Request.Cookies["auth_token"];
-            if (string.IsNullOrEmpty(token))
+            var client = CreateAuthenticatedClient();
+            if (client.DefaultRequestHeaders.Authorization == null)
             {
                 _logger.LogWarning("JWT token missing for contest submission");
                 return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
             }
-
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             // Log the start of file upload
             _logger.LogInformation("Starting file upload for contest {ContestId}, file: {FileName}, size: {FileSize} bytes", 

@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Client.Models;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace Client.Controllers
 {
@@ -12,17 +13,46 @@ namespace Client.Controllers
     {
         private readonly IHttpClientFactory _clientFactory;
         private readonly ILogger<VotesController> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public VotesController(IHttpClientFactory clientFactory, ILogger<VotesController> logger)
+        public VotesController(
+            IHttpClientFactory clientFactory, 
+            ILogger<VotesController> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _clientFactory = clientFactory;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+        }
+
+        private HttpClient CreateAuthenticatedClient()
+        {
+            var client = _clientFactory.CreateClient("API");
+            
+            var token = HttpContext.Request.Cookies["auth_token"];
+            
+            if (string.IsNullOrEmpty(token) && User.Identity is ClaimsIdentity identity)
+            {
+                var jwtClaim = identity.FindFirst("JWT");
+                token = jwtClaim?.Value;
+            }
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Remove("Authorization");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            return client;
         }
 
         [HttpPost]
@@ -31,13 +61,10 @@ namespace Client.Controllers
         {
             try
             {
-                var client = _clientFactory.CreateClient("API");
-                
-                // Get the auth token from cookies
-                var token = HttpContext.Request.Cookies["auth_token"];
-                if (!string.IsNullOrEmpty(token))
+                var client = CreateAuthenticatedClient();
+                if (client.DefaultRequestHeaders.Authorization == null)
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    return Json(new { success = false, message = "Please sign in to vote" });
                 }
 
                 // Forward the request to the server API
