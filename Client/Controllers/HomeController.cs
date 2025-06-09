@@ -1,16 +1,20 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Client.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace Client.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly IConfiguration _config;
 
-    public HomeController(ILogger<HomeController> logger)
+    // Gộp lại thành 1 constructor duy nhất
+    public HomeController(ILogger<HomeController> logger, IConfiguration config)
     {
         _logger = logger;
+        _config = config;
     }
 
     public IActionResult Index()
@@ -24,6 +28,8 @@ public class HomeController : Controller
     }
     public IActionResult About()
     {
+        // Đọc key từ appsettings.secrets.json
+        ViewBag.GoogleMapsApiKey = _config["GoogleMaps:ApiKey"];
         return View();
     }
 
