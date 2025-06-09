@@ -455,10 +455,13 @@ namespace Client.Controllers
 
             ViewBag.CurrentUserId = userId.Value;
             ViewBag.UserRole = "None";
+            var viewModel = new CommunityDetailsViewModel();
 
             try
             {
                 using var client = CreateAuthenticatedClient();
+                
+                // Get community details
                 var response = await client.GetAsync($"api/community/{communityId}");
 
                 if (response.IsSuccessStatusCode)
@@ -496,6 +499,141 @@ namespace Client.Controllers
                     if (responseObj.TryGetProperty("privacyID", out var privacyIdProp) && privacyIdProp.ValueKind != JsonValueKind.Null)
                         community.PrivacyID = privacyIdProp.GetInt32();
 
+                    viewModel.Community = community;
+
+                    // Get community posts
+                    var postsResponse = await client.GetAsync($"api/community/{communityId}/posts");
+                    _logger.LogInformation($"Posts API Response Status: {postsResponse.StatusCode}");
+                    
+                    if (postsResponse.IsSuccessStatusCode)
+                    {
+                        var postsContent = await postsResponse.Content.ReadAsStringAsync();
+                        _logger.LogInformation($"Posts API Response: {postsContent}");
+                        
+                        try
+                        {
+                            var postsJson = JsonDocument.Parse(postsContent).RootElement;
+                            _logger.LogInformation($"Parsed JSON. ValueKind: {postsJson.ValueKind}");
+                            
+                            if (postsJson.ValueKind == JsonValueKind.Array)
+                            {
+                                _logger.LogInformation($"Found array with {postsJson.GetArrayLength()} items");
+                                var posts = new List<PostViewModel>();
+                                int postIndex = 0;
+                                
+                                foreach (var postElement in postsJson.EnumerateArray())
+                                {
+                                    _logger.LogInformation($"Processing post at index {postIndex}");
+                                    var post = new PostViewModel();
+                                    
+                                    try 
+                                    {
+                                        if (postElement.TryGetProperty("postID", out var postIdProp) && postIdProp.ValueKind == JsonValueKind.Number)
+                                        {
+                                            post.PostID = postIdProp.GetInt32();
+                                            _logger.LogInformation($"Post ID: {post.PostID}");
+                                        }
+                                        else
+                                        {
+                                            _logger.LogWarning($"Post at index {postIndex} is missing or has invalid postID");
+                                        }
+                                        
+                                        if (postElement.TryGetProperty("title", out var titleProp) && titleProp.ValueKind == JsonValueKind.String)
+                                            post.Title = titleProp.GetString() ?? string.Empty;
+                                            
+                                        if (postElement.TryGetProperty("content", out var contentProp) && contentProp.ValueKind == JsonValueKind.String)
+                                            post.Content = contentProp.GetString() ?? string.Empty;
+                                            
+                                        if (postElement.TryGetProperty("createdAt", out var createdAtPostProp) && 
+                                            createdAtPostProp.ValueKind == JsonValueKind.String && 
+                                            DateTime.TryParse(createdAtPostProp.GetString(), out var postCreatedAt))
+                                        {
+                                            post.CreatedAt = postCreatedAt;
+                                        }
+                                        else
+                                        {
+                                            post.CreatedAt = DateTime.UtcNow; // Default to now if parsing fails
+                                            _logger.LogWarning($"Post {post.PostID} has invalid or missing createdAt, defaulting to now");
+                                        }
+                                        
+                                        if (postElement.TryGetProperty("userID", out var userIdProp) && userIdProp.ValueKind == JsonValueKind.Number)
+                                            post.UserID = userIdProp.GetInt32();
+                                            
+                                        if (postElement.TryGetProperty("username", out var usernameProp) && usernameProp.ValueKind == JsonValueKind.String)
+                                            post.Username = usernameProp.GetString() ?? string.Empty;
+                                            
+                                        if (postElement.TryGetProperty("fullName", out var fullNameProp) && fullNameProp.ValueKind == JsonValueKind.String)
+                                            post.FullName = fullNameProp.GetString() ?? string.Empty;
+                                            
+                                        if (postElement.TryGetProperty("profileImageURL", out var imgUrlProp) && imgUrlProp.ValueKind == JsonValueKind.String)
+                                            post.ProfileImageURL = imgUrlProp.GetString() ?? string.Empty;
+                                            
+                                        if (postElement.TryGetProperty("categoryName", out var categoryNameProp) && categoryNameProp.ValueKind == JsonValueKind.String)
+                                            post.CategoryName = categoryNameProp.GetString();
+                                            
+                                        if (postElement.TryGetProperty("likesCount", out var likesCountProp) && likesCountProp.ValueKind == JsonValueKind.Number)
+                                            post.LikesCount = likesCountProp.GetInt32();
+                                            
+                                        if (postElement.TryGetProperty("commentsCount", out var commentsCountProp) && commentsCountProp.ValueKind == JsonValueKind.Number)
+                                            post.CommentsCount = commentsCountProp.GetInt32();
+                                            
+                                        if (postElement.TryGetProperty("hasLiked", out var hasLikedProp) && hasLikedProp.ValueKind == JsonValueKind.True)
+                                            post.HasLiked = true;
+                                            
+                                        // Handle media files if present
+                                        if (postElement.TryGetProperty("mediaFiles", out var mediaFilesProp) && mediaFilesProp.ValueKind == JsonValueKind.Array)
+                                        {
+                                            post.MediaFiles = new List<MediaFileViewModel>();
+                                            int mediaIndex = 0;
+                                            
+                                            foreach (var mediaElement in mediaFilesProp.EnumerateArray())
+                                            {
+                                                var media = new MediaFileViewModel();
+                                                
+                                                if (mediaElement.TryGetProperty("url", out var mediaUrlProp) && mediaUrlProp.ValueKind == JsonValueKind.String)
+                                                    media.Url = mediaUrlProp.GetString() ?? string.Empty;
+                                                    
+                                                if (mediaElement.TryGetProperty("type", out var mediaTypeProp) && mediaTypeProp.ValueKind == JsonValueKind.String)
+                                                    media.Type = mediaTypeProp.GetString()?.ToLower() ?? "image";
+                                                    
+                                                if (mediaElement.TryGetProperty("publicId", out var publicIdProp) && publicIdProp.ValueKind == JsonValueKind.String)
+                                                    media.PublicId = publicIdProp.GetString() ?? string.Empty;
+                                                    
+                                                post.MediaFiles.Add(media);
+                                                mediaIndex++;
+                                            }
+                                            _logger.LogInformation($"Added {mediaIndex} media files to post {post.PostID}");
+                                        }
+                                        
+                                        posts.Add(post);
+                                        _logger.LogInformation($"Successfully added post {post.PostID} to the list");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError(ex, $"Error processing post at index {postIndex}");
+                                    }
+                                    
+                                    postIndex++;
+                                }
+                            
+                                _logger.LogInformation($"Successfully processed {posts.Count} posts. Assigning to view model...");
+                                viewModel.Posts = posts ?? new List<PostViewModel>();
+                                _logger.LogInformation($"View model now has {viewModel.Posts.Count} posts");
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Posts JSON is not an array");
+                                viewModel.Posts = new List<PostViewModel>();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error parsing posts JSON");
+                            viewModel.Posts = new List<PostViewModel>();
+                        }
+                    }
+
+                    // Get community members
                     var members = new List<CommunityMemberViewModel>();
                     if (responseObj.TryGetProperty("Members", out var membersElement) || 
                         responseObj.TryGetProperty("members", out membersElement))
@@ -592,19 +730,9 @@ namespace Client.Controllers
                         // User is already authenticated
                     }
 
-                    var viewModel = new CommunityDetailsViewModel
-                    {
-                        Community = community,
-                        Members = members,
-                        CommunityRole = communityRole
-                    };
-
-                    var userRole = communityRole.ToString();
-                    var communityIdValue = communityId;
-                    ViewBag.UserRole = userRole;
-                    ViewBag.CurrentUserId = currentUserId;
-                    ViewBag.CommunityId = communityIdValue;
-
+                    viewModel.Members = members;
+                    viewModel.CommunityRole = communityRole;
+                    
                     return View(viewModel);
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)

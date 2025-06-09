@@ -1,11 +1,11 @@
 @model Client.Models.CommunityDetailsViewModel
 @{
-    ViewData["Title"] = "Community Details";
-    int currentUserId = (int)ViewBag.CurrentUserId;
+ViewData["Title"] = "Community Details";
+int currentUserId = (int)ViewBag.CurrentUserId;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/communities.css" />
+<link rel="stylesheet" href="~/css/communities.css" />
 }
 
 <div class="community-container">
@@ -17,47 +17,47 @@
                     <li class="breadcrumb-item active" aria-current="page">@Model.Community.Name</li>
                 </ol>
             </nav>
-            
+
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["Error"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             }
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    @TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             }
-            
+
             <div class="community-card mb-4">
                 <div class="card-header bg-light">
                     <div class="d-flex justify-content-between align-items-center">
                         <h2 class="h4 mb-0">@Model.Community.Name</h2>
                         @switch (Model.CommunityRole)
                         {
-                            case Client.Models.CommunityRole.Moderator:
-                                <span class="badge bg-success">Moderator</span>
-                                break;
-                            case Client.Models.CommunityRole.Member:
-                                <span class="badge bg-primary">Member</span>
-                                break;
-                            default:
-                                <span class="badge bg-secondary">Not Joined</span>
-                                break;
+                        case Client.Models.CommunityRole.Moderator:
+                        <span class="badge bg-success">Moderator</span>
+                        break;
+                        case Client.Models.CommunityRole.Member:
+                        <span class="badge bg-primary">Member</span>
+                        break;
+                        default:
+                        <span class="badge bg-secondary">Not Joined</span>
+                        break;
                         }
                     </div>
                 </div>
                 @if (!string.IsNullOrEmpty(Model.Community.CoverImageUrl))
                 {
-                    var imageUrl = Model.Community.CoverImageUrl.StartsWith("http") 
-                        ? Model.Community.CoverImageUrl 
-                        : $"{Context.Request.Scheme}://{Context.Request.Host}{Model.Community.CoverImageUrl}";
-                    <div class="community-cover-image" style="height: 200px; overflow: hidden; background-size: cover; background-position: center; background-image: url('@imageUrl')">
-                    </div>
+                var imageUrl = Model.Community.CoverImageUrl.StartsWith("http")
+                ? Model.Community.CoverImageUrl
+                : $"{Context.Request.Scheme}://{Context.Request.Host}{Model.Community.CoverImageUrl}";
+                <div class="community-cover-image" style="height: 200px; overflow: hidden; background-size: cover; background-position: center; background-image: url('@imageUrl')">
+                </div>
                 }
                 <div class="card-body">
                     <p class="card-text">@(string.IsNullOrEmpty(Model.Community.Description) ? "No description available." : Model.Community.Description)</p>
@@ -65,38 +65,38 @@
                         <div><i class="far fa-calendar-alt me-2"></i> Created Date: @Model.Community.CreatedAt.ToString("dd/MM/yyyy")</div>
                         @if (Model.Community.UpdatedAt.HasValue)
                         {
-                            <div><i class="far fa-edit me-2"></i> Last Updated: @Model.Community.UpdatedAt.Value.ToString("dd/MM/yyyy")</div>
+                        <div><i class="far fa-edit me-2"></i> Last Updated: @Model.Community.UpdatedAt.Value.ToString("dd/MM/yyyy")</div>
                         }
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
                     @switch (Model.CommunityRole)
                     {
-                        case Client.Models.CommunityRole.Moderator:
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-success"><i class="fas fa-shield-alt me-2"></i>You are moderator of this community</span>
-                                <div>
-                                    <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID" class="btn btn-outline-primary btn-sm me-2">
-                                        <i class="fas fa-edit me-1"></i> Edit
-                                    </a>
-                                </div>
-                            </div>
-                            break;
-                        case Client.Models.CommunityRole.Member:
-                            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
-                                <button type="submit" class="btn btn-outline-danger" 
-                                        onclick="return confirm('Are you sure you want to leave this community?');">
-                                    <i class="fas fa-sign-out-alt me-1"></i> Leave Community
-                                </button>
-                            </form>
-                            break;
-                        default:
-                            <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-user-plus me-1"></i> Join Community
-                                </button>
-                            </form>
-                            break;
+                    case Client.Models.CommunityRole.Moderator:
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-success"><i class="fas fa-shield-alt me-2"></i>You are moderator of this community</span>
+                        <div>
+                            <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                        </div>
+                    </div>
+                    break;
+                    case Client.Models.CommunityRole.Member:
+                    <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger"
+                                onclick="return confirm('Are you sure you want to leave this community?');">
+                            <i class="fas fa-sign-out-alt me-1"></i> Leave Community
+                        </button>
+                    </form>
+                    break;
+                    default:
+                    <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-1"></i> Join Community
+                        </button>
+                    </form>
+                    break;
                     }
                 </div>
             </div>
@@ -114,25 +114,169 @@
                 </div>
                 <div class="card-body p-0">
                     @{
-                        ViewBag.CurrentUserId = currentUserId;
-                        ViewBag.UserRole = Model.CommunityRole.ToString();
+                    ViewBag.CurrentUserId = currentUserId;
+                    ViewBag.UserRole = Model.CommunityRole.ToString();
                     }
                     @await Html.PartialAsync("_CommunityMemberListPartial", Model.Members)
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Debug toggle -->
-    <script>
-        document.addEventListener('keydown', function(e) {
-            // Show debug info when pressing Ctrl+Shift+D
-            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-                const debugInfo = document.getElementById('debugInfo');
-                if (debugInfo) {
-                    debugInfo.classList.toggle('d-none');
+
+    <!-- Posts Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="community-card">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-newspaper me-2"></i>Community Posts
+                        <span class="badge bg-primary rounded-pill">@Model.Posts.Count</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Debug Info -->
+                    <div id="debugInfo" class="d-none alert alert-info mb-3">
+                        <h5>Debug Information</h5>
+                        <p>Total Posts: @Model.Posts.Count</p>
+                        @if (Model.Posts.Any())
+                        {
+                            <ul>
+                                @foreach (var post in Model.Posts.Take(3))
+                                {
+                                    <li>Post ID: @post.PostID - @post.Title</li>
+                                }
+                                @if (Model.Posts.Count > 3)
+                                {
+                                    <li>... and @(Model.Posts.Count - 3) more</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No posts found in the model</p>
+                        }
+                    </div>
+                    
+                    @if (Model.Posts.Any())
+                    {
+                    <div class="posts-feed">
+                        @foreach (var post in Model.Posts)
+                        {
+                        <div class="post-card mb-4">
+                            <div class="post-header">
+                                <a asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@post.Username" class="text-decoration-none d-flex align-items-center">
+                                    <div class="post-avatar">
+                                        @if (!string.IsNullOrEmpty(post.ProfileImageURL))
+                                        {
+                                        <img src="@post.ProfileImageURL" alt="@post.FullName">
+                                        }
+                                        else
+                                        {
+                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                            <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        }
+                                    </div>
+                                    <div class="post-meta ms-3">
+                                        <div class="post-author">
+                                            @post.FullName
+                                            @if (!string.IsNullOrEmpty(post.CategoryName))
+                                            {
+                                            <span class="talent-badge">@post.CategoryName</span>
+                                            }
+                                        </div>
+                                        <div class="post-info">
+                                            <span>@@@(post.Username?.ToLower()?.Replace(" ", "") ?? "user")</span>
+                                            <span class="mx-1">·</span>
+                                            <span>@(post.CreatedAt.ToString("MMM dd"))</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none">
+                                <div class="post-content">
+                                    <h5 class="post-title">@post.Title</h5>
+                                    <p class="post-text">@post.Content</p>
+
+                                    @if (post.MediaFiles != null && post.MediaFiles.Any())
+                                    {
+                                    <div class="media-grid">
+                                        @if (post.MediaFiles.Count == 1)
+                                        {
+                                        var media = post.MediaFiles[0];
+                                        <div class="media-item">
+                                            @if (media.Type == "image")
+                                            {
+                                            <img src="@media.Url" alt="@post.Title" class="img-fluid rounded">
+                                            }
+                                            else if (media.Type == "video")
+                                            {
+                                            <video controls class="img-fluid rounded">
+                                                <source src="@media.Url" type="video/mp4">
+                                            </video>
+                                            }
+                                        </div>
+                                        }
+                                    </div>
+                                    }
+                                </div>
+                            </a>
+                        </div>
+                        }
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="text-center py-4">
+                        <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No posts in this community yet.</p>
+                        @if (Model.CommunityRole != Client.Models.CommunityRole.None)
+                        {
+                        <a asp-controller="Posts" asp-action="Index" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> Create First Post
+                        </a>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug toggle -->
+<script>
+    document.addEventListener('keydown', function(e) {
+        // Show debug info when pressing Ctrl+Shift+D
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            const debugInfo = document.getElementById('debugInfo');
+            if (debugInfo) {
+                debugInfo.classList.toggle('d-none');
+                console.log('Debug info toggled. Visible:', !debugInfo.classList.contains('d-none'));
+                
+                // Log model data to console
+                console.log('Community Details Model:', {
+                    communityId: @Model.Community.CommunityID,
+                    postCount: @Model.Posts.Count,
+                    memberCount: @Model.Members.Count,
+                    userRole: '@Model.CommunityRole'
+                });
+                
+                @if (Model.Posts.Count > 0) {
+                    <text>
+                    console.log('First 3 posts:');
+                    @foreach (var post in Model.Posts.Take(3)) {
+                        <text>console.log('  - Post ID: @post.PostID, Title: @post.Title');</text>
+                    }
+                    </text>
                 }
             }
-        });
-    </script>
-</div>
+        }
+    });
+    
+    // Log when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Community Details page loaded');
+        console.log('Press Ctrl+Shift+D to toggle debug information');
+    });
+</script>

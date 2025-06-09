@@ -34,6 +34,7 @@ public class CommunityRepository : ICommunityRepository
         var posts = await _db.Posts
             .Where(p => p.CommunityID == communityId)
             .Include(p => p.User)
+            .Include(p => p.Privacy)  // Include the Privacy navigation property
             .Include(p => p.Likes)
             .Include(p => p.Comments)
             .Include(p => p.Images)
@@ -44,10 +45,10 @@ public class CommunityRepository : ICommunityRepository
         // Filter posts based on privacy settings if user is not the owner
         if (userId.HasValue)
         {
-            return posts.Where(p => p.Privacy.Name == "Public" || p.UserID == userId.Value);
+            return posts.Where(p => p.Privacy != null && (p.Privacy.Name == "Public" || p.UserID == userId.Value));
         }
         
-        return posts.Where(p => p.Privacy.Name == "Public");
+        return posts.Where(p => p.Privacy != null && p.Privacy.Name == "Public");
     }
 
     public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
