@@ -165,23 +165,40 @@ namespace Server.Controllers.Admin
         }
 
         // DELETE: api/admin/ContestManagement/entries/5
-        [HttpDelete("entries/{entryId}")]
-        public async Task<IActionResult> DeleteContestEntry(int entryId)
+        [HttpDelete("entries/{id}")]
+        public async Task<IActionResult> DeleteContestEntry(int id)
         {
             try
             {
-                var result = await _repository.DeleteContestEntryAsync(entryId);
+                var result = await _repository.DeleteContestEntryAsync(id);
                 if (!result)
-                {
                     return NotFound();
-                }
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error deleting contest entry with id {entryId}");
+                _logger.LogError(ex, "Error deleting contest entry with ID {ContestEntryId}", id);
                 return StatusCode(500, "Internal server error while deleting contest entry");
+            }
+        }
+        
+        // POST: api/admin/ContestManagement/entries/5/declare-winner
+        [HttpPost("entries/{entryId}/declare-winner")]
+        public async Task<IActionResult> DeclareWinner(int entryId)
+        {
+            try
+            {
+                var result = await _repository.DeclareWinnerAsync(entryId);
+                if (!result)
+                    return NotFound("Entry or contest not found");
+                    
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error declaring winner for entry {EntryId}", entryId);
+                return StatusCode(500, "Internal server error while declaring winner");
             }
         }
 

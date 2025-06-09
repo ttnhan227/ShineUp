@@ -35,13 +35,21 @@ namespace Client.Areas.Admin.Controllers
             try
             {
                 var client = GetAuthenticatedClient(token);
-                var response = await client.GetAsync(_apiBaseUrl);
+                // Update the endpoint to include entries with their vote counts
+                var response = await client.GetAsync($"{_apiBaseUrl}?includeEntries=true");
                 
                 if (!response.IsSuccessStatusCode)
                     return View(new List<ContestViewModel>());
 
                 var json = await response.Content.ReadAsStringAsync();
                 var contests = JsonConvert.DeserializeObject<List<ContestViewModel>>(json);
+                
+                // Calculate total votes for each contest
+                foreach (var contest in contests)
+                {
+                    contest.CalculateTotalVotes();
+                }
+                
                 return View(contests);
             }
             catch (Exception ex)
@@ -63,19 +71,28 @@ namespace Client.Areas.Admin.Controllers
             try
             {
                 var client = GetAuthenticatedClient(token);
-                var response = await client.GetAsync($"{_apiBaseUrl}/{id}");
+                // Ensure we're including entries with their vote counts
+                var response = await client.GetAsync($"{_apiBaseUrl}/{id}?includeEntries=true");
                 
                 if (!response.IsSuccessStatusCode)
                     return NotFound();
 
                 var json = await response.Content.ReadAsStringAsync();
                 var contest = JsonConvert.DeserializeObject<ContestDetailViewModel>(json);
+                
+                // Calculate total votes
+                if (contest != null)
+                {
+                    contest.CalculateTotalVotes();
+                }
+                
                 return View(contest);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ModelState.AddModelError("", "An error occurred while retrieving contest details.");
-                return RedirectToAction(nameof(Index));
+                // Log the exception
+                ModelState.AddModelError("", "An error occurred while retrieving the contest details.");
+                return View(new ContestDetailViewModel());
             }
         }
 
@@ -262,6 +279,41 @@ namespace Client.Areas.Admin.Controllers
             {
                 TempData["ErrorMessage"] = "An error occurred while deleting the contest entry.";
                 return RedirectToAction(nameof(Details), new { id = contestId });
+            }
+        }
+
+        // POST: Admin/ContestManagement/DeclareWinner/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeclareWinner(int id, int contestId)
+        {
+            if (id <= 0 || contestId <= 0)
+                return BadRequest("Invalid entry or contest ID.");
+                
+            var token = User.FindFirst("JWT")?.Value;
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            try
+            {
+                var client = GetAuthenticatedClient(token);
+                var response = await client.PostAsync($"{_apiBaseUrl}/entries/{id}/declare-winner", null);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        return NotFound("Entry or contest not found.");
+                        
+                    return BadRequest("Failed to declare winner. The contest might already be closed.");
+                }
+                
+                TempData["SuccessMessage"] = "Winner declared successfully and contest is now closed.";
+                return RedirectToAction("Details", new { id = contestId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "An error occurred while declaring the winner.");
+                return RedirectToAction("Details", new { id = contestId });
             }
         }
 

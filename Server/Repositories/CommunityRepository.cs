@@ -13,16 +13,42 @@ public class CommunityRepository : ICommunityRepository
     private readonly ICloudinaryService _cloudinaryService;
     private readonly ILogger<CommunityRepository> _logger;
 
+    private readonly IPostRepository _postRepository;
+
     public CommunityRepository(
         DatabaseContext db, 
         IWebHostEnvironment env, 
         ICloudinaryService cloudinaryService,
-        ILogger<CommunityRepository> logger)
+        ILogger<CommunityRepository> logger,
+        IPostRepository postRepository)
     {
         _db = db;
         _env = env;
         _cloudinaryService = cloudinaryService;
         _logger = logger;
+        _postRepository = postRepository;
+    }
+
+    public async Task<IEnumerable<Post>> GetCommunityPostsAsync(int communityId, int? userId = null)
+    {
+        var posts = await _db.Posts
+            .Where(p => p.CommunityID == communityId)
+            .Include(p => p.User)
+            .Include(p => p.Privacy)  // Include the Privacy navigation property
+            .Include(p => p.Likes)
+            .Include(p => p.Comments)
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        // Filter posts based on privacy settings if user is not the owner
+        if (userId.HasValue)
+        {
+            return posts.Where(p => p.Privacy != null && (p.Privacy.Name == "Public" || p.UserID == userId.Value));
+        }
+        
+        return posts.Where(p => p.Privacy != null && p.Privacy.Name == "Public");
     }
 
     public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
@@ -440,9 +466,99 @@ public class CommunityRepository : ICommunityRepository
 
     public async Task<string?> GetUserRoleAsync(int communityId, int userId)
     {
-        var member = await _db.CommunityMembers.AsNoTracking()
-            .FirstOrDefaultAsync(m => m.CommunityID == communityId && m.UserID == userId);
+        var member = await _db.CommunityMembers
+            .FirstOrDefaultAsync(cm => cm.CommunityID == communityId && cm.UserID == userId);
+
         return member?.Role.ToString();
+    }
+    
+    public async Task<IEnumerable<CommunityDTO>> GetUserCommunitiesAsync(int userId)
+    {
+        _logger.LogInformation($"[DEBUG] Getting communities for user ID: {userId}");
+        
+        try 
+        {
+            // First, get the community IDs where the user is a member
+            var communityIds = await _db.CommunityMembers
+                .Where(cm => cm.UserID == userId)
+                .Select(cm => cm.CommunityID)
+                .ToListAsync();
+                
+            _logger.LogInformation($"[DEBUG] Found {communityIds.Count} community memberships for user {userId}");
+            
+            if (!communityIds.Any())
+            {
+                return new List<CommunityDTO>();
+            }
+            
+            // Then get the communities with only the necessary includes
+            var communities = await _db.Communities
+                .Where(c => communityIds.Contains(c.CommunityID))
+                .Include(c => c.Privacy)
+                .Include(c => c.Members)
+                    .ThenInclude(m => m.User)
+                .AsNoTracking()
+                .ToListAsync();
+                
+            _logger.LogInformation($"[DEBUG] Retrieved {communities.Count} communities");
+            
+            var result = new List<CommunityDTO>();
+            
+            foreach (var community in communities)
+            {
+                try 
+                {
+                    _logger.LogInformation($"[DEBUG] Processing community: {community.Name} (ID: {community.CommunityID})");
+                    
+                    var member = community.Members?.FirstOrDefault(m => m.UserID == userId);
+                    if (member == null)
+                    {
+                        _logger.LogWarning($"[DEBUG] Could not find membership for user {userId} in community {community.CommunityID}");
+                        continue;
+                    }
+                    
+                    var dto = new CommunityDTO
+                    {
+                        CommunityID = community.CommunityID,
+                        Name = community.Name,
+                        Description = community.Description,
+                        CoverImageUrl = community.CoverImageUrl,
+                        CreatedAt = community.CreatedAt,
+                        PrivacyID = community.PrivacyID,
+                        IsCurrentUserModerator = member.Role == CommunityRole.Moderator,
+                        IsCurrentUserMember = true,
+                        MemberUserIds = community.Members?.Select(m => m.UserID).ToList() ?? new List<int>(),
+                        Members = community.Members?.Select(m => new CommunityMemberDTO
+                        {
+                            UserID = m.UserID,
+                            Username = m.User?.Username ?? "Unknown",
+                            FullName = m.User?.FullName,
+                            Email = m.User?.Email,
+                            ProfileImageUrl = m.User?.ProfileImageURL,
+                            Role = m.Role.ToString(),
+                            JoinedAt = m.JoinedAt,
+                            LastActiveAt = m.LastActiveAt
+                        }).ToList() ?? new List<CommunityMemberDTO>()
+                    };
+                    
+                    _logger.LogInformation($"[DEBUG] Created DTO for community: {dto.Name} with {dto.Members.Count} members");
+                    result.Add(dto);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"[DEBUG] Error processing community {community.CommunityID}");
+                    // Continue with the next community
+                }
+            }
+            
+            _logger.LogInformation($"[DEBUG] Returning {result.Count} communities");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"[DEBUG] Error in GetUserCommunitiesAsync for user {userId}");
+            throw new Exception("An error occurred while retrieving your communities. Please try again later.", ex);
+        }
     }
 
     public async Task<bool> IsUserMemberAsync(int communityId, int userId)

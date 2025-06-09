@@ -57,19 +57,31 @@
                                 <div class="profile-detail-item">
                                     <label><i class='bx bx-time'></i> Status</label>
                                     <div>
-                                        @if (DateTime.Now < Model.StartDate)
+                                        @if (Model.Status == "Upcoming")
                                         {
-                                            <span class="badge bg-primary p-2">Upcoming</span>
+                                            <span class="badge bg-primary p-2">@Model.Status</span>
                                         }
-                                        else if (DateTime.Now > Model.EndDate)
+                                        else if (Model.Status == "Ended")
                                         {
-                                            <span class="badge bg-secondary p-2">Ended</span>
+                                            <span class="badge bg-secondary p-2">@Model.Status</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-success p-2">Active</span>
+                                            <span class="badge bg-success p-2">@Model.Status</span>
                                         }
                                     </div>
+                                </div>
+                                <div class="profile-detail-item">
+                                    <label><i class='bx bx-time-five'></i> Time Remaining</label>
+                                    <p class="form-control-plaintext">@Model.TimeRemaining</p>
+                                </div>
+                                <div class="profile-detail-item">
+                                    <label><i class='bx bx-bar-chart'></i> Total Entries</label>
+                                    <p class="form-control-plaintext">@Model.TotalEntries</p>
+                                </div>
+                                <div class="profile-detail-item">
+                                    <label><i class='bx bx-like'></i> Total Votes</label>
+                                    <p class="form-control-plaintext">@Model.TotalVotes</p>
                                 </div>
                             </div>
                         </div>
@@ -109,8 +121,9 @@
                                         <th>Title</th>
                                         <th>User</th>
                                         <th>Submitted</th>
+                                        <th>Votes</th>
                                         <th>Status</th>
-                                        <th style="width: 150px;">Actions</th>
+                                        <th style="width: 200px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -118,8 +131,17 @@
                                     {
                                         <tr>
                                             <td>@entry.Title</td>
-                                            <td>@entry.UserName</td>
-                                            <td>@entry.SubmittedAt.ToString("g")</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(entry.UserAvatar))
+                                                    {
+                                                        <img src="@entry.UserAvatar" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;" alt="@entry.UserName">
+                                                    }
+                                                    <span>@entry.UserName</span>
+                                                </div>
+                                            </td>
+                                            <td>@entry.TimeAgo</td>
+                                            <td>@entry.VoteCount</td>
                                             <td>
                                                 @if (entry.IsWinner)
                                                 {
@@ -132,28 +154,57 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group">
-                                                    <a href="@entry.MediaUrl" target="_blank" class="btn btn-info" data-bs-toggle="tooltip" title="View Entry">
+                                                    <!-- Media Preview Modal Trigger -->
+                                                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#mediaModal_@entry.EntryID" data-bs-toggle="tooltip" title="View Entry">
                                                         <i class='bx bx-show'></i>
-                                                    </a>
-                                                    @if (!entry.IsWinner)
+                                                    </button>
+                                                    
+                                                    @if (!Model.IsClosed)
                                                     {
-                                                        <form asp-action="DeclareWinner" asp-route-id="@entry.EntryID" method="post" class="d-inline">
+                                                        <!-- Declare Winner Button -->
+                                                        <form asp-area="Admin" asp-controller="ContestManagement" asp-action="DeclareWinner" asp-route-id="@entry.EntryID" asp-route-contestId="@Model.ContestID" method="post" class="d-inline">
                                                             @Html.AntiForgeryToken()
-                                                            <input type="hidden" name="contestId" value="@Model.ContestID" />
-                                                            <button type="submit" class="btn btn-success" data-bs-toggle="tooltip" title="Declare Winner">
+                                                            <button type="submit" class="btn btn-success" 
+                                                                    onclick="return confirm('Are you sure you want to declare this entry as the winner? This will close the contest.')"
+                                                                    data-bs-toggle="tooltip" title="Declare Winner">
                                                                 <i class='bx bx-trophy'></i>
                                                             </button>
                                                         </form>
                                                     }
-                                                    <form asp-action="DeleteEntry" method="post" class="d-inline">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="entryId" value="@entry.EntryID" />
-                                                        <input type="hidden" name="contestId" value="@Model.ContestID" />
-                                                        <button type="submit" class="btn btn-danger" data-bs-toggle="tooltip" title="Delete Entry"
-                                                                onclick="return confirm('Are you sure you want to delete this entry?')">
-                                                            <i class='bx bx-trash'></i>
-                                                        </button>
-                                                    </form>
+                                                    else if (entry.IsWinner)
+                                                    {
+                                                        <span class="badge bg-success ms-2">
+                                                            <i class='bx bx-trophy'></i> Winner
+                                                        </span>
+                                                    }
+                                                    <!-- Media Preview Modal -->
+                                                    <div class="modal fade" id="mediaModal_@entry.EntryID" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title">@entry.Title</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body text-center">
+                                                                    @Html.Raw(entry.MediaHtml)
+                                                                    @if (!string.IsNullOrEmpty(entry.Description))
+                                                                    {
+                                                                        <div class="mt-3">
+                                                                            <p>@entry.Description</p>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Delete Entry Button with Confirmation -->
+                                                    <button type="button" class="btn btn-danger delete-entry" 
+                                                            data-entry-id="@entry.EntryID" 
+                                                            data-contest-id="@Model.ContestID"
+                                                            data-bs-toggle="tooltip" 
+                                                            title="Delete Entry">
+                                                        <i class='bx bx-trash'></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -195,12 +246,51 @@
     </div>
 </div>
 
+<!-- Delete Entry Confirmation Modal -->
+<div class="modal fade" id="deleteEntryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this entry? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteEntryForm" method="post" action="">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize tooltips
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle delete entry button click
+            const deleteEntryButtons = document.querySelectorAll('.delete-entry');
+            const deleteEntryForm = document.getElementById('deleteEntryForm');
+            
+            deleteEntryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const entryId = this.getAttribute('data-entry-id');
+                    const contestId = this.getAttribute('data-contest-id');
+                    deleteEntryForm.action = `/Admin/ContestManagement/DeleteEntry?entryId=${entryId}&contestId=${contestId}`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteEntryModal'));
+                    modal.show();
+                });
+            });
         });
     </script>
 }

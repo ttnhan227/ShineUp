@@ -13,11 +13,10 @@ namespace Server.DTOs
         public int CreatedByUserID { get; set; }
         public int? PrivacyID { get; set; }
         public bool IsCurrentUserModerator { get; set; }
-    
         public bool IsCurrentUserMember { get; set; }
-        public List<int> MemberUserIds { get; set; }
-        public List<CommunityMemberDTO> Members { get; set; }
-        public List<PostListResponseDto> Posts { get; set; }
+        public List<int> MemberUserIds { get; set; } = new List<int>();
+        public List<CommunityMemberDTO> Members { get; set; } = new List<CommunityMemberDTO>();
+        public List<PostListResponseDto> Posts { get; set; } = new List<PostListResponseDto>();
     }
     public class CreateCommunityDTO
     {
