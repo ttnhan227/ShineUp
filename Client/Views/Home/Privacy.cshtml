@@ -3,7 +3,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/home.css" />
+    <link rel="stylesheet" href="~/css/home.css"/>
     <style>
         .accordion-button.collapsed::after {
             transform: rotate(0deg);
@@ -28,9 +28,9 @@
             transition: border-color 0.3s ease;
         }
 
-            .accordion-item:hover {
-                border-left-color: var(--primary-color);
-            }
+        .accordion-item:hover {
+            border-left-color: var(--primary-color);
+        }
 
         .privacy-section:hover {
             transform: translateY(-4px);
@@ -43,10 +43,10 @@
             transition: all 0.6s ease-out;
         }
 
-            .timeline-item.visible {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
     </style>
 }
 
@@ -74,8 +74,10 @@
         </div>
         <h2 class="h3 mb-4">Introduction</h2>
         <p class="text-muted">
-            Welcome to ShineUp's Privacy Policy. This document explains how we collect, use, and protect your personal information
-            when you use our talent competition platform. We are committed to ensuring your privacy and protecting any personal
+            Welcome to ShineUp's Privacy Policy. This document explains how we collect, use, and protect your personal
+            information
+            when you use our talent competition platform. We are committed to ensuring your privacy and protecting any
+            personal
             information that you share with us.
         </p>
     </div>
@@ -151,19 +153,22 @@
         <div class="accordion" id="rightsAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne">
                         Access and Update
                     </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#rightsAccordion">
                     <div class="accordion-body text-muted">
-                        You have the right to access and update your personal information at any time through your account settings.
+                        You have the right to access and update your personal information at any time through your
+                        account settings.
                     </div>
                 </div>
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo">
                         Data Deletion
                     </button>
                 </h2>
@@ -229,7 +234,7 @@
                         observer.unobserve(entry.target);
                     }
                 });
-            }, { threshold: 0.1 });
+            }, {threshold: 0.1});
 
             timelineItems.forEach(item => observer.observe(item));
         });

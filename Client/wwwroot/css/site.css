@@ -1,24 +1,24 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 /* ========== ShineUp THEME VARIABLES ========== */
@@ -71,11 +71,11 @@ body {
     border: none;
 }
 
-    .btn-cta:hover {
-        background: var(--secondary-color);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    }
+.btn-cta:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
 
 .btn-outline-cta {
     background: transparent;
@@ -86,10 +86,10 @@ body {
     transition: all 0.3s;
 }
 
-    .btn-outline-cta:hover {
-        background: var(--primary-color);
-        color: white;
-    }
+.btn-outline-cta:hover {
+    background: var(--primary-color);
+    color: white;
+}
 
 /* ========== Utilities ========== */
 .text-gradient {

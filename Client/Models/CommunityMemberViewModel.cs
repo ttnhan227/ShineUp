@@ -1,3 +1,6 @@
+using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
+
 namespace Client.Models;
 
 public class CommunityMemberViewModel
@@ -11,14 +14,14 @@ public class CommunityMemberViewModel
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastActiveAt { get; set; }
 
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
+    [System.Text.Json.Serialization.JsonConverter(typeof(JsonStringEnumConverter))]
     public CommunityRole Role { get; set; } = CommunityRole.Member;
 }
 
 public enum CommunityRole
 {
-    None,      // Not a member
-    Member,    // Regular member
-    Moderator  // Community moderator
+    None, // Not a member
+    Member, // Regular member
+    Moderator // Community moderator
 }

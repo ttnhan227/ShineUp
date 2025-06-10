@@ -1,7 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
 
 namespace Server.DTOs;
 
@@ -16,10 +13,10 @@ public class CreatePostDto
     public string Content { get; set; }
 
     public int? CategoryID { get; set; }
-    public int? CommunityID { get; set; } 
+    public int? CommunityID { get; set; }
     public int? PrivacyID { get; set; }
 
-    public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();
+    public List<MediaFileDTO> MediaFiles { get; set; } = new();
 }
 
 // DTO for updating an existing post
@@ -34,7 +31,7 @@ public class UpdatePostDto
 
     public int? PrivacyID { get; set; }
 
-    public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();
+    public List<MediaFileDTO> MediaFiles { get; set; } = new();
 }
 
 // DTO for returning post data
@@ -49,7 +46,7 @@ public class PostResponseDto
     // User info
     public int UserID { get; set; }
     public string Username { get; set; }
-    
+
     public string FullName { get; set; }
 
     // Category info
@@ -65,7 +62,7 @@ public class PostResponseDto
     public int CommentsCount { get; set; }
     public bool HasLiked { get; set; }
 
-    public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();
+    public List<MediaFileDTO> MediaFiles { get; set; } = new();
 }
 
 // DTO for returning a list of posts
@@ -75,7 +72,7 @@ public class PostListResponseDto
     public string Title { get; set; }
     public string Content { get; set; }
     public DateTime CreatedAt { get; set; }
-    
+
     // User info
     public int UserID { get; set; }
     public string UserName { get; set; }
@@ -89,7 +86,7 @@ public class PostListResponseDto
     public int LikesCount { get; set; }
     public int CommentsCount { get; set; }
 
-    public List<MediaFileDTO> MediaFiles { get; set; } = new List<MediaFileDTO>();
+    public List<MediaFileDTO> MediaFiles { get; set; } = new();
 }
 
 public class MediaFileDTO

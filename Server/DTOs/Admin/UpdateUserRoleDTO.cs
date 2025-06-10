@@ -6,4 +6,4 @@ public class UpdateUserRoleDTO
 {
     [Required]
     public int RoleID { get; set; }
-} 
+}

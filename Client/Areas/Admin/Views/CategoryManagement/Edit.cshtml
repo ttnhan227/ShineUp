@@ -12,27 +12,27 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
-                        <input type="hidden" asp-for="CategoryID" />
+                        <input type="hidden" asp-for="CategoryID"/>
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        
+
                         <div class="mb-3">
                             <label asp-for="CategoryName" class="form-label">Category Name *</label>
-                            <input asp-for="CategoryName" class="form-control" />
+                            <input asp-for="CategoryName" class="form-control"/>
                             <span asp-validation-for="CategoryName" class="text-danger"></span>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label asp-for="Description" class="form-label">Description</label>
                             <textarea asp-for="Description" class="form-control" rows="4"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
-                        
+
                         <div class="button-group mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-save'></i> Save Changes
+                                <i class="bx bx-save"></i> Save Changes
                             </button>
                             <a asp-action="Index" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to List
+                                <i class="bx bx-arrow-back"></i> Back to List
                             </a>
                         </div>
                     </form>
@@ -43,10 +43,10 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
-    
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet"/>
+
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
 
 }

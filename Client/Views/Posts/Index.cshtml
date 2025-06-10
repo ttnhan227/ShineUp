@@ -1,4 +1,5 @@
-@model IEnumerable<Client.Models.PostViewModel>
+@using System.Security.Claims
+@model IEnumerable<PostViewModel>
 
 @{
     ViewData["Title"] = "Talent Showcase";
@@ -15,16 +16,19 @@
                         <h5 class="mb-0 fw-semibold">Create a Post</h5>
                     </div>
                     <div class="card-body">
-                        <form id="createPostForm" asp-action="CreatePost" asp-controller="Posts" method="post" enctype="multipart/form-data">
+                        <form id="createPostForm" asp-action="CreatePost" asp-controller="Posts" method="post"
+                              enctype="multipart/form-data">
                             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                             <div class="mb-3">
-                                <input type="text" id="titleInput" name="Title" class="form-control rounded-3" placeholder="Performance Title" required />
+                                <input type="text" id="titleInput" name="Title" class="form-control rounded-3"
+                                       placeholder="Performance Title" required/>
                                 <span validation-for="Title" class="text-danger"></span>
                             </div>
 
                             <div class="mb-3">
-                                <textarea id="contentInput" name="Content" class="form-control rounded-3" rows="4" placeholder="Share your talent story..."></textarea>
+                                <textarea id="contentInput" name="Content" class="form-control rounded-3" rows="4"
+                                          placeholder="Share your talent story..."></textarea>
                                 <span validation-for="Content" class="text-danger"></span>
                             </div>
 
@@ -32,22 +36,30 @@
 
                             <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
                                 <div class="d-flex flex-wrap gap-2 flex-grow-1">
-                                    <label for="imagesInput" class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Add photos">
+                                    <label for="imagesInput"
+                                           class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1"
+                                           data-bs-toggle="tooltip" title="Add photos">
                                         <i class='bx bx-image'></i> Photos
-                                        <input type="file" id="imagesInput" name="ImageFiles" class="d-none" multiple accept="image/*" />
+                                        <input type="file" id="imagesInput" name="ImageFiles" class="d-none" multiple
+                                               accept="image/*"/>
                                     </label>
-                                    <label for="videosInput" class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Add videos">
+                                    <label for="videosInput"
+                                           class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1"
+                                           data-bs-toggle="tooltip" title="Add videos">
                                         <i class='bx bx-video'></i> Videos
-                                        <input type="file" id="videosInput" name="VideoFiles" class="d-none" multiple accept="video/*" />
+                                        <input type="file" id="videosInput" name="VideoFiles" class="d-none" multiple
+                                               accept="video/*"/>
                                     </label>
-                                    <select class="form-select form-select-sm rounded-3" id="categorySelect" name="CategoryID">
+                                    <select class="form-select form-select-sm rounded-3" id="categorySelect"
+                                            name="CategoryID">
                                         <option value="">Select Category</option>
                                         @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                                         {
                                             <option value="@category.Value">@category.Text</option>
                                         }
                                     </select>
-                                    <select class="form-select form-select-sm rounded-3" id="privacySelect" name="PrivacyID">
+                                    <select class="form-select form-select-sm rounded-3" id="privacySelect"
+                                            name="PrivacyID">
                                         @foreach (var privacy in ViewBag.PrivacyOptions ?? new List<SelectListItem>())
                                         {
                                             <option value="@privacy.Value">@privacy.Text</option>
@@ -55,7 +67,8 @@
                                     </select>
                                     @if (ViewBag.UserCommunities != null && ((IEnumerable<SelectListItem>)ViewBag.UserCommunities).Any())
                                     {
-                                        <select class="form-select form-select-sm rounded-3 flex-grow-1" id="communitySelect" name="CommunityID">
+                                        <select class="form-select form-select-sm rounded-3 flex-grow-1"
+                                                id="communitySelect" name="CommunityID">
                                             <option value="">Tag a Community (Optional)</option>
                                             @foreach (var item in ViewBag.UserCommunities as IEnumerable<SelectListItem>)
                                             {
@@ -82,7 +95,9 @@
                 {
                     <div class="post-card mb-4">
                         <div class="post-header">
-                            <a asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@item.Username" class="text-decoration-none d-flex align-items-center">
+                            <a asp-controller="UserProfile" asp-action="PublicProfile"
+                               asp-route-username="@item.Username"
+                               class="text-decoration-none d-flex align-items-center">
                                 <div class="post-avatar">
                                     @if (!string.IsNullOrEmpty(item.ProfileImageURL))
                                     {
@@ -90,7 +105,8 @@
                                     }
                                     else
                                     {
-                                        <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                        <div
+                                            class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
                                             <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
                                         </div>
                                     }
@@ -111,7 +127,8 @@
                                 </div>
                             </a>
                         </div>
-                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID" class="text-decoration-none">
+                        <a asp-action="Details" asp-controller="Posts" asp-route-id="@item.PostID"
+                           class="text-decoration-none">
                             <div class="post-content">
                                 <h5 class="post-title">@item.Title</h5>
                                 <p class="post-text">@item.Content</p>
@@ -125,7 +142,8 @@
                                             <div class="media-item">
                                                 @if (media.Type == "image")
                                                 {
-                                                    <img src="@media.Url" alt="@item.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                    <img src="@media.Url" alt="@item.Title" class="clickable-image"
+                                                         data-fullsize="@media.Url">
                                                 }
                                                 else if (media.Type == "video")
                                                 {
@@ -143,7 +161,8 @@
                                                     <div class="media-item">
                                                         @if (media.Type == "image")
                                                         {
-                                                            <img src="@media.Url" alt="@item.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                            <img src="@media.Url" alt="@item.Title"
+                                                                 class="clickable-image" data-fullsize="@media.Url">
                                                         }
                                                         else if (media.Type == "video")
                                                         {
@@ -166,9 +185,10 @@
                             </div>
                         </a>
                         <div class="post-actions">
-                            <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline toggle-like-form" data-post-id="@item.PostID">
+                            <form asp-controller="Social" asp-action="ToggleLike" method="post"
+                                  class="d-inline toggle-like-form" data-post-id="@item.PostID">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="PostID" value="@item.PostID" />
+                                <input type="hidden" name="PostID" value="@item.PostID"/>
                                 <button type="submit" class="post-action">
                                     <i class='@(item.HasLiked ? "bx bxs-heart text-danger" : "bx bx-heart")'></i>
                                     <span>@item.LikesCount</span>
@@ -200,7 +220,7 @@
                             {
                                 <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4 add-comment-form" data-post-id="@item.PostID">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="PostID" value="@item.PostID" />
+                                    <input type="hidden" name="PostID" value="@item.PostID"/>
                                     <div class="input-group">
                                         <input type="text" name="Content" class="form-control" placeholder="Write a comment..." required>
                                         <button type="submit" class="btn btn-primary">Post</button>
@@ -209,7 +229,41 @@
                             }
 
                             <div id="comments-list-@item.PostID">
-                                <!-- Comments will be loaded via AJAX -->
+                                @if (item.Comments != null && item.Comments.Count > 0)
+                                {
+                                    foreach (var comment in item.Comments)
+                                    {
+                                        <div class="comment-item mb-3 d-flex">
+                                            <div class="flex-shrink-0 me-2">
+                                                <img src="@(string.IsNullOrEmpty(comment.ProfileImageURL) ? "/images/default-avatar.png" : comment.ProfileImageURL)" class="rounded-circle" width="40" height="40" alt="@comment.Username" />
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="comment-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>@comment.Username</strong>
+                                                        <small class="text-muted ms-2">@comment.TimeAgo</small>
+                                                    </div>
+                                                    @if (User.Identity.IsAuthenticated && User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == comment.UserID.ToString())
+                                                    {
+                                                        <form asp-controller="Social" asp-action="DeleteComment" method="post" class="delete-comment-form d-inline" data-comment-id="@comment.CommentID" data-post-id="@item.PostID">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="commentId" value="@comment.CommentID" />
+                                                            <input type="hidden" name="postId" value="@item.PostID" />
+                                                            <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                                <i class='bx bx-trash'></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                                <div class="comment-content">@comment.Content</div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No comments yet. Be the first to comment!</p>
+                                }
                             </div>
                         </div>
                     </div>
@@ -227,12 +281,13 @@
                 <div class="category-card">
                     <div class="category-header">
                         <h5 class="mb-0">
-                            <i class='bx bx-category me-2'></i> Talent Categories
+                            <i class="bx bx-category me-2"></i> Talent Categories
                         </h5>
                     </div>
                     <div class="category-list">
-                        <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
-                            <i class='bx bx-grid-alt'></i> All Performances
+                        <a href="@Url.Action("Index", "Posts")"
+                           class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
+                            <i class="bx bx-grid-alt"></i> All Performances
                         </a>
                         @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                         {
@@ -248,7 +303,7 @@
             <div class="trending-card">
                 <div class="trending-header">
                     <h5 class="mb-0">
-                        <i class='bx bx-trending-up me-2'></i> Trending Talents
+                        <i class="bx bx-trending-up me-2"></i> Trending Talents
                     </h5>
                 </div>
                 <div class="trending-list">
@@ -271,6 +326,7 @@
 </div>
 
 @functions {
+
     private string GetGridClass(int mediaCount)
     {
         return (mediaCount > 4 ? 4 : mediaCount) switch
@@ -281,6 +337,7 @@
             _ => "grid-4"
         };
     }
+
 }
 
 @section Scripts {
@@ -330,7 +387,8 @@
                         try {
                             var response = JSON.parse(xhr.responseText);
                             errorMessage = response.title || response.detail || errorMessage;
-                        } catch (e) {}
+                        } catch (e) {
+                        }
                         alert('Error: ' + errorMessage);
                     },
                     complete: function () {
@@ -343,7 +401,7 @@
             function updateMediaPreview(files, inputName) {
                 var $preview = $('#mediaPreview');
                 $preview.empty();
-                
+
                 if (files.length > 4) {
                     alert('You can only upload up to 4 files at once.');
                     $(`input[name="${inputName}"]`)[0].value = '';
@@ -372,16 +430,16 @@
                 });
             }
 
-            $('#imagesInput').on('change', function() {
+            $('#imagesInput').on('change', function () {
                 updateMediaPreview(this.files, 'ImageFiles');
             });
 
-            $('#videosInput').on('change', function() {
+            $('#videosInput').on('change', function () {
                 updateMediaPreview(this.files, 'VideoFiles');
             });
 
             // Handle media removal
-            $(document).on('click', '.btn-close', function() {
+            $(document).on('click', '.btn-close', function () {
                 var fileName = $(this).data('file-name');
                 var inputName = $(this).data('input-name');
                 $(this).closest('.col-6').remove();
@@ -422,58 +480,14 @@
                 });
             });
 
-            // Toggle comments section
+            // Toggle comments section (no AJAX, just show/hide)
             $('.toggle-comments').on('click', function () {
                 var postId = $(this).data('post-id');
                 var $container = $('#comments-container-' + postId);
                 var $icon = $(this).find('i');
                 var isHidden = $container.is(':hidden');
-
                 $container.toggle();
                 $icon.toggleClass('bx-comment bxs-comment');
-
-                if (isHidden) {
-                    $.ajax({
-                        url: '@Url.Action("GetComments", "Social")',
-                        type: 'GET',
-                        data: { postId: postId },
-                        success: function (comments) {
-                            var $commentsList = $('#comments-list-' + postId);
-                            $commentsList.empty();
-                            if (comments.length > 0) {
-                                comments.forEach(function (comment) {
-                                    var commentHtml = `
-                                        <div class="comment-item mb-3 d-flex">
-                                            <div class="flex-shrink-0 me-2">
-                                                <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="comment-header d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <strong>${comment.username}</strong>
-                                                        <small class="text-muted ms-2">${comment.timeAgo}</small>
-                                                    </div>
-                                                    ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
-                                                        <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
-                                                            <input type="hidden" name="commentId" value="${comment.commentID}" />
-                                                            <input type="hidden" name="postId" value="${postId}" />
-                                                            <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
-                                                                <i class='bx bx-trash'></i>
-                                                            </button>
-                                                        </form>
-                                                    ` : ''}
-                                                </div>
-                                                <div class="comment-content">${comment.content}</div>
-                                            </div>
-                                        </div>`;
-                                    $commentsList.append(commentHtml);
-                                });
-                            } else {
-                                $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
-                            }
-                        }
-                    });
-                }
             });
 
             // Close comments section
@@ -505,7 +519,7 @@
                         $.ajax({
                             url: '@Url.Action("GetComments", "Social")',
                             type: 'GET',
-                            data: { postId: postId },
+                            data: {postId: postId},
                             success: function (comments) {
                                 $commentsList.empty();
                                 if (comments.length > 0) {
@@ -521,7 +535,7 @@
                                                             <strong>${comment.username}</strong>
                                                             <small class="text-muted ms-2">${comment.timeAgo}</small>
                                                         </div>
-                                                        ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
+                                                        ${comment.userID == '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value' ? `
                                                             <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
                                                                 <input type="hidden" name="commentId" value="${comment.commentID}" />
                                                                 <input type="hidden" name="postId" value="${postId}" />
@@ -566,7 +580,7 @@
                         $.ajax({
                             url: '@Url.Action("GetComments", "Social")',
                             type: 'GET',
-                            data: { postId: postId },
+                            data: {postId: postId},
                             success: function (comments) {
                                 $commentsList.empty();
                                 if (comments.length > 0) {
@@ -582,7 +596,7 @@
                                                             <strong>${comment.username}</strong>
                                                             <small class="text-muted ms-2">${comment.timeAgo}</small>
                                                         </div>
-                                                        ${comment.userID == '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value' ? `
+                                                        ${comment.userID == '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value' ? `
                                                             <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
                                                                 <input type="hidden" name="commentId" value="${comment.commentID}" />
                                                                 <input type="hidden" name="postId" value="${postId}" />

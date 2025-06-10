@@ -1,6 +1,5 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
 using Server.Interfaces;
 
 namespace Server.Services;

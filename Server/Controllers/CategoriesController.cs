@@ -32,4 +32,4 @@ public class CategoriesController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
-} 
+}

@@ -1,15 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
-using System.Security.Claims;
-using Microsoft.Extensions.Logging;
 using Server.Models;
-using Server.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security.Claims;
 
 namespace Server.Controllers;
 
@@ -19,17 +14,17 @@ namespace Server.Controllers;
 // Removed [Produces("application/json")] from controller level to allow multipart/form-data
 public class UserProfileController : ControllerBase
 {
-    private readonly IUserProfileRepository _userProfileRepository;
     private readonly ICloudinaryService _cloudinaryService; // Injected Cloudinary Service
-    private readonly ILogger<UserProfileController> _logger;
-    private readonly IPostRepository _postRepository; // Injected Post Repository
-    private readonly INotificationRepository _notificationRepository; // Injected Notification Repository
     private readonly DatabaseContext _context; // Database context for direct access
+    private readonly ILogger<UserProfileController> _logger;
+    private readonly INotificationRepository _notificationRepository; // Injected Notification Repository
+    private readonly IPostRepository _postRepository; // Injected Post Repository
+    private readonly IUserProfileRepository _userProfileRepository;
 
     public UserProfileController(
-        IUserProfileRepository userProfileRepository, 
-        ICloudinaryService cloudinaryService, 
-        ILogger<UserProfileController> logger, 
+        IUserProfileRepository userProfileRepository,
+        ICloudinaryService cloudinaryService,
+        ILogger<UserProfileController> logger,
         IPostRepository postRepository,
         INotificationRepository notificationRepository,
         DatabaseContext context)
@@ -54,7 +49,7 @@ public class UserProfileController : ControllerBase
             // First, get the current username from the token
             var currentUsername = User.FindFirst(ClaimTypes.Name)?.Value;
             var isCurrentUser = false;
-            
+
             // Get the requested user's profile
             var userDto = await _userProfileRepository.GetUserProfileByUsername(username);
             if (userDto == null)
@@ -63,17 +58,17 @@ public class UserProfileController : ControllerBase
             }
 
             // Check if the current user is viewing their own profile
-            if (!string.IsNullOrEmpty(currentUsername) && 
+            if (!string.IsNullOrEmpty(currentUsername) &&
                 string.Equals(currentUsername, userDto.Username, StringComparison.OrdinalIgnoreCase))
             {
                 isCurrentUser = true;
             }
-            
+
             _logger.LogInformation($"Is Current User: {isCurrentUser}, Profile Privacy: {userDto.ProfilePrivacy}");
 
             // Set IsPrivate flag based on privacy setting and ownership
             userDto.IsPrivate = userDto.ProfilePrivacy == ProfilePrivacy.Private && !isCurrentUser;
-            
+
             // If profile is private and user is not the owner, return limited information
             if (userDto.IsPrivate && !isCurrentUser)
             {
@@ -98,7 +93,7 @@ public class UserProfileController : ControllerBase
                 {
                     result.Add("Email", userDto.Email);
                 }
-                
+
                 if (userDto.Bio != null)
                 {
                     result.Add("Bio", userDto.Bio);
@@ -112,7 +107,7 @@ public class UserProfileController : ControllerBase
             {
                 userDto.ProfileImageURL = EnsureFullImageUrl(userDto.ProfileImageURL);
             }
-            
+
             return Ok(userDto);
         }
         catch (Exception ex)
@@ -137,7 +132,7 @@ public class UserProfileController : ControllerBase
 
             if (!int.TryParse(userIdClaim.Value, out var currentUserId))
             {
-                 return Unauthorized("Invalid token: User ID claim is not a valid integer.");
+                return Unauthorized("Invalid token: User ID claim is not a valid integer.");
             }
 
             // Handle profile image upload if a file is provided
@@ -149,6 +144,7 @@ public class UserProfileController : ControllerBase
                     _logger.LogError($"Cloudinary profile image upload error: {uploadResult.Error.Message}");
                     return BadRequest(new { message = "Profile image upload failed: " + uploadResult.Error.Message });
                 }
+
                 updateProfile.ProfileImageUrl = EnsureFullImageUrl(uploadResult.SecureUrl.ToString());
             }
 
@@ -161,6 +157,7 @@ public class UserProfileController : ControllerBase
                     _logger.LogError($"Cloudinary cover photo upload error: {uploadResult.Error.Message}");
                     return BadRequest(new { message = "Cover photo upload failed: " + uploadResult.Error.Message });
                 }
+
                 updateProfile.CoverPhotoUrl = EnsureFullImageUrl(uploadResult.SecureUrl.ToString());
             }
 
@@ -171,7 +168,7 @@ public class UserProfileController : ControllerBase
                 return NotFound(new { message = "User not found" });
             }
 
-            var userModel = new Server.Models.User
+            var userModel = new User
             {
                 UserID = currentUserId, // Use ID from token
                 Username = updateProfile.Username,
@@ -225,7 +222,8 @@ public class UserProfileController : ControllerBase
                 Verified = updatedUser.Verified,
                 LastLoginTime = updatedUser.LastLoginTime,
                 ProfilePrivacy = updatedUser.ProfilePrivacy,
-                ProfileCompletionPercentage = existingUserDto.ProfileCompletionPercentage, // Will be recalculated in GetUserProfile
+                ProfileCompletionPercentage =
+                    existingUserDto.ProfileCompletionPercentage, // Will be recalculated in GetUserProfile
                 IsGoogleAccount = existingUserDto.IsGoogleAccount,
                 // Social Media Links
                 InstagramUrl = updatedUser.InstagramUrl,
@@ -264,7 +262,7 @@ public class UserProfileController : ControllerBase
 
             // Get user info before changing password for the notification
             var user = await _context.Users.FindAsync(currentUserId);
-            
+
             var success = await _userProfileRepository.ChangePassword(
                 currentUserId,
                 changePasswordDto.CurrentPassword,
@@ -279,7 +277,8 @@ public class UserProfileController : ControllerBase
                     var notificationDto = new CreateNotificationDTO
                     {
                         UserID = currentUserId,
-                        Message = "Your password was recently changed. If you didn't make this change, please secure your account.",
+                        Message =
+                            "Your password was recently changed. If you didn't make this change, please secure your account.",
                         Type = NotificationType.Security,
                         RelatedEntityType = "Account"
                     };
@@ -294,11 +293,9 @@ public class UserProfileController : ControllerBase
 
                 return Ok(new { message = "Password changed successfully." });
             }
-            else
-            {
-                // This could be due to incorrect current password or user not found (though user not found should be caught by Unauthorized above)
-                return BadRequest(new { message = "Failed to change password. Please check your current password." });
-            }
+
+            // This could be due to incorrect current password or user not found (though user not found should be caught by Unauthorized above)
+            return BadRequest(new { message = "Failed to change password. Please check your current password." });
         }
         catch (Exception ex)
         {
@@ -354,14 +351,17 @@ public class UserProfileController : ControllerBase
             return StatusCode(500, new { message = "Internal server error" });
         }
     }
+
     // In Server/Controllers/UserProfileController.cs
     private string EnsureFullImageUrl(string imageUrl)
     {
         if (string.IsNullOrEmpty(imageUrl))
+        {
             return imageUrl;
+        }
 
         // If it's already a full URL, return as is
-        if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+        if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
             imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
             return imageUrl;
@@ -375,7 +375,7 @@ public class UserProfileController : ControllerBase
 
         // For relative URLs, you might want to prepend your site's base URL
         // return $"{Request.Scheme}://{Request.Host}{imageUrl.TrimStart('~')}";
-    
+
         return imageUrl; // Fallback
     }
 }

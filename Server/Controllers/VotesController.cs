@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
 using System.Security.Claims;
@@ -15,19 +14,15 @@ namespace Server.Controllers;
 public class VotesController : ControllerBase
 {
     private readonly DatabaseContext _context;
-    private readonly IVoteRepositories _repository;
     private readonly ILogger<VotesController> _logger;
+    private readonly IVoteRepositories _repository;
 
-    public VotesController(IVoteRepositories repository, DatabaseContext context, ILogger<VotesController> logger = null)
+    public VotesController(IVoteRepositories repository, DatabaseContext context,
+        ILogger<VotesController> logger = null)
     {
         _repository = repository;
         _context = context;
         _logger = logger;
-    }
-
-    public class VoteRequest
-    {
-        public int EntryId { get; set; }
     }
 
     [HttpPost]
@@ -37,35 +32,35 @@ public class VotesController : ControllerBase
     public async Task<IActionResult> Vote([FromBody] VoteRequest request)
     {
         var logger = _logger ?? HttpContext.RequestServices.GetRequiredService<ILogger<VotesController>>();
-        
+
         try
         {
             logger.LogInformation("Vote request received for entry {EntryId}", request?.EntryId);
-            
+
             if (request == null || request.EntryId <= 0)
             {
                 logger.LogWarning("Invalid vote request");
                 return BadRequest(new { message = "Invalid request" });
             }
-            
+
             if (!User.Identity.IsAuthenticated)
             {
                 return Unauthorized(new { message = "Please sign in to vote" });
             }
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
             {
                 logger.LogWarning("Invalid user ID in token");
                 return Unauthorized(new { message = "Invalid user identity" });
             }
-            
+
             logger.LogInformation("Authenticated user ID: {UserId}", userId);
-            
+
             var entry = await _context.ContestEntries
                 .Include(e => e.Contest)
                 .FirstOrDefaultAsync(e => e.EntryID == request.EntryId);
-                
+
             if (entry == null)
             {
                 logger.LogWarning("Entry not found: {EntryId}", request.EntryId);
@@ -90,10 +85,10 @@ public class VotesController : ControllerBase
 
                 // Get updated vote count
                 var voteCount = await _context.Votes.CountAsync(v => v.EntryID == request.EntryId);
-                
-                return Ok(new 
-                { 
-                    message = "Vote removed successfully", 
+
+                return Ok(new
+                {
+                    message = "Vote removed successfully",
                     voteCount,
                     hasVoted = false
                 });
@@ -113,14 +108,14 @@ public class VotesController : ControllerBase
 
                 // Get updated vote count
                 var voteCount = await _context.Votes.CountAsync(v => v.EntryID == request.EntryId);
-                
-                return Ok(new 
-                { 
-                    message = "Vote recorded successfully", 
+
+                return Ok(new
+                {
+                    message = "Vote recorded successfully",
                     voteCount,
                     hasVoted = true
                 });
-            } 
+            }
         }
         catch (Exception ex)
         {
@@ -149,5 +144,10 @@ public class VotesController : ControllerBase
             .ToListAsync();
 
         return Ok(results);
+    }
+
+    public class VoteRequest
+    {
+        public int EntryId { get; set; }
     }
 }

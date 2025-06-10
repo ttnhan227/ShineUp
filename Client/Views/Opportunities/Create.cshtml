@@ -1,4 +1,4 @@
-@model Client.Models.CreateOpportunityViewModel
+@model CreateOpportunityViewModel
 @{
     ViewData["Title"] = "Post New Opportunity";
 }
@@ -16,7 +16,8 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="page-title">Post a New Opportunity</h1>
-                    <p class="page-subtitle text-muted mb-0">Fill in the details below to create your opportunity listing</p>
+                    <p class="page-subtitle text-muted mb-0">Fill in the details below to create your opportunity
+                        listing</p>
                 </div>
                 <a asp-action="Index" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Back to List
@@ -29,7 +30,7 @@
             <div class="col-lg-10">
                 <form asp-action="Create" method="post" class="needs-validation" novalidate>
                     @Html.AntiForgeryToken()
-                    
+
                     <div class="card shadow-sm border-0 mb-4">
                         <div class="card-header bg-light">
                             <h2 class="h5 mb-0">Opportunity Details</h2>
@@ -38,8 +39,9 @@
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <div class="form-group mb-3">
-                                        <label asp-for="Title" class="form-label">Title <span class="text-danger">*</span></label>
-                                        <input asp-for="Title" class="form-control form-control-lg" 
+                                        <label asp-for="Title" class="form-label">Title <span
+                                                class="text-danger">*</span></label>
+                                        <input asp-for="Title" class="form-control form-control-lg"
                                                placeholder="E.g., Guitarist needed for jazz band" required>
                                         <div class="invalid-feedback">
                                             Please provide a title for this opportunity.
@@ -70,12 +72,14 @@
                             </div>
 
                             <div class="form-group mb-4">
-                                <label asp-for="Description" class="form-label">Description <span class="text-danger">*</span></label>
-                                <textarea asp-for="Description" class="form-control" rows="8" 
-                                          placeholder="Provide detailed information about the opportunity, including responsibilities, requirements, and any other relevant details." 
+                                <label asp-for="Description" class="form-label">Description <span
+                                        class="text-danger">*</span></label>
+                                <textarea asp-for="Description" class="form-control" rows="8"
+                                          placeholder="Provide detailed information about the opportunity, including responsibilities, requirements, and any other relevant details."
                                           required></textarea>
                                 <div class="form-text">
-                                    Be clear and specific about what you're looking for. Include any requirements, expectations, and benefits.
+                                    Be clear and specific about what you're looking for. Include any requirements,
+                                    expectations, and benefits.
                                 </div>
                                 <div class="invalid-feedback">
                                     Please provide a detailed description.
@@ -86,7 +90,8 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label asp-for="CategoryId" class="form-label">Category <span class="text-danger">*</span></label>
+                                        <label asp-for="CategoryId" class="form-label">Category <span
+                                                class="text-danger">*</span></label>
                                         @if (ViewBag.Categories != null)
                                         {
                                             <select asp-for="CategoryId" class="form-select" required>
@@ -135,14 +140,17 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mb-4">
-                                        <input class="form-check-input" type="checkbox" id="isRemote" asp-for="IsRemote">
-                                        <label class="form-check-label" for="isRemote">This is a remote opportunity</label>
+                                        <input class="form-check-input" type="checkbox" id="isRemote"
+                                               asp-for="IsRemote">
+                                        <label class="form-check-label" for="isRemote">This is a remote
+                                            opportunity</label>
                                     </div>
                                     <div id="locationField" class="form-group">
                                         <label asp-for="Location" class="form-label">Location <span class="text-danger">*</span></label>
-                                        <input asp-for="Location" class="form-control" 
+                                        <input asp-for="Location" class="form-control"
                                                placeholder="E.g., New York, NY" required>
-                                        <div class="form-text">City and state/country where the opportunity is based</div>
+                                        <div class="form-text">City and state/country where the opportunity is based
+                                        </div>
                                         <div class="invalid-feedback">
                                             Please provide a location.
                                         </div>
@@ -151,9 +159,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label asp-for="ApplicationDeadline" class="form-label">Application Deadline</label>
-                                        <input asp-for="ApplicationDeadline" type="date" 
-                                               class="form-control" 
+                                        <label asp-for="ApplicationDeadline" class="form-label">Application
+                                            Deadline</label>
+                                        <input asp-for="ApplicationDeadline" type="date"
+                                               class="form-control"
                                                min="@DateTime.Today.ToString("yyyy-MM-dd")">
                                         <div class="form-text">Leave blank if there's no specific deadline</div>
                                         <span asp-validation-for="ApplicationDeadline" class="text-danger small"></span>
@@ -179,19 +188,19 @@
 </main>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/opportunities.css" />
+    <link rel="stylesheet" href="~/css/opportunities.css"/>
 }
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
     <script>
         // Show/hide location field based on remote checkbox
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const isRemoteCheckbox = document.getElementById('isRemote');
             const locationField = document.getElementById('locationField');
             const locationInput = document.querySelector('[name="Location"]');
-            
+
             function toggleLocationField() {
                 if (isRemoteCheckbox.checked) {
                     locationField.style.display = 'none';
@@ -202,20 +211,20 @@
                     locationInput.setAttribute('required', 'required');
                 }
             }
-            
+
             // Initial check
             toggleLocationField();
-            
+
             // Add event listener
             isRemoteCheckbox.addEventListener('change', toggleLocationField);
 
             // Form validation
             (function () {
                 'use strict'
-                
+
                 // Fetch all the forms we want to apply custom Bootstrap validation styles to
                 var forms = document.querySelectorAll('.needs-validation')
-                
+
                 // Loop over them and prevent submission
                 Array.prototype.slice.call(forms)
                     .forEach(function (form) {
@@ -224,7 +233,7 @@
                                 event.preventDefault()
                                 event.stopPropagation()
                             }
-                            
+
                             form.classList.add('was-validated')
                         }, false)
                     })

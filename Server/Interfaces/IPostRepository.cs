@@ -1,4 +1,3 @@
-using Server.DTOs;
 using Server.Models;
 
 namespace Server.Interfaces;
@@ -18,7 +17,7 @@ public interface IPostRepository
     Task<IEnumerable<Post>> GetPostsByCategoryAsync(int categoryId);
     Task<IEnumerable<Post>> GetRecentPostsAsync(int count);
     Task<bool> PostExistsAsync(int postId);
-    
+
     // Social features - Comments
     Task<Comment> AddCommentToPostAsync(Comment comment);
     Task<IEnumerable<Comment>> GetCommentsForPostAsync(int postId);
@@ -38,8 +37,7 @@ public interface IPostRepository
     Task<Image> AddImageAsync(Image image);
     Task<Video> AddVideoAsync(Video video);
     Task RemoveAllMediaFromPostAsync(int postId);
-    
+
     //Hoang Community features
     Task<List<Post>> GetPostsByCommunityIdAsync(int communityId);
-
 }

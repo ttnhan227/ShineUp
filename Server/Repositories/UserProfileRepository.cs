@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
-using BCrypt.Net; // Assuming BCrypt.Net is installed
+
+// Assuming BCrypt.Net is installed
 
 namespace Server.Repositories;
 
@@ -26,14 +26,18 @@ public class UserProfileRepository : IUserProfileRepository
             .AsTracking()
             .SingleOrDefaultAsync(x => x.UserID == userId);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         // Calculate profile completion percentage
         var completionPercentage = CalculateProfileCompletion(user);
 
         // A user is considered a Google account if they have a GoogleId or no password hash
         var isGoogleAccount = !string.IsNullOrEmpty(user.GoogleId) || string.IsNullOrEmpty(user.PasswordHash);
-        _logger.LogInformation($"User {user.UserID} - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
+        _logger.LogInformation(
+            $"User {user.UserID} - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
 
         return new UserDTO
         {
@@ -59,32 +63,6 @@ public class UserProfileRepository : IUserProfileRepository
         };
     }
 
-    private int CalculateProfileCompletion(User user)
-    {
-        // Define the fields that count towards profile completion
-        var completedFields = 0;
-        var totalFields = 10; // Total number of fields that count towards completion
-
-        // Check each field and increment completedFields if it's filled
-        if (!string.IsNullOrWhiteSpace(user.Username)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.FullName)) completedFields++;
-        // Email verification counts as one field
-        if (user.Verified) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.Bio)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.ProfileImageURL)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.TalentArea)) completedFields++;
-        // Social media links (count each one)
-        if (!string.IsNullOrWhiteSpace(user.InstagramUrl)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.YouTubeUrl)) completedFields++;
-        if (!string.IsNullOrWhiteSpace(user.TwitterUrl)) completedFields++;
-        // Cover photo
-        if (!string.IsNullOrWhiteSpace(user.CoverPhotoUrl)) completedFields++;
-
-        // Calculate percentage (ensure it doesn't exceed 100%)
-        var percentage = (int)((double)completedFields / totalFields * 100);
-        return Math.Min(percentage, 100); // Cap at 100%
-    }
-
     public async Task<UserDTO?> GetUserProfileByUsername(string username)
     {
         var user = await _context.Users
@@ -92,14 +70,18 @@ public class UserProfileRepository : IUserProfileRepository
             .AsTracking()
             .SingleOrDefaultAsync(x => x.Username == username);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         // Calculate profile completion percentage
         var completionPercentage = CalculateProfileCompletion(user);
 
         // A user is considered a Google account if they have a GoogleId or no password hash
         var isGoogleAccount = !string.IsNullOrEmpty(user.GoogleId) || string.IsNullOrEmpty(user.PasswordHash);
-        _logger.LogInformation($"User {user.UserID} (Username: {user.Username}) - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
+        _logger.LogInformation(
+            $"User {user.UserID} (Username: {user.Username}) - GoogleId: {user.GoogleId}, PasswordHash null/empty: {string.IsNullOrEmpty(user.PasswordHash)}, IsGoogleAccount: {isGoogleAccount}");
 
         return new UserDTO
         {
@@ -141,6 +123,7 @@ public class UserProfileRepository : IUserProfileRepository
         {
             existingUser.Username = userToUpdate.Username;
         }
+
         if (!string.IsNullOrEmpty(userToUpdate.FullName))
         {
             existingUser.FullName = userToUpdate.FullName;
@@ -195,7 +178,7 @@ public class UserProfileRepository : IUserProfileRepository
         {
             _context.Entry(existingUser).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            
+
             // Reload the user to ensure we have the latest data
             await _context.Entry(existingUser).ReloadAsync();
             return existingUser;
@@ -239,5 +222,70 @@ public class UserProfileRepository : IUserProfileRepository
             _logger.LogError($"Error changing password for user {userId}: {ex.Message}");
             return false;
         }
+    }
+
+    private int CalculateProfileCompletion(User user)
+    {
+        // Define the fields that count towards profile completion
+        var completedFields = 0;
+        var totalFields = 10; // Total number of fields that count towards completion
+
+        // Check each field and increment completedFields if it's filled
+        if (!string.IsNullOrWhiteSpace(user.Username))
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.FullName))
+        {
+            completedFields++;
+        }
+
+        // Email verification counts as one field
+        if (user.Verified)
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.Bio))
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.ProfileImageURL))
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.TalentArea))
+        {
+            completedFields++;
+        }
+
+        // Social media links (count each one)
+        if (!string.IsNullOrWhiteSpace(user.InstagramUrl))
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.YouTubeUrl))
+        {
+            completedFields++;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.TwitterUrl))
+        {
+            completedFields++;
+        }
+
+        // Cover photo
+        if (!string.IsNullOrWhiteSpace(user.CoverPhotoUrl))
+        {
+            completedFields++;
+        }
+
+        // Calculate percentage (ensure it doesn't exceed 100%)
+        var percentage = (int)((double)completedFields / totalFields * 100);
+        return Math.Min(percentage, 100); // Cap at 100%
     }
 }

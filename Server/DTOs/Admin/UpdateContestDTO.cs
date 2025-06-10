@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Server.DTOs.Admin;
@@ -21,5 +20,4 @@ public class AdminUpdateContestDTO
     [Required(ErrorMessage = "End date is required")]
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
-
 }

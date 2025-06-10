@@ -6,6 +6,5 @@ public class _CommunityListPartial : PageModel
 {
     public void OnGet()
     {
-        
     }
 }

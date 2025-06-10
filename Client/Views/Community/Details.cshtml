@@ -1,6 +1,7 @@
-@model Client.Models.CommunityDetailsViewModel
+@model CommunityDetailsViewModel
 
 @functions {
+
     private string GetGridClass(int mediaCount)
     {
         if (mediaCount == 2) return "grid-2";
@@ -8,15 +9,16 @@
         if (mediaCount >= 4) return "grid-4";
         return "";
     }
+
 }
 
 @{
     ViewData["Title"] = "Community Details";
-    int currentUserId = (int)ViewBag.CurrentUserId;
+    var currentUserId = (int)ViewBag.CurrentUserId;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/communities.css" />
+    <link rel="stylesheet" href="~/css/communities.css"/>
 }
 
 <div class="community-container">
@@ -50,10 +52,10 @@
                         <h2 class="h4 mb-0">@Model.Community.Name</h2>
                         @switch (Model.CommunityRole)
                         {
-                            case Client.Models.CommunityRole.Moderator:
+                            case CommunityRole.Moderator:
                                 <span class="badge bg-success">Moderator</span>
                                 break;
-                            case Client.Models.CommunityRole.Member:
+                            case CommunityRole.Member:
                                 <span class="badge bg-primary">Member</span>
                                 break;
                             default:
@@ -67,34 +69,39 @@
                     var imageUrl = Model.Community.CoverImageUrl.StartsWith("http")
                         ? Model.Community.CoverImageUrl
                         : $"{Context.Request.Scheme}://{Context.Request.Host}{Model.Community.CoverImageUrl}";
-                    <div class="community-cover-image" style="height: 200px; overflow: hidden; background-size: cover; background-position: center; background-image: url('@imageUrl')">
+                    <div class="community-cover-image"
+                         style="height: 200px; overflow: hidden; background-size: cover; background-position: center; background-image: url('@imageUrl')">
                     </div>
                 }
                 <div class="card-body">
                     <p class="card-text">@(string.IsNullOrEmpty(Model.Community.Description) ? "No description available." : Model.Community.Description)</p>
                     <div class="text-muted small">
-                        <div><i class="far fa-calendar-alt me-2"></i> Created Date: @Model.Community.CreatedAt.ToString("dd/MM/yyyy")</div>
+                        <div><i class="far fa-calendar-alt me-2"></i> Created
+                            Date: @Model.Community.CreatedAt.ToString("dd/MM/yyyy")</div>
                         @if (Model.Community.UpdatedAt.HasValue)
                         {
-                            <div><i class="far fa-edit me-2"></i> Last Updated: @Model.Community.UpdatedAt.Value.ToString("dd/MM/yyyy")</div>
+                            <div><i class="far fa-edit me-2"></i> Last
+                                Updated: @Model.Community.UpdatedAt.Value.ToString("dd/MM/yyyy")</div>
                         }
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
                     @switch (Model.CommunityRole)
                     {
-                        case Client.Models.CommunityRole.Moderator:
+                        case CommunityRole.Moderator:
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-success"><i class="fas fa-shield-alt me-2"></i>You are moderator of this community</span>
                                 <div>
-                                    <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID" class="btn btn-outline-primary btn-sm me-2">
+                                    <a asp-action="Edit" asp-route-communityId="@Model.Community.CommunityID"
+                                       class="btn btn-outline-primary btn-sm me-2">
                                         <i class="fas fa-edit me-1"></i> Edit
                                     </a>
                                 </div>
                             </div>
                             break;
-                        case Client.Models.CommunityRole.Member:
-                            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                        case CommunityRole.Member:
+                            <form method="post" asp-action="Leave" asp-route-communityId="@Model.Community.CommunityID"
+                                  class="d-inline">
                                 <button type="submit" class="btn btn-outline-danger"
                                         onclick="return confirm('Are you sure you want to leave this community?');">
                                     <i class="fas fa-sign-out-alt me-1"></i> Leave Community
@@ -102,7 +109,8 @@
                             </form>
                             break;
                         default:
-                            <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID" class="d-inline">
+                            <form method="post" asp-action="Join" asp-route-communityId="@Model.Community.CommunityID"
+                                  class="d-inline">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-user-plus me-1"></i> Join Community
                                 </button>
@@ -168,24 +176,28 @@
                             <p>No posts found in the model</p>
                         }
                     </div>
-                    
+
                     @if (Model.Posts.Any())
                     {
                         @foreach (var post in Model.Posts)
                         {
                             <div class="post-card mb-4 position-relative">
-                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none d-block text-dark">
+                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID"
+                                   class="text-decoration-none d-block text-dark">
                                     <div class="post-header">
                                         <div class="d-flex align-items-center">
-                                            <div class="post-avatar" onclick="event.stopPropagation(); window.location.href='@Url.Action("PublicProfile", "UserProfile", new { username = post.Username })'">
+                                            <div class="post-avatar"
+                                                 onclick="event.stopPropagation(); window.location.href='@Url.Action("PublicProfile", "UserProfile", new { username = post.Username })'">
                                                 @if (!string.IsNullOrEmpty(post.ProfileImageURL))
                                                 {
                                                     <img src="@post.ProfileImageURL" alt="@post.FullName">
                                                 }
                                                 else
                                                 {
-                                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
+                                                    <div
+                                                        class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                                        <i class='bx bx-user text-primary'
+                                                           style="font-size: 1.5rem;"></i>
                                                     </div>
                                                 }
                                             </div>
@@ -217,30 +229,34 @@
                                                     <div class="media-item">
                                                         @if (media.Type == "image")
                                                         {
-                                                            <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url" />
+                                                            <img src="@media.Url" alt="@post.Title"
+                                                                 class="clickable-image" data-fullsize="@media.Url"/>
                                                         }
                                                         else if (media.Type == "video")
                                                         {
                                                             <video controls preload="metadata">
-                                                                <source src="@media.Url" type="video/mp4" />
+                                                                <source src="@media.Url" type="video/mp4"/>
                                                             </video>
                                                         }
                                                     </div>
                                                 }
                                                 else
                                                 {
-                                                    <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
+                                                    <div
+                                                        class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
                                                         @foreach (var media in post.MediaFiles.Take(4))
                                                         {
                                                             <div class="media-item">
                                                                 @if (media.Type == "image")
                                                                 {
-                                                                    <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url" />
+                                                                    <img src="@media.Url" alt="@post.Title"
+                                                                         class="clickable-image"
+                                                                         data-fullsize="@media.Url"/>
                                                                 }
                                                                 else if (media.Type == "video")
                                                                 {
                                                                     <video controls preload="metadata">
-                                                                        <source src="@media.Url" type="video/mp4" />
+                                                                        <source src="@media.Url" type="video/mp4"/>
                                                                     </video>
                                                                 }
                                                                 @if (post.MediaFiles.Count > 4 && media == post.MediaFiles.Skip(3).First())
@@ -258,9 +274,10 @@
                                     </div>
                                 </a>
                                 <div class="post-actions">
-                                    <form asp-controller="Social" asp-action="ToggleLike" method="post" class="d-inline toggle-like-form" data-post-id="@post.PostID">
+                                    <form asp-controller="Social" asp-action="ToggleLike" method="post"
+                                          class="d-inline toggle-like-form" data-post-id="@post.PostID">
                                         @Html.AntiForgeryToken()
-                                        <input type="hidden" name="PostID" value="@post.PostID" />
+                                        <input type="hidden" name="PostID" value="@post.PostID"/>
                                         <button type="submit" class="post-action">
                                             <i class='@(post.HasLiked ? "bx bxs-heart text-danger" : "bx bx-heart")'></i>
                                             <span>@post.LikesCount</span>
@@ -289,7 +306,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
                             <p class="text-muted">No posts in this community yet.</p>
-                            @if (Model.CommunityRole != Client.Models.CommunityRole.None)
+                            @if (Model.CommunityRole != CommunityRole.None)
                             {
                                 <a asp-controller="Posts" asp-action="Index" class="btn btn-primary mt-2">
                                     <i class="fas fa-plus me-1"></i> Create First Post
@@ -305,14 +322,14 @@
 
 <!-- Debug toggle -->
 <script>
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         // Show debug info when pressing Ctrl+Shift+D
         if (e.ctrlKey && e.shiftKey && e.key === 'D') {
             const debugInfo = document.getElementById('debugInfo');
             if (debugInfo) {
                 debugInfo.classList.toggle('d-none');
                 console.log('Debug info toggled. Visible:', !debugInfo.classList.contains('d-none'));
-                
+
                 // Log model data to console
                 console.log('Community Details Model:', {
                     communityId: @Model.Community.CommunityID,
@@ -320,23 +337,23 @@
                     memberCount: @Model.Members.Count,
                     userRole: '@Model.CommunityRole'
                 });
-                
+
                 @if (Model.Posts.Any())
                 {
                     <text>
-                    console.log('First 3 posts:');
-                    @foreach (var post in Model.Posts.Take(3))
-                    {
-                        <text>console.log('  - Post ID: @post.PostID, Title: @post.Title');</text>
-                    }
+                        console.log('First 3 posts:');
+                        @foreach (var post in Model.Posts.Take(3))
+                        {
+                            <text>console.log('  - Post ID: @post.PostID, Title: @post.Title');</text>
+                        }
                     </text>
                 }
             }
         }
     });
-    
+
     // Log when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         console.log('Community Details page loaded');
         console.log('Press Ctrl+Shift+D to toggle debug information');
     });

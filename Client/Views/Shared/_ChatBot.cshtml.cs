@@ -6,6 +6,5 @@ public class _ChatBot : PageModel
 {
     public void OnGet()
     {
-        
     }
 }

@@ -10,14 +10,17 @@ public class Image
 
     [ForeignKey("Post")]
     public int? PostID { get; set; }
+
     public Post? Post { get; set; }
 
     [ForeignKey("User")]
     public int UserID { get; set; }
+
     public User User { get; set; }
 
     [ForeignKey("Category")]
     public int? CategoryID { get; set; } // Optional category
+
     public Category? Category { get; set; }
 
     [StringLength(100)]
@@ -33,7 +36,8 @@ public class Image
 
     [ForeignKey("Privacy")]
     public int? PrivacyID { get; set; }
+
     public Privacy? Privacy { get; set; }
 
     public DateTime UploadDate { get; set; } = DateTime.UtcNow;
-} 
+}

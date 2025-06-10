@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using Server.DTOs;
 
 namespace Server.DTOs.Admin;
 
@@ -19,13 +16,13 @@ public class AdminContestDTO
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime StartDate { get; set; }
-    
+
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
-    
+
     public bool IsClosed { get; set; }
-    
+
     // Navigation property with DTO
     public ICollection<ContestEntryDTO> ContestEntries { get; set; } = new List<ContestEntryDTO>();
 }

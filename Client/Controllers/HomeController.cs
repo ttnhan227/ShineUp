@@ -1,14 +1,13 @@
-﻿using System.Diagnostics;
+﻿using Client.Models;
 using Microsoft.AspNetCore.Mvc;
-using Client.Models;
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 
 namespace Client.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
     private readonly IConfiguration _config;
+    private readonly ILogger<HomeController> _logger;
 
     // Gộp lại thành 1 constructor duy nhất
     public HomeController(ILogger<HomeController> logger, IConfiguration config)
@@ -26,6 +25,7 @@ public class HomeController : Controller
     {
         return View();
     }
+
     public IActionResult About()
     {
         // Đọc key từ appsettings.secrets.json

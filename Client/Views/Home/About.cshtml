@@ -3,8 +3,8 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" href="~/css/about.css" />
+    <link rel="stylesheet" href="~/css/site.css"/>
+    <link rel="stylesheet" href="~/css/about.css"/>
 }
 
 <!-- Hero Section -->
@@ -19,7 +19,8 @@
     </div>
     <div class="custom-shape-divider">
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+            <path
+                d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
         </svg>
     </div>
 </section>
@@ -30,7 +31,8 @@
         <div class="row align-items-center">
             <div class="col-lg-6" data-aos="fade-right">
                 <h2 class="display-4 fw-bold text-gradient mb-4">Our Mission</h2>
-                <p class="lead mb-4">Empowering talented individuals across Vietnam to showcase their abilities and connect with a global audience through innovative digital competitions.</p>
+                <p class="lead mb-4">Empowering talented individuals across Vietnam to showcase their abilities and
+                    connect with a global audience through innovative digital competitions.</p>
                 <div class="d-flex gap-4 mb-5">
                     <div class="stat-card text-center">
                         <div class="counter-value" data-target="1000">0</div>
@@ -58,12 +60,13 @@
     <div class="container">
         <h2 class="text-center display-5 fw-bold mb-5" data-aos="fade-up">What Makes Us Special</h2>
         <div class="row g-4">
-            @foreach (var feature in new[] {
-                        new { Icon = "bi-camera-video", Title = "Video Submissions", Description = "Share your talent through high-quality video submissions" },
-                        new { Icon = "bi-trophy", Title = "Fair Competition", Description = "Transparent voting system ensures fair competition" },
-                        new { Icon = "bi-graph-up", Title = "Real-time Analytics", Description = "Track your performance with detailed analytics" },
-                        new { Icon = "bi-shield-check", Title = "Secure Platform", Description = "Advanced security measures to protect your content" }
-                        })
+            @foreach (var feature in new[]
+                          {
+                              new { Icon = "bi-camera-video", Title = "Video Submissions", Description = "Share your talent through high-quality video submissions" },
+                              new { Icon = "bi-trophy", Title = "Fair Competition", Description = "Transparent voting system ensures fair competition" },
+                              new { Icon = "bi-graph-up", Title = "Real-time Analytics", Description = "Track your performance with detailed analytics" },
+                              new { Icon = "bi-shield-check", Title = "Secure Platform", Description = "Advanced security measures to protect your content" }
+                          })
             {
                 <div class="col-md-6 col-lg-3" data-aos="fade-up">
                     <div class="feature-card p-4 h-100">
@@ -82,11 +85,12 @@
     <div class="container">
         <h2 class="text-center display-5 fw-bold mb-5" data-aos="fade-up">Meet Our Team</h2>
         <div class="row g-4">
-            @foreach (var member in new[] {
-                        new { Name = "John Doe", Role = "Lead Developer", Image = "/images/JohnDoe.png" },
-                        new { Name = "Jane Smith", Role = "UI/UX Designer", Image = "/images/JaneSmith.jpg" },
-                        new { Name = "Mike Johnson", Role = "Project Manager", Image = "/images/ProjectManager.jpg" }
-                        })
+            @foreach (var member in new[]
+                          {
+                              new { Name = "John Doe", Role = "Lead Developer", Image = "/images/JohnDoe.png" },
+                              new { Name = "Jane Smith", Role = "UI/UX Designer", Image = "/images/JaneSmith.jpg" },
+                              new { Name = "Mike Johnson", Role = "Project Manager", Image = "/images/ProjectManager.jpg" }
+                          })
             {
                 <div class="col-md-4" data-aos="fade-up">
                     <div class="team-card">
@@ -106,7 +110,8 @@
 <section class="py-5 bg-primary text-white position-relative">
     <div class="container text-center py-5">
         <h2 class="display-4 fw-bold mb-4" data-aos="fade-up">Ready to Shine?</h2>
-        <p class="lead mb-4" data-aos="fade-up" data-aos-delay="100">Join our community and showcase your talent to the world</p>
+        <p class="lead mb-4" data-aos="fade-up" data-aos-delay="100">Join our community and showcase your talent to the
+            world</p>
         <a href="/" class="btn btn-lg btn-light rounded-pill px-5 py-3" data-aos="fade-up" data-aos-delay="200">
             Go to Community
             <i class="bi bi-house ms-2"></i>
@@ -122,9 +127,9 @@
             <div class="col-lg-6 mb-4 mb-lg-0">
                 <h3 class="fw-bold mb-3">FPT Aptech Campus</h3>
                 <p class="text-muted">
-                    391A Nam Ky Khoi Nghia, Ward 14,<br />
-                    District 3, Ho Chi Minh City 700000, Vietnam<br />
-                    📞 (028) 7300 1955<br />
+                    391A Nam Ky Khoi Nghia, Ward 14,<br/>
+                    District 3, Ho Chi Minh City 700000, Vietnam<br/>
+                    📞 (028) 7300 1955<br/>
                     🌐 <a href="https://aptech.fpt.edu.vn/" target="_blank">aptech.fpt.edu.vn</a>
                 </p>
                 <p class="text-muted mb-0">
@@ -141,7 +146,7 @@
 <!-- Google Maps Logic (placed before script call to avoid async callback issues) -->
 <script>
     function initMap() {
-        const aptechLocation = { lat: 10.7907758, lng: 106.6818425 };
+        const aptechLocation = {lat: 10.7907758, lng: 106.6818425};
         const map = new google.maps.Map(document.getElementById("map"), {
             zoom: 16,
             center: aptechLocation,
@@ -204,12 +209,13 @@
         }
     }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=@ViewBag.GoogleMapsApiKey&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=@ViewBag.GoogleMapsApiKey&callback=initMap" async
+        defer></script>
 
 @section Scripts {
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 800, once: true, offset: 100 });
+        AOS.init({duration: 800, once: true, offset: 100});
 
         // Easing function
         const easeOutExpo = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t); //hiệu ứng số chạy mượt thay vì nhảy đều đều.

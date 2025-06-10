@@ -1,14 +1,14 @@
+using Server.Interfaces;
 using System.Net;
 using System.Net.Mail;
-using Server.Interfaces;
 
 namespace Server.Services;
 
 public class EmailService : IEmailService
 {
     private readonly string _fromEmail;
-    private readonly string _password;
     private readonly ILogger<EmailService> _logger;
+    private readonly string _password;
 
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {

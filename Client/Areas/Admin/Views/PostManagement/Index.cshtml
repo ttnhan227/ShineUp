@@ -10,7 +10,7 @@
             <div class="card">
                 <div class="card-body">
                     <h2 class="mb-4">Post Management</h2>
-                    
+
                     @if (TempData["SuccessMessage"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -22,66 +22,67 @@
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Title</th>
-                                    <th>Author</th>
-                                    <th>Category</th>
-                                    <th>Privacy</th>
-                                    <th>Community</th>
-                                    <th>Comments</th>
-                                    <th>Likes</th>
-                                    <th>Created</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Category</th>
+                                <th>Privacy</th>
+                                <th>Community</th>
+                                <th>Comments</th>
+                                <th>Likes</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @if (Model != null && Model.Any())
-                                {
-                                    foreach (var post in Model)
-                                    {
-                                        <tr>
-                                            <td>@post.PostID</td>
-                                            <td>@(post.Title.Length > 30 ? post.Title.Substring(0, 30) + "..." : post.Title)</td>
-                                            <td>@post.UserName</td>
-                                            <td>@(post.CategoryName ?? "-")</td>
-                                            <td>@(post.PrivacyName ?? "-")</td>
-                                            <td>@(post.CommunityName ?? "-")</td>
-                                            <td>@post.CommentCount</td>
-                                            <td>@post.LikeCount</td>
-                                            <td>@post.CreatedAt.ToString("dd MMM yyyy")</td>
-                                            <td>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" 
-                                                           id="isActive_@post.PostID"
-                                                           @(post.IsActive ? "checked" : "")
-                                                           onchange="updatePostStatus(@post.PostID, this.checked)">
-                                                    <label class="form-check-label" for="isActive_@post.PostID">
-                                                        @(post.IsActive ? "Active" : "Inactive")
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="button-group">
-                                                    <a asp-action="Details" asp-route-id="@post.PostID" class="btn btn-primary btn-sm">
-                                                        <i class='bx bx-detail'></i> Details
-                                                    </a>
-                                                    <button type="button" class="btn btn-danger btn-sm" 
-                                                            onclick="confirmDelete(@post.PostID, '@post.Title')">
-                                                        <i class='bx bx-trash'></i> Delete
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                                else
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var post in Model)
                                 {
                                     <tr>
-                                        <td colspan="11" class="text-center">No posts found</td>
+                                        <td>@post.PostID</td>
+                                        <td>@(post.Title.Length > 30 ? post.Title.Substring(0, 30) + "..." : post.Title)</td>
+                                        <td>@post.UserName</td>
+                                        <td>@(post.CategoryName ?? "-")</td>
+                                        <td>@(post.PrivacyName ?? "-")</td>
+                                        <td>@(post.CommunityName ?? "-")</td>
+                                        <td>@post.CommentCount</td>
+                                        <td>@post.LikeCount</td>
+                                        <td>@post.CreatedAt.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox"
+                                                       id="isActive_@post.PostID"
+                                                       @(post.IsActive ? "checked" : "")
+                                                       onchange="updatePostStatus(@post.PostID, this.checked)">
+                                                <label class="form-check-label" for="isActive_@post.PostID">
+                                                    @(post.IsActive ? "Active" : "Inactive")
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="button-group">
+                                                <a asp-action="Details" asp-route-id="@post.PostID"
+                                                   class="btn btn-primary btn-sm">
+                                                    <i class='bx bx-detail'></i> Details
+                                                </a>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                        onclick="confirmDelete(@post.PostID, '@post.Title')">
+                                                    <i class='bx bx-trash'></i> Delete
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="11" class="text-center">No posts found</td>
+                                </tr>
+                            }
                             </tbody>
                         </table>
                     </div>
@@ -114,9 +115,9 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
-    
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet"/>
+
     <script>
         function updatePostStatus(postId, isActive) {
             fetch(`/Admin/PostManagement/UpdateStatus/${postId}`, {
@@ -127,24 +128,24 @@
                 },
                 body: JSON.stringify(isActive)
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the post status.');
-                window.location.reload();
-            });
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the post status.');
+                    window.location.reload();
+                });
         }
 
         function confirmDelete(postId, postTitle) {
             document.getElementById('postTitle').textContent = postTitle;
             const form = document.getElementById('deleteForm');
             form.action = `/Admin/PostManagement/Delete/${postId}`;
-            
+
             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
             modal.show();
         }

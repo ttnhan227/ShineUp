@@ -11,12 +11,12 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class PostsController : ControllerBase
 {
-    private readonly IPostRepository _postRepository;
-    private readonly ILogger<PostsController> _logger;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly ILogger<PostsController> _logger;
+    private readonly IPostRepository _postRepository;
 
     public PostsController(
-        IPostRepository postRepository, 
+        IPostRepository postRepository,
         ILogger<PostsController> logger,
         ICloudinaryService cloudinaryService)
     {
@@ -113,7 +113,8 @@ public class PostsController : ControllerBase
                 PrivacyName = post.Privacy?.Name,
                 LikesCount = post.Likes?.Count ?? 0,
                 CommentsCount = post.Comments?.Count ?? 0,
-                HasLiked = currentUserId.HasValue && await _postRepository.HasUserLikedPostAsync(post.PostID, currentUserId.Value),
+                HasLiked = currentUserId.HasValue &&
+                           await _postRepository.HasUserLikedPostAsync(post.PostID, currentUserId.Value),
                 MediaFiles = post.Images.Select(i => new MediaFileDTO
                 {
                     Url = i.ImageURL?.Replace("http://", "https://"),
@@ -154,9 +155,11 @@ public class PostsController : ControllerBase
 
             var post = new Post
             {
-                Title = string.IsNullOrEmpty(createPostDto.Title) ? 
-                        (createPostDto.Content.Length > 50 ? createPostDto.Content.Substring(0, 50) + "..." : createPostDto.Content) :
-                        createPostDto.Title,
+                Title = string.IsNullOrEmpty(createPostDto.Title)
+                    ? createPostDto.Content.Length > 50
+                        ? createPostDto.Content.Substring(0, 50) + "..."
+                        : createPostDto.Content
+                    : createPostDto.Title,
                 Content = createPostDto.Content,
                 UserID = userId,
                 CategoryID = createPostDto.CategoryID,
@@ -169,11 +172,11 @@ public class PostsController : ControllerBase
 
             // Handle media files
             var formFiles = Request.Form.Files;
-            var mediaTypes = Request.Form.ContainsKey("MediaTypes") 
-                ? Request.Form["MediaTypes"].ToList() 
+            var mediaTypes = Request.Form.ContainsKey("MediaTypes")
+                ? Request.Form["MediaTypes"].ToList()
                 : new List<string>();
 
-            for (int i = 0; i < formFiles.Count; i++)
+            for (var i = 0; i < formFiles.Count; i++)
             {
                 var file = formFiles[i];
                 // Default to "image" if mediaTypes is empty or doesn't have enough items
@@ -277,13 +280,24 @@ public class PostsController : ControllerBase
 
             // Update basic post information
             if (!string.IsNullOrEmpty(updatePostDto.Title))
+            {
                 post.Title = updatePostDto.Title;
+            }
+
             if (!string.IsNullOrEmpty(updatePostDto.Content))
+            {
                 post.Content = updatePostDto.Content;
+            }
+
             if (updatePostDto.CategoryID.HasValue)
+            {
                 post.CategoryID = updatePostDto.CategoryID;
+            }
+
             if (updatePostDto.PrivacyID.HasValue)
+            {
                 post.PrivacyID = updatePostDto.PrivacyID;
+            }
 
             // Handle media files
             if (updatePostDto.MediaFiles != null && updatePostDto.MediaFiles.Any())
@@ -293,7 +307,6 @@ public class PostsController : ControllerBase
 
                 // Add new media files
                 foreach (var mediaFile in updatePostDto.MediaFiles)
-                {
                     if (mediaFile.Type == "image")
                     {
                         var image = new Image
@@ -320,7 +333,6 @@ public class PostsController : ControllerBase
                         };
                         await _postRepository.AddVideoAsync(video);
                     }
-                }
             }
 
             await _postRepository.UpdatePostAsync(post);
@@ -353,14 +365,8 @@ public class PostsController : ControllerBase
             }
 
             // Delete media files from Cloudinary
-            foreach (var image in post.Images)
-            {
-                await _cloudinaryService.DeleteMediaAsync(image.CloudPublicId);
-            }
-            foreach (var video in post.Videos)
-            {
-                await _cloudinaryService.DeleteMediaAsync(video.CloudPublicId);
-            }
+            foreach (var image in post.Images) await _cloudinaryService.DeleteMediaAsync(image.CloudPublicId);
+            foreach (var video in post.Videos) await _cloudinaryService.DeleteMediaAsync(video.CloudPublicId);
 
             await _postRepository.DeletePostAsync(post);
             return NoContent();
@@ -379,7 +385,7 @@ public class PostsController : ControllerBase
         try
         {
             var posts = await _postRepository.GetPostsByUserIdAsync(userId);
-            
+
             var postDtos = posts.Select(p => new PostListResponseDto
             {
                 PostID = p.PostID,
@@ -495,4 +501,4 @@ public class PostsController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
-} 
+}

@@ -8,8 +8,8 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class PrivacyController : ControllerBase
 {
-    private readonly IPrivacyRepository _privacyRepository;
     private readonly ILogger<PrivacyController> _logger;
+    private readonly IPrivacyRepository _privacyRepository;
 
     public PrivacyController(IPrivacyRepository privacyRepository, ILogger<PrivacyController> logger)
     {
@@ -32,4 +32,4 @@ public class PrivacyController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
-} 
+}

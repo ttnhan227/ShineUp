@@ -1,4 +1,5 @@
 // OpportunityRepository.cs
+
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
@@ -24,80 +25,12 @@ public class OpportunityRepository : IOpportunityRepository
             .Include(o => o.Applications)
             .FirstOrDefaultAsync(o => o.Id == id);
 
-        if (opportunity == null) return null;
+        if (opportunity == null)
+        {
+            return null;
+        }
 
         return MapToOpportunityDTO(opportunity);
-    }
-
-    private OpportunityDTO MapToOpportunityDTO(TalentOpportunity opportunity)
-    {
-        return new OpportunityDTO
-        {
-            Id = opportunity.Id,
-            Title = opportunity.Title,
-            Description = opportunity.Description,
-            Location = opportunity.Location,
-            IsRemote = opportunity.IsRemote,
-            Type = opportunity.Type,
-            Status = opportunity.Status,
-            ApplicationDeadline = opportunity.ApplicationDeadline,
-            CreatedAt = opportunity.CreatedAt,
-            UpdatedAt = opportunity.UpdatedAt,
-            PostedByUserId = opportunity.PostedByUserId,
-            PostedByUser = opportunity.PostedByUser != null ? new UserDTO
-            {
-                UserID = opportunity.PostedByUser.UserID,
-                Username = opportunity.PostedByUser.Username,
-                FullName = opportunity.PostedByUser.FullName,
-                Email = opportunity.PostedByUser.Email,
-                Bio = opportunity.PostedByUser.Bio,
-                ProfileImageURL = opportunity.PostedByUser.ProfileImageURL,
-                RoleID = opportunity.PostedByUser.RoleID,
-                TalentArea = opportunity.PostedByUser.TalentArea,
-                CreatedAt = opportunity.PostedByUser.CreatedAt,
-                IsActive = opportunity.PostedByUser.IsActive,
-                Verified = opportunity.PostedByUser.Verified,
-                LastLoginTime = opportunity.PostedByUser.LastLoginTime,
-                ProfilePrivacy = opportunity.PostedByUser.ProfilePrivacy
-            } : null,
-            CategoryId = opportunity.CategoryId,
-            Category = opportunity.Category != null ? new CategoryDTO 
-            { 
-                CategoryID = opportunity.Category.CategoryID,
-                CategoryName = opportunity.Category.CategoryName,
-                Description = opportunity.Category.Description 
-            } : null,
-            TalentArea = opportunity.TalentArea,
-            ApplicationCount = opportunity.Applications?.Count ?? 0
-        };
-    }
-
-    private OpportunityApplicationDTO MapToApplicationDTO(OpportunityApplication application)
-    {
-        if (application == null) return null;
-        
-        return new OpportunityApplicationDTO
-        {
-            ApplicationID = application.ApplicationID,
-            UserID = application.UserID,
-            User = application.User != null ? new UserDTO
-            {
-                UserID = application.User.UserID,
-                Username = application.User.Username,
-                FullName = application.User.FullName,
-                Email = application.User.Email,
-                ProfileImageURL = application.User.ProfileImageURL
-            } : null,
-            TalentOpportunityID = application.TalentOpportunityID,
-            TalentOpportunityTitle = application.TalentOpportunity?.Title ?? string.Empty,
-            TalentOpportunityDescription = application.TalentOpportunity?.Description ?? string.Empty,
-            CoverLetter = application.CoverLetter,
-            Status = application.Status,
-            AppliedAt = application.AppliedAt,
-            ReviewedAt = application.ReviewedAt,
-            ReviewNotes = application.ReviewNotes,
-            ApplicantId = application.UserID
-        };
     }
 
     public async Task<IEnumerable<OpportunityDTO>> GetAllOpportunitiesAsync()
@@ -132,9 +65,9 @@ public class OpportunityRepository : IOpportunityRepository
         }
 
         var opportunities = await _context.TalentOpportunities
-            .Where(o => o.TalentArea == talentArea && 
-                      o.Status != OpportunityStatus.Closed && 
-                      o.Status != OpportunityStatus.Cancelled)
+            .Where(o => o.TalentArea == talentArea &&
+                        o.Status != OpportunityStatus.Closed &&
+                        o.Status != OpportunityStatus.Cancelled)
             .Include(o => o.PostedByUser)
             .Include(o => o.Category)
             .Include(o => o.Applications)
@@ -143,13 +76,13 @@ public class OpportunityRepository : IOpportunityRepository
 
         return opportunities.Select(MapToOpportunityDTO);
     }
-    
+
     public async Task<IEnumerable<OpportunityDTO>> GetOpportunitiesByCategoryAsync(int categoryId)
     {
         var opportunities = await _context.TalentOpportunities
-            .Where(o => o.CategoryId == categoryId && 
-                      o.Status != OpportunityStatus.Closed && 
-                      o.Status != OpportunityStatus.Cancelled)
+            .Where(o => o.CategoryId == categoryId &&
+                        o.Status != OpportunityStatus.Closed &&
+                        o.Status != OpportunityStatus.Cancelled)
             .Include(o => o.PostedByUser)
             .Include(o => o.Category)
             .Include(o => o.Applications)
@@ -181,11 +114,11 @@ public class OpportunityRepository : IOpportunityRepository
             IsRemote = opportunityDto.IsRemote,
             Type = opportunityDto.Type,
             Status = OpportunityStatus.Open,
-            ApplicationDeadline = opportunityDto.ApplicationDeadline.HasValue ? 
-                opportunityDto.ApplicationDeadline.Value.Kind == DateTimeKind.Unspecified ?
-                    DateTime.SpecifyKind(opportunityDto.ApplicationDeadline.Value, DateTimeKind.Utc).ToUniversalTime() :
-                    opportunityDto.ApplicationDeadline.Value.ToUniversalTime() :
-                null,
+            ApplicationDeadline = opportunityDto.ApplicationDeadline.HasValue
+                ? opportunityDto.ApplicationDeadline.Value.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(opportunityDto.ApplicationDeadline.Value, DateTimeKind.Utc).ToUniversalTime()
+                    : opportunityDto.ApplicationDeadline.Value.ToUniversalTime()
+                : null,
             PostedByUserId = userId,
             CategoryId = opportunityDto.CategoryId,
             TalentArea = opportunityDto.TalentArea,
@@ -204,21 +137,41 @@ public class OpportunityRepository : IOpportunityRepository
             .FirstOrDefaultAsync(o => o.Id == id && o.PostedByUserId == userId);
 
         if (opportunity == null)
+        {
             return null;
+        }
 
         // Update only the fields that were provided
         if (opportunityDto.Title != null)
+        {
             opportunity.Title = opportunityDto.Title;
+        }
+
         if (opportunityDto.Description != null)
+        {
             opportunity.Description = opportunityDto.Description;
+        }
+
         if (opportunityDto.Location != null)
+        {
             opportunity.Location = opportunityDto.Location;
+        }
+
         if (opportunityDto.IsRemote.HasValue)
+        {
             opportunity.IsRemote = opportunityDto.IsRemote.Value;
+        }
+
         if (opportunityDto.Type.HasValue)
+        {
             opportunity.Type = opportunityDto.Type.Value;
+        }
+
         if (opportunityDto.Status.HasValue)
+        {
             opportunity.Status = opportunityDto.Status.Value;
+        }
+
         if (opportunityDto.ApplicationDeadline.HasValue)
         {
             // Ensure the DateTime is in UTC before saving to PostgreSQL
@@ -234,10 +187,16 @@ public class OpportunityRepository : IOpportunityRepository
                 opportunity.ApplicationDeadline = deadline.ToUniversalTime();
             }
         }
+
         if (opportunityDto.CategoryId.HasValue)
+        {
             opportunity.CategoryId = opportunityDto.CategoryId;
+        }
+
         if (opportunityDto.TalentArea != null)
+        {
             opportunity.TalentArea = opportunityDto.TalentArea;
+        }
 
         opportunity.UpdatedAt = DateTime.UtcNow;
 
@@ -253,7 +212,9 @@ public class OpportunityRepository : IOpportunityRepository
             .FirstOrDefaultAsync(o => o.Id == id && o.PostedByUserId == userId);
 
         if (opportunity == null)
+        {
             return false;
+        }
 
         _context.TalentOpportunities.Remove(opportunity);
         await _context.SaveChangesAsync();
@@ -271,33 +232,37 @@ public class OpportunityRepository : IOpportunityRepository
         var applications = await _context.OpportunityApplications
             .Where(a => a.UserID == userId)
             .Include(a => a.TalentOpportunity)
-                .ThenInclude(o => o.PostedByUser)
+            .ThenInclude(o => o.PostedByUser)
             .Include(a => a.TalentOpportunity)
-                .ThenInclude(o => o.Category)
+            .ThenInclude(o => o.Category)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync();
 
         return applications.Select(MapToApplicationDTO);
     }
 
-    public async Task<IEnumerable<OpportunityApplicationDTO>> GetOpportunityApplicationsAsync(int opportunityId, int userId)
+    public async Task<IEnumerable<OpportunityApplicationDTO>> GetOpportunityApplicationsAsync(int opportunityId,
+        int userId)
     {
         var ownsOpportunity = await UserOwnsOpportunity(opportunityId, userId);
         if (!ownsOpportunity)
+        {
             return null;
+        }
 
         var applications = await _context.OpportunityApplications
             .Where(a => a.TalentOpportunityID == opportunityId)
             .Include(a => a.User)
             .Include(a => a.TalentOpportunity)
-                .ThenInclude(o => o.PostedByUser)
+            .ThenInclude(o => o.PostedByUser)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync();
 
         return applications.Select(MapToApplicationDTO);
     }
 
-    public async Task<OpportunityApplicationDTO> UpdateApplicationStatusAsync(int applicationId, UpdateOpportunityApplicationDTO updateDto, int userId)
+    public async Task<OpportunityApplicationDTO> UpdateApplicationStatusAsync(int applicationId,
+        UpdateOpportunityApplicationDTO updateDto, int userId)
     {
         // Validate status
         if (string.IsNullOrEmpty(updateDto.Status) || !updateDto.IsValidStatus())
@@ -307,7 +272,7 @@ public class OpportunityRepository : IOpportunityRepository
 
         var application = await _context.OpportunityApplications
             .Include(a => a.TalentOpportunity)
-                .ThenInclude(o => o.PostedByUser)
+            .ThenInclude(o => o.PostedByUser)
             .Include(a => a.User)
             .FirstOrDefaultAsync(a => a.ApplicationID == applicationId);
 
@@ -346,7 +311,7 @@ public class OpportunityRepository : IOpportunityRepository
         await _context.Entry(application)
             .Reference(a => a.TalentOpportunity)
             .LoadAsync();
-            
+
         await _context.Entry(application)
             .Reference(a => a.User)
             .LoadAsync();
@@ -354,7 +319,8 @@ public class OpportunityRepository : IOpportunityRepository
         return MapToApplicationDTO(application);
     }
 
-    public async Task<OpportunityApplicationDTO> ApplyForOpportunityAsync(CreateOpportunityApplicationDTO applicationDto, int userId)
+    public async Task<OpportunityApplicationDTO> ApplyForOpportunityAsync(
+        CreateOpportunityApplicationDTO applicationDto, int userId)
     {
         // Check if the opportunity exists
         var opportunity = await _context.TalentOpportunities.FindAsync(applicationDto.TalentOpportunityID);
@@ -371,7 +337,8 @@ public class OpportunityRepository : IOpportunityRepository
 
         // Check if user has already applied
         var existingApplication = await _context.OpportunityApplications
-            .FirstOrDefaultAsync(a => a.TalentOpportunityID == applicationDto.TalentOpportunityID && a.UserID == userId);
+            .FirstOrDefaultAsync(a =>
+                a.TalentOpportunityID == applicationDto.TalentOpportunityID && a.UserID == userId);
 
         if (existingApplication != null)
         {
@@ -408,6 +375,86 @@ public class OpportunityRepository : IOpportunityRepository
             AppliedAt = application.AppliedAt,
             ReviewedAt = application.ReviewedAt,
             ReviewNotes = application.ReviewNotes
+        };
+    }
+
+    private OpportunityDTO MapToOpportunityDTO(TalentOpportunity opportunity)
+    {
+        return new OpportunityDTO
+        {
+            Id = opportunity.Id,
+            Title = opportunity.Title,
+            Description = opportunity.Description,
+            Location = opportunity.Location,
+            IsRemote = opportunity.IsRemote,
+            Type = opportunity.Type,
+            Status = opportunity.Status,
+            ApplicationDeadline = opportunity.ApplicationDeadline,
+            CreatedAt = opportunity.CreatedAt,
+            UpdatedAt = opportunity.UpdatedAt,
+            PostedByUserId = opportunity.PostedByUserId,
+            PostedByUser = opportunity.PostedByUser != null
+                ? new UserDTO
+                {
+                    UserID = opportunity.PostedByUser.UserID,
+                    Username = opportunity.PostedByUser.Username,
+                    FullName = opportunity.PostedByUser.FullName,
+                    Email = opportunity.PostedByUser.Email,
+                    Bio = opportunity.PostedByUser.Bio,
+                    ProfileImageURL = opportunity.PostedByUser.ProfileImageURL,
+                    RoleID = opportunity.PostedByUser.RoleID,
+                    TalentArea = opportunity.PostedByUser.TalentArea,
+                    CreatedAt = opportunity.PostedByUser.CreatedAt,
+                    IsActive = opportunity.PostedByUser.IsActive,
+                    Verified = opportunity.PostedByUser.Verified,
+                    LastLoginTime = opportunity.PostedByUser.LastLoginTime,
+                    ProfilePrivacy = opportunity.PostedByUser.ProfilePrivacy
+                }
+                : null,
+            CategoryId = opportunity.CategoryId,
+            Category = opportunity.Category != null
+                ? new CategoryDTO
+                {
+                    CategoryID = opportunity.Category.CategoryID,
+                    CategoryName = opportunity.Category.CategoryName,
+                    Description = opportunity.Category.Description
+                }
+                : null,
+            TalentArea = opportunity.TalentArea,
+            ApplicationCount = opportunity.Applications?.Count ?? 0
+        };
+    }
+
+    private OpportunityApplicationDTO MapToApplicationDTO(OpportunityApplication application)
+    {
+        if (application == null)
+        {
+            return null;
+        }
+
+        return new OpportunityApplicationDTO
+        {
+            ApplicationID = application.ApplicationID,
+            UserID = application.UserID,
+            User = application.User != null
+                ? new UserDTO
+                {
+                    UserID = application.User.UserID,
+                    Username = application.User.Username,
+                    FullName = application.User.FullName,
+                    Email = application.User.Email,
+                    ProfileImageURL = application.User.ProfileImageURL
+                }
+                : null,
+            TalentOpportunityID = application.TalentOpportunityID,
+            TalentOpportunityTitle = application.TalentOpportunity?.Title ?? string.Empty,
+            TalentOpportunityDescription = application.TalentOpportunity?.Description ?? string.Empty,
+            CoverLetter = application.CoverLetter,
+            Status = application.Status,
+            AppliedAt = application.AppliedAt,
+            ReviewedAt = application.ReviewedAt,
+            ReviewNotes = application.ReviewNotes,
+            ApplicantId = application.UserID
         };
     }
 }

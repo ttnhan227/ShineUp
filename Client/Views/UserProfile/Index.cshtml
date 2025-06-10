@@ -1,4 +1,4 @@
-@model Client.Models.UserViewModel
+@model UserViewModel
 
 @{
     ViewData["Title"] = "User Profile";
@@ -70,7 +70,8 @@
             @if (Model.IsPrivate && !isOwner)
             {
                 <div class="private-profile-message">
-                    <p>This user has a private profile. Only approved followers can see their full profile and posts.</p>
+                    <p>This user has a private profile. Only approved followers can see their full profile and
+                        posts.</p>
                 </div>
             }
             else
@@ -110,7 +111,8 @@
                     </div>
                     <div class="info-group">
                         <label><i class='bx bx-user'></i> Full Name</label>
-                        <div class="info-value">@(string.IsNullOrEmpty(Model.FullName) ? "Not provided" : Model.FullName)</div>
+                        <div
+                            class="info-value">@(string.IsNullOrEmpty(Model.FullName) ? "Not provided" : Model.FullName)</div>
                     </div>
                     <div class="info-group">
                         <label><i class='bx bx-info-circle'></i> Bio</label>
@@ -118,7 +120,8 @@
                     </div>
                     <div class="info-group">
                         <label><i class='bx bx-star'></i> Talent Area</label>
-                        <div class="info-value">@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</div>
+                        <div
+                            class="info-value">@(string.IsNullOrEmpty(Model.TalentArea) ? "Not specified" : Model.TalentArea)</div>
                     </div>
                     <div class="info-group">
                         <label><i class='bx bx-lock-alt'></i> Profile Privacy</label>
@@ -184,7 +187,8 @@
                             @foreach (var post in Model.Posts)
                             {
                                 <div class="post-card">
-                                    <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="text-decoration-none">
+                                    <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID"
+                                       class="text-decoration-none">
                                         <div class="post-header">
                                             <div class="post-avatar">
                                                 @if (!string.IsNullOrEmpty(post.ProfileImageURL))
@@ -193,8 +197,10 @@
                                                 }
                                                 else
                                                 {
-                                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
+                                                    <div
+                                                        class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                                        <i class='bx bx-user text-primary'
+                                                           style="font-size: 1.5rem;"></i>
                                                     </div>
                                                 }
                                             </div>
@@ -225,7 +231,8 @@
                                                         <div class="media-item">
                                                             @if (media.Type == "image")
                                                             {
-                                                                <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                                <img src="@media.Url" alt="@post.Title"
+                                                                     class="clickable-image" data-fullsize="@media.Url">
                                                             }
                                                             else if (media.Type == "video")
                                                             {
@@ -237,13 +244,16 @@
                                                     }
                                                     else
                                                     {
-                                                        <div class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
+                                                        <div
+                                                            class="media-grid-container @(GetGridClass(post.MediaFiles.Count))">
                                                             @foreach (var media in post.MediaFiles.Take(4))
                                                             {
                                                                 <div class="media-item">
                                                                     @if (media.Type == "image")
                                                                     {
-                                                                        <img src="@media.Url" alt="@post.Title" class="clickable-image" data-fullsize="@media.Url">
+                                                                        <img src="@media.Url" alt="@post.Title"
+                                                                             class="clickable-image"
+                                                                             data-fullsize="@media.Url">
                                                                     }
                                                                     else if (media.Type == "video")
                                                                     {
@@ -318,7 +328,7 @@
                         lastLoginTimeElement.textContent = 'Never';
                         return;
                     }
-                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    const options = {year: 'numeric', month: 'short', day: 'numeric'};
                     lastLoginTimeElement.textContent = localTime.toLocaleDateString(undefined, options);
                 } catch (error) {
                     console.error('Error formatting date:', error);
@@ -355,6 +365,7 @@
 }
 
 @functions {
+
     private string GetGridClass(int mediaCount)
     {
         return (mediaCount > 4 ? 4 : mediaCount) switch
@@ -365,4 +376,5 @@
             _ => "grid-1"
         };
     }
+
 }

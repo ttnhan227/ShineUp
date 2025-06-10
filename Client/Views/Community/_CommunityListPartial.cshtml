@@ -1,4 +1,4 @@
-@model List<Client.Models.CommunityViewModel>
+@model List<CommunityViewModel>
 
 @if (Model == null || !Model.Any())
 {
@@ -12,41 +12,41 @@ else
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
-                <tr>
-                    <th>Community Name</th>
-                    <th>Description</th>
-                    <th>Created</th>
-                    <th class="text-end">Actions</th>
-                </tr>
+            <tr>
+                <th>Community Name</th>
+                <th>Description</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+            </tr>
             </thead>
             <tbody class="border-top-0">
-                @foreach (var community in Model)
-                {
-                    <tr class="community-row">
-                        <td class="fw-semibold">@community.Name</td>
-                        <td class="text-muted">
-                            @if (string.IsNullOrEmpty(community.Description))
-                            {
-                                <span class="text-muted">No description</span>
-                            }
-                            else
-                            {
-                                <span>@(community.Description.Length > 50 ? community.Description.Substring(0, 50) + "..." : community.Description)</span>
-                            }
-                        </td>
-                        <td class="text-nowrap">
-                            <span class="text-muted small">@community.CreatedAt.ToString("MMM d, yyyy")</span>
-                        </td>
-                        <td class="text-end">
-                            <a href="@Url.Action("Details", "Community", new { communityId = community.CommunityID })" 
-                               class="btn btn-sm btn-outline-primary"
-                               data-bs-toggle="tooltip" 
-                               title="View community details">
-                                <i class="fas fa-eye me-1"></i> View
-                            </a>
-                        </td>
-                    </tr>
-                }
+            @foreach (var community in Model)
+            {
+                <tr class="community-row">
+                    <td class="fw-semibold">@community.Name</td>
+                    <td class="text-muted">
+                        @if (string.IsNullOrEmpty(community.Description))
+                        {
+                            <span class="text-muted">No description</span>
+                        }
+                        else
+                        {
+                            <span>@(community.Description.Length > 50 ? community.Description.Substring(0, 50) + "..." : community.Description)</span>
+                        }
+                    </td>
+                    <td class="text-nowrap">
+                        <span class="text-muted small">@community.CreatedAt.ToString("MMM d, yyyy")</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="@Url.Action("Details", "Community", new { communityId = community.CommunityID })"
+                           class="btn btn-sm btn-outline-primary"
+                           data-bs-toggle="tooltip"
+                           title="View community details">
+                            <i class="fas fa-eye me-1"></i> View
+                        </a>
+                    </td>
+                </tr>
+            }
             </tbody>
         </table>
     </div>
@@ -55,7 +55,7 @@ else
 @section Scripts {
     <script>
         // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);

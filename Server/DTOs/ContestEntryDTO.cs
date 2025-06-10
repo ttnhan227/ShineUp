@@ -14,18 +14,18 @@ public class ContestEntryDTO
     public DateTime SubmissionDate { get; set; }
     public string MediaUrl { get; set; }
     public string MediaType { get; set; }
-    
+
     [Required]
     [StringLength(100)]
     public string Title { get; set; } = string.Empty;
-    
+
     [StringLength(500)]
     public string? Description { get; set; }
-    
+
     // Voting properties
     public int VoteCount { get; set; }
     public bool HasVoted { get; set; }
-    
+
     // Winner status
     public bool IsWinner { get; set; }
 }

@@ -8,8 +8,8 @@ namespace Server.Services;
 
 public class GoogleAuthService : IGoogleAuthService
 {
-    private readonly DatabaseContext _context;
     private readonly IConfiguration _configuration;
+    private readonly DatabaseContext _context;
     private readonly ILogger<GoogleAuthService> _logger;
 
     public GoogleAuthService(DatabaseContext context, IConfiguration configuration, ILogger<GoogleAuthService> logger)
@@ -21,7 +21,7 @@ public class GoogleAuthService : IGoogleAuthService
 
     public async Task<GoogleJsonWebSignature.Payload> VerifyGoogleToken(string idToken)
     {
-        var settings = new GoogleJsonWebSignature.ValidationSettings()
+        var settings = new GoogleJsonWebSignature.ValidationSettings
         {
             Audience = new[] { _configuration["Authentication:Google:ClientId"] }
         };
@@ -31,13 +31,14 @@ public class GoogleAuthService : IGoogleAuthService
 
     public async Task<User> HandleGoogleUser(GoogleJsonWebSignature.Payload payload)
     {
-        _logger.LogInformation($"[GoogleAuthService] Handling Google user with email: {payload.Email}, Subject: {payload.Subject}");
-        
+        _logger.LogInformation(
+            $"[GoogleAuthService] Handling Google user with email: {payload.Email}, Subject: {payload.Subject}");
+
         // First try to find by Google ID
         var user = await _context.Users
             .Include(u => u.Role)
             .FirstOrDefaultAsync(x => x.GoogleId == payload.Subject);
-            
+
         _logger.LogInformation($"[GoogleAuthService] User found by Google ID: {user != null}");
 
         // If not found by Google ID, try by email
@@ -46,7 +47,7 @@ public class GoogleAuthService : IGoogleAuthService
             user = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(x => x.Email == payload.Email);
-                
+
             _logger.LogInformation($"[GoogleAuthService] User found by email: {user != null}");
         }
 
@@ -54,8 +55,8 @@ public class GoogleAuthService : IGoogleAuthService
         {
             _logger.LogInformation("[GoogleAuthService] Creating new user");
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
-            string uniqueUsername = await GenerateUniqueUsername(payload.Name);
-            
+            var uniqueUsername = await GenerateUniqueUsername(payload.Name);
+
             user = new User
             {
                 GoogleId = payload.Subject,
@@ -76,7 +77,7 @@ public class GoogleAuthService : IGoogleAuthService
         else
         {
             _logger.LogInformation($"[GoogleAuthService] Updating existing user with ID: {user.UserID}");
-            
+
             // Check if the account is active
             if (!user.IsActive)
             {
@@ -87,16 +88,16 @@ public class GoogleAuthService : IGoogleAuthService
             // Update Google ID if not set
             if (string.IsNullOrEmpty(user.GoogleId))
             {
-                _logger.LogInformation($"[GoogleAuthService] Adding Google ID to existing user");
+                _logger.LogInformation("[GoogleAuthService] Adding Google ID to existing user");
                 user.GoogleId = payload.Subject;
             }
-            
+
             // Only update FullName if it's not already set
             if (string.IsNullOrEmpty(user.FullName))
             {
                 user.FullName = payload.Name ?? user.FullName;
             }
-            
+
             // Always update the profile picture from Google
             user.ProfileImageURL = payload.Picture;
             user.Verified = true;
@@ -105,7 +106,7 @@ public class GoogleAuthService : IGoogleAuthService
 
         await _context.SaveChangesAsync();
         _logger.LogInformation($"[GoogleAuthService] User processed successfully. UserID: {user.UserID}");
-        
+
         // Ensure we have the latest data by explicitly selecting only the columns we need
         return await _context.Users
             .AsNoTracking()
@@ -130,13 +131,10 @@ public class GoogleAuthService : IGoogleAuthService
 
     private async Task<string> GenerateUniqueUsername(string baseUsername)
     {
-        string username = baseUsername;
-        int counter = 1;
+        var username = baseUsername;
+        var counter = 1;
 
-        while (await _context.Users.AnyAsync(u => u.Username == username))
-        {
-            username = $"{baseUsername}{counter++}";
-        }
+        while (await _context.Users.AnyAsync(u => u.Username == username)) username = $"{baseUsername}{counter++}";
 
         return username;
     }

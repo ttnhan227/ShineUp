@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Server.DTOs;
 using Server.DTOs.Admin;
 using Server.Interfaces.Admin;
-using System.Security.Claims;
 
 namespace Server.Controllers.Admin;
 
@@ -12,9 +11,9 @@ namespace Server.Controllers.Admin;
 [ApiController]
 public class UserManagementController : ControllerBase
 {
-    private readonly IUserManagementRepository _userManagementRepository;
-    private readonly ILogger<UserManagementController> _logger;
     private const int ADMIN_ROLE_ID = 2;
+    private readonly ILogger<UserManagementController> _logger;
+    private readonly IUserManagementRepository _userManagementRepository;
 
     public UserManagementController(
         IUserManagementRepository userManagementRepository,
@@ -27,7 +26,7 @@ public class UserManagementController : ControllerBase
     private bool IsAdmin()
     {
         var roleIdClaim = User.FindFirst("RoleID");
-        return roleIdClaim != null && int.TryParse(roleIdClaim.Value, out int roleId) && roleId == ADMIN_ROLE_ID;
+        return roleIdClaim != null && int.TryParse(roleIdClaim.Value, out var roleId) && roleId == ADMIN_ROLE_ID;
     }
 
     [HttpGet]
@@ -65,6 +64,7 @@ public class UserManagementController : ControllerBase
             {
                 return NotFound(new { message = "User not found" });
             }
+
             return Ok(user);
         }
         catch (Exception ex)
@@ -89,6 +89,7 @@ public class UserManagementController : ControllerBase
             {
                 return NotFound(new { message = "User not found" });
             }
+
             return Ok(user);
         }
         catch (Exception ex)
@@ -113,6 +114,7 @@ public class UserManagementController : ControllerBase
             {
                 return NotFound(new { message = "User not found" });
             }
+
             return Ok(user);
         }
         catch (Exception ex)
@@ -137,6 +139,7 @@ public class UserManagementController : ControllerBase
             {
                 return NotFound(new { message = "User not found" });
             }
+
             return Ok(new { message = "User deleted successfully" });
         }
         catch (Exception ex)
@@ -145,4 +148,4 @@ public class UserManagementController : ControllerBase
             return StatusCode(500, new { message = "Internal server error" });
         }
     }
-} 
+}

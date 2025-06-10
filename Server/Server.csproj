@@ -10,8 +10,8 @@
 
         <PackageReference Include="CloudinaryDotNet" Version="1.27.5"/>
         <PackageReference Include="BCrypt.Net-Core" Version="1.6.0"/>
-        <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
-        <PackageReference Include="Google.Apis.Gmail.v1" Version="1.69.0.3742" />
+        <PackageReference Include="Google.Apis.Auth" Version="1.69.0"/>
+        <PackageReference Include="Google.Apis.Gmail.v1" Version="1.69.0.3742"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.15"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">

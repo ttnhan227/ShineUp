@@ -424,28 +424,28 @@ body {
         transition: transform 0.3s ease;
         z-index: 1040;
     }
-    
+
     #sidebar.active {
         transform: translateX(0);
         box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
     }
-    
+
     #content {
         width: 100%;
         margin-left: 0;
         padding: 1rem;
     }
-    
+
     #content.active {
         margin-left: var(--sidebar-width);
         width: calc(100% - var(--sidebar-width));
     }
-    
+
     /* Disable content shifting on mobile */
     #content {
         transition: none;
     }
-    
+
     /* Add overlay when sidebar is open on mobile */
     .sidebar-overlay {
         display: none;
@@ -459,17 +459,17 @@ body {
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-    
+
     body.sidebar-open .sidebar-overlay {
         display: block;
         opacity: 1;
     }
-    
+
     /* Adjust navbar for mobile */
     .navbar {
         padding: 0.5rem 1rem;
     }
-    
+
     .navbar .btn {
         padding: 0.25rem 0.5rem;
         font-size: 0.8rem;
@@ -481,11 +481,11 @@ body {
     #content {
         padding: 0.75rem;
     }
-    
+
     .card {
         border-radius: 0.5rem;
     }
-    
+
     .table-responsive {
         border-radius: 0.5rem;
         overflow-x: auto;
@@ -662,7 +662,7 @@ body {
 }
 
 /* Form Controls */
-.form-control, 
+.form-control,
 .form-select {
     border: 1px solid #e9ecef;
     border-radius: 8px;
@@ -672,7 +672,7 @@ body {
     transition: all 0.3s ease;
 }
 
-.form-control:focus, 
+.form-control:focus,
 .form-select:focus {
     border-color: #5e72e4;
     box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
@@ -737,12 +737,15 @@ body {
     #sidebar {
         margin-left: -250px;
     }
+
     #sidebar.active {
         margin-left: 0;
     }
+
     #content {
         margin-left: 0;
     }
+
     #content.active {
         margin-left: 250px;
     }
@@ -994,24 +997,24 @@ body {
         flex-direction: column;
         width: 100%;
     }
-    
+
     .button-group .btn {
         width: 100%;
         justify-content: center;
     }
-    
+
     .btn-group {
         flex-wrap: wrap;
     }
-    
+
     .btn-group .btn {
         margin-bottom: 0.5rem;
     }
-    
+
     .card {
         margin-bottom: 1rem;
     }
-    
+
     .stat-card {
         margin-bottom: 1rem;
     }

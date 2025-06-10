@@ -1,4 +1,4 @@
-@model Client.Models.LoginViewModel
+@model LoginViewModel
 @inject IConfiguration Configuration
 @{
     ViewData["Title"] = "Login";
@@ -14,41 +14,43 @@
                         <p class="text-muted">Please login to continue</p>
                     </div>
 
-                    <form asp-controller="Auth" asp-action="Login" asp-route-returnurl="@ViewBag.ReturnUrl" method="post" class="login-form" id="loginForm">
+                    <form asp-controller="Auth" asp-action="Login" asp-route-returnurl="@ViewBag.ReturnUrl"
+                          method="post" class="login-form" id="loginForm">
                         <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
                         <div class="form-group mb-4">
                             <label asp-for="Email" class="form-label">
-                                <i class='bx bx-envelope'></i> Email
+                                <i class="bx bx-envelope"></i> Email
                             </label>
                             <div class="input-group">
-                                <input asp-for="Email" class="form-control" placeholder="Enter your email" required />
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email" required/>
                             </div>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
-                        
+
                         <div class="form-group mb-4">
                             <label asp-for="Password" class="form-label">
-                                <i class='bx bx-lock-alt'></i> Password
+                                <i class="bx bx-lock-alt"></i> Password
                             </label>
                             <div class="input-group">
-                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" required />
+                                <input asp-for="Password" class="form-control" type="password"
+                                       placeholder="Enter your password" required/>
                             </div>
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
-                        
+
                         <div class="button-group">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-log-in'></i> Sign In
+                                <i class="bx bx-log-in"></i> Sign In
                             </button>
                         </div>
-                        
+
                         <div class="text-center mt-3">
                             <a asp-controller="Auth" asp-action="ForgotPassword" class="text-primary">
-                                <i class='bx bx-help-circle'></i> Forgot your password?
+                                <i class="bx bx-help-circle"></i> Forgot your password?
                             </a>
                         </div>
                     </form>
-                    
+
                     <div class="divider">
                         <span>OR</span>
                     </div>
@@ -70,8 +72,9 @@
                     </div>
 
                     <div class="text-center mt-4">
-                        <p class="text-muted mb-0">Don't have an account? 
-                            <a asp-controller="Auth" asp-action="Register" asp-route-returnurl="@ViewBag.ReturnUrl" class="text-primary">Register</a>
+                        <p class="text-muted mb-0">Don't have an account?
+                            <a asp-controller="Auth" asp-action="Register" asp-route-returnurl="@ViewBag.ReturnUrl"
+                               class="text-primary">Register</a>
                         </p>
                     </div>
                 </div>
@@ -95,14 +98,14 @@
 }
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
     <link href="~/css/auth.css" rel="stylesheet">
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async></script>
     <script>
         // Add form submission handler
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
             e.preventDefault();
             showLoading('Authenticating...');
             this.submit();
@@ -123,48 +126,48 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ idToken: response.credential })
+                    body: JSON.stringify({idToken: response.credential})
                 })
-                .then(async response => {
-                    const text = await response.text();
-                    console.log('Server response:', text);
-                    
-                    if (!response.ok) {
-                        throw new Error(text);
-                    }
-                    
-                    const data = JSON.parse(text);
-                    
-                    if (data.needsPassword) {
-                        // Redirect to profile completion page with the necessary parameters
-                        const url = new URL('/Auth/CompleteProfile', window.location.origin);
-                        url.searchParams.append('userId', data.userId);
-                        url.searchParams.append('email', data.email);
-                        if (data.username) url.searchParams.append('username', data.username);
-                        if (data.fullName) url.searchParams.append('fullName', data.fullName);
-                        
-                        window.location.href = url.toString();
-                    } else if (data.token) {
-                        // Save the token in localStorage
-                        localStorage.setItem('authToken', data.token);
-                        
-                        // Set a flag to indicate successful login
-                        sessionStorage.setItem('justLoggedIn', 'true');
-                        
-                        // Redirect to home
-                        showLoading('Success! Redirecting you to home...');
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 1000);
-                    } else {
-                        throw new Error(data.message || 'Authentication failed');
-                    }
-                })
-                .catch(error => {
-                    console.error('Auth error:', error);
-                    alert('Login failed: ' + error.message);
-                    document.getElementById('loadingOverlay').classList.add('d-none');
-                });
+                    .then(async response => {
+                        const text = await response.text();
+                        console.log('Server response:', text);
+
+                        if (!response.ok) {
+                            throw new Error(text);
+                        }
+
+                        const data = JSON.parse(text);
+
+                        if (data.needsPassword) {
+                            // Redirect to profile completion page with the necessary parameters
+                            const url = new URL('/Auth/CompleteProfile', window.location.origin);
+                            url.searchParams.append('userId', data.userId);
+                            url.searchParams.append('email', data.email);
+                            if (data.username) url.searchParams.append('username', data.username);
+                            if (data.fullName) url.searchParams.append('fullName', data.fullName);
+
+                            window.location.href = url.toString();
+                        } else if (data.token) {
+                            // Save the token in localStorage
+                            localStorage.setItem('authToken', data.token);
+
+                            // Set a flag to indicate successful login
+                            sessionStorage.setItem('justLoggedIn', 'true');
+
+                            // Redirect to home
+                            showLoading('Success! Redirecting you to home...');
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 1000);
+                        } else {
+                            throw new Error(data.message || 'Authentication failed');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Auth error:', error);
+                        alert('Login failed: ' + error.message);
+                        document.getElementById('loadingOverlay').classList.add('d-none');
+                    });
             }
         }
     </script>

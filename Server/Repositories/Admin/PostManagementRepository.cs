@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs.Admin;
 using Server.Interfaces.Admin;
-using Server.Models;
 
 namespace Server.Repositories.Admin;
 
@@ -105,12 +104,14 @@ public class PostManagementRepository : IPostManagementRepository
         {
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
+            {
                 return false;
+            }
 
             // Since there's no IsActive in the model, we'll just update the UpdatedAt
             // If you want to implement soft delete, you might need to add an IsActive field to the Post model
             post.UpdatedAt = DateTime.UtcNow;
-            
+
             await _context.SaveChangesAsync();
             return true;
         }
@@ -127,7 +128,9 @@ public class PostManagementRepository : IPostManagementRepository
         {
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
+            {
                 return false;
+            }
 
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();

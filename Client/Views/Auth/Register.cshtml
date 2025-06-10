@@ -1,4 +1,4 @@
-@model Client.Models.RegisterViewModel
+@model RegisterViewModel
 
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -13,73 +13,75 @@
                     <form asp-controller="Auth" asp-action="Register" method="post" class="register-form">
                         <div class="form-group mb-4">
                             <label asp-for="Username" class="form-label">
-                                <i class='bx bx-user'></i> Username
+                                <i class="bx bx-user"></i> Username
                             </label>
                             <div class="input-group">
-                                <input asp-for="Username" class="form-control" placeholder="Choose a username" />
+                                <input asp-for="Username" class="form-control" placeholder="Choose a username"/>
                             </div>
                             <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-4">
                             <label asp-for="FullName" class="form-label">
-                                <i class='bx bx-user-circle'></i> Full Name
+                                <i class="bx bx-user-circle"></i> Full Name
                             </label>
                             <div class="input-group">
-                                <input asp-for="FullName" class="form-control" placeholder="Enter your full name" />
+                                <input asp-for="FullName" class="form-control" placeholder="Enter your full name"/>
                             </div>
                             <span asp-validation-for="FullName" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-4">
                             <label asp-for="Email" class="form-label">
-                                <i class='bx bx-envelope'></i> Email
+                                <i class="bx bx-envelope"></i> Email
                             </label>
                             <div class="input-group">
-                                <input asp-for="Email" 
-                                       class="form-control" 
-                                       placeholder="Enter your email" 
+                                <input asp-for="Email"
+                                       class="form-control"
+                                       placeholder="Enter your email"
                                        type="email"
                                        pattern="[a-z0-9._%+-]+@@[a-z0-9.-]+\.[a-z]{2,}$"
                                        title="Please enter a valid email address (e.g., example@gmail.com)"
-                                       required />
+                                       required/>
                             </div>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-4">
                             <label asp-for="Password" class="form-label">
-                                <i class='bx bx-lock-alt'></i> Password
+                                <i class="bx bx-lock-alt"></i> Password
                             </label>
                             <div class="input-group">
-                                <input asp-for="Password" class="form-control" type="password" placeholder="Choose a password" />
+                                <input asp-for="Password" class="form-control" type="password"
+                                       placeholder="Choose a password"/>
                             </div>
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-4">
                             <label asp-for="ConfirmPassword" class="form-label">
-                                <i class='bx bx-lock-alt'></i> Confirm Password
+                                <i class="bx bx-lock-alt"></i> Confirm Password
                             </label>
                             <div class="input-group">
-                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm your password" />
+                                <input asp-for="ConfirmPassword" class="form-control" type="password"
+                                       placeholder="Confirm your password"/>
                             </div>
                             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-4">
                             <label asp-for="TalentArea" class="form-label">
-                                <i class='bx bx-star'></i> Talent Area
+                                <i class="bx bx-star"></i> Talent Area
                             </label>
                             <div class="input-group">
-                                <input asp-for="TalentArea" class="form-control" placeholder="What's your talent?" />
+                                <input asp-for="TalentArea" class="form-control" placeholder="What's your talent?"/>
                             </div>
                             <span asp-validation-for="TalentArea" class="text-danger"></span>
                         </div>
 
                         <div class="button-group">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-user-plus'></i> Create Account
+                                <i class="bx bx-user-plus"></i> Create Account
                             </button>
                         </div>
                     </form>
@@ -89,7 +91,7 @@
                     </div>
 
                     <div class="text-center mt-4">
-                        <p class="text-muted mb-0">Already have an account? 
+                        <p class="text-muted mb-0">Already have an account?
                             <a asp-controller="Auth" asp-action="Login" class="text-primary">Sign In</a>
                         </p>
                     </div>
@@ -100,16 +102,16 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
     <link href="~/css/auth.css" rel="stylesheet">
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('form');
             const passwordField = document.getElementById('Password');
             const confirmPasswordField = document.getElementById('ConfirmPassword');
-            
+
             function validatePassword() {
                 if (passwordField.value !== confirmPasswordField.value) {
                     confirmPasswordField.setCustomValidity("Passwords do not match");
@@ -119,11 +121,11 @@
                     return true;
                 }
             }
-            
+
             passwordField.addEventListener('change', validatePassword);
             confirmPasswordField.addEventListener('keyup', validatePassword);
-            
-            form.addEventListener('submit', function(e) {
+
+            form.addEventListener('submit', function (e) {
                 if (!validatePassword()) {
                     e.preventDefault();
                     return false;

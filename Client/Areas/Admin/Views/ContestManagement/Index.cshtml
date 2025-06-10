@@ -1,8 +1,8 @@
 @model IEnumerable<Client.Areas.Admin.Models.ContestViewModel>
 @{
     ViewData["Title"] = "Contest Management";
-    string backIcon = "bx bx-arrow-back";
-    string plusIcon = "bx bx-plus";
+    var backIcon = "bx bx-arrow-back";
+    var plusIcon = "bx bx-plus";
     var successMessage = TempData["SuccessMessage"] as string;
     var errorMessage = TempData["ErrorMessage"] as string;
     Layout = "_AdminLayout";
@@ -23,7 +23,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    
+
     @if (!string.IsNullOrEmpty(errorMessage))
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -39,56 +39,59 @@
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="table-light">
-                            <tr>
-                                <th>Title</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Entries</th>
-                                <th>Votes</th>
-                                <th>Status</th>
-                                <th>Time Remaining</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>Title</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Entries</th>
+                            <th>Votes</th>
+                            <th>Status</th>
+                            <th>Time Remaining</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            @foreach (var contest in Model)
-                            {
-                                <tr>
-                                    <td>@contest.Title</td>
-                                    <td>@contest.StartDate.ToString("g")</td>
-                                    <td>@contest.EndDate.ToString("g")</td>
-                                    <td>@contest.EntryCount</td>
-                                    <td>@contest.TotalVotes</td>
-                                    <td>
-                                        @if (contest.Status == "Upcoming")
-                                        {
-                                            <span class="badge bg-info">@contest.Status</span>
-                                        }
-                                        else if (contest.Status == "Ended")
-                                        {
-                                            <span class="badge bg-secondary">@contest.Status</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success">@contest.Status</span>
-                                        }
-                                    </td>
-                                    <td>@contest.TimeRemaining</td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a asp-action="Details" asp-route-id="@contest.ContestID" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
-                                                <i class='bx bx-show'></i>
-                                            </a>
-                                            <a asp-action="Edit" asp-route-id="@contest.ContestID" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
-                                                <i class='bx bx-edit'></i>
-                                            </a>
-                                            <button class="btn btn-sm btn-danger delete-contest" data-id="@contest.ContestID" data-bs-toggle="tooltip" title="Delete">
-                                                <i class='bx bx-trash'></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
+                        @foreach (var contest in Model)
+                        {
+                            <tr>
+                                <td>@contest.Title</td>
+                                <td>@contest.StartDate.ToString("g")</td>
+                                <td>@contest.EndDate.ToString("g")</td>
+                                <td>@contest.EntryCount</td>
+                                <td>@contest.TotalVotes</td>
+                                <td>
+                                    @if (contest.Status == "Upcoming")
+                                    {
+                                        <span class="badge bg-info">@contest.Status</span>
+                                    }
+                                    else if (contest.Status == "Ended")
+                                    {
+                                        <span class="badge bg-secondary">@contest.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@contest.Status</span>
+                                    }
+                                </td>
+                                <td>@contest.TimeRemaining</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@contest.ContestID"
+                                           class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="View Details">
+                                            <i class='bx bx-show'></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@contest.ContestID"
+                                           class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                            <i class='bx bx-edit'></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-danger delete-contest"
+                                                data-id="@contest.ContestID" data-bs-toggle="tooltip" title="Delete">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                         </tbody>
                     </table>
                 </div>
@@ -125,7 +128,7 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Initialize tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
@@ -133,13 +136,13 @@
             // Handle delete button click
             const deleteButtons = document.querySelectorAll('.delete-contest');
             const deleteForm = document.getElementById('deleteForm');
-            
+
             deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
+                button.addEventListener('click', function (e) {
                     e.preventDefault();
                     const contestId = this.getAttribute('data-id');
                     deleteForm.action = '/Admin/ContestManagement/Delete/' + contestId;
-                    
+
                     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
                     modal.show();
                 });
@@ -150,5 +153,5 @@
 
 @section Styles {
     <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
-    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet"/>
 }

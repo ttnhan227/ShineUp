@@ -3,17 +3,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Server;
 using Server.Data;
-using Server.DTOs;
 using Server.Interfaces;
 using Server.Interfaces.Admin;
-using Server.Models;
 using Server.Repositories;
 using Server.Repositories.Admin;
 using Server.Services;
-using System.Text;
 using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +19,7 @@ Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "www
 
 // Add secrets configuration
 builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
-    .AddJsonFile("appsettings.secrets.json", optional: false, reloadOnChange: true);
+    .AddJsonFile("appsettings.secrets.json", false, true);
 
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
@@ -81,7 +78,7 @@ builder.Services.AddScoped<IVideoRepository, VideoRepository>();
 // Add Repositories and Services
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
-builder.Services.AddScoped<IEmailService, EmailService>();  // Updated name
+builder.Services.AddScoped<IEmailService, EmailService>(); // Updated name
 builder.Services.AddScoped<ISocialService, SocialService>();
 
 // Add Distributed Memory Cache for session state
@@ -115,7 +112,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             NameClaimType = ClaimTypes.NameIdentifier,
             RoleClaimType = ClaimTypes.Role
         };
-        
+
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = context =>
@@ -131,6 +128,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 {
                     logger.LogInformation($"Token validated successfully for user {userId}");
                 }
+
                 return Task.CompletedTask;
             },
             OnAuthenticationFailed = context =>
@@ -139,10 +137,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 logger.LogError($"Authentication failed: {context.Exception.Message}");
                 return Task.CompletedTask;
             },
-            OnMessageReceived = context => 
+            OnMessageReceived = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation($"Received token: {context.Token?.Substring(0, Math.Min(20, context.Token?.Length ?? 0))}...");
+                logger.LogInformation(
+                    $"Received token: {context.Token?.Substring(0, Math.Min(20, context.Token?.Length ?? 0))}...");
                 return Task.CompletedTask;
             }
         };
@@ -190,9 +189,9 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(builder =>
     {
         builder.SetIsOriginAllowed(_ => true)
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -211,23 +210,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShineUp API v1");
-    });
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShineUp API v1"); });
 }
 
 // Correct middleware order
 app.UseHttpsRedirection();
 app.UseStaticFiles(new StaticFileOptions
 {
-    OnPrepareResponse = ctx =>
-    {
-        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=600");
-    }
+    OnPrepareResponse = ctx => { ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=600"); }
 });
 app.UseRouting();
-app.UseCors();  // Must be after UseRouting and before UseAuthentication
+app.UseCors(); // Must be after UseRouting and before UseAuthentication
 
 app.UseAuthentication();
 app.UseAuthorization();

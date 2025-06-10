@@ -2,13 +2,13 @@ namespace Server.Models;
 
 public enum NotificationType
 {
-    Generic,        // General purpose notification
+    Generic, // General purpose notification
     OpportunityPosted,
     ApplicationUpdate,
     MessageReceived,
     TalentMatch,
     SystemAlert,
-    Security        // For security-related notifications like password changes
+    Security // For security-related notifications like password changes
 }
 
 public enum NotificationStatus

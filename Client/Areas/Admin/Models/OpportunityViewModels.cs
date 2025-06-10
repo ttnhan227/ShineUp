@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Client.Areas.Admin.Models
@@ -23,35 +21,35 @@ namespace Client.Areas.Admin.Models
     public class OpportunityDetailViewModel
     {
         public int Id { get; set; }
-        
+
         [Required(ErrorMessage = "Title is required")]
         [StringLength(200, ErrorMessage = "Title cannot be longer than 200 characters")]
         public string Title { get; set; }
-        
+
         [Required(ErrorMessage = "Description is required")]
         public string Description { get; set; }
-        
+
         [StringLength(100, ErrorMessage = "Location cannot be longer than 100 characters")]
         public string Location { get; set; }
-        
+
         public bool IsRemote { get; set; }
-        
+
         [Required(ErrorMessage = "Type is required")]
         public string Type { get; set; }
-        
+
         [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; }
-        
+
         [Required(ErrorMessage = "Application deadline is required")]
         [DataType(DataType.DateTime)]
         public DateTime? ApplicationDeadline { get; set; }
-        
+
         [Required(ErrorMessage = "Category is required")]
         public int? CategoryId { get; set; }
-        
+
         [StringLength(100, ErrorMessage = "Talent area cannot be longer than 100 characters")]
         public string TalentArea { get; set; }
-        
+
         public string CategoryName { get; set; }
         public string PostedBy { get; set; }
         public string PostedByEmail { get; set; }
@@ -63,37 +61,37 @@ namespace Client.Areas.Admin.Models
     public class OpportunityCreateEditViewModel
     {
         public int Id { get; set; }
-        
+
         [Required(ErrorMessage = "Title is required")]
         [StringLength(200, ErrorMessage = "Title cannot be longer than 200 characters")]
         public string Title { get; set; }
-        
+
         [Required(ErrorMessage = "Description is required")]
         public string Description { get; set; }
-        
+
         [StringLength(100, ErrorMessage = "Location cannot be longer than 100 characters")]
         public string Location { get; set; }
-        
+
         public bool IsRemote { get; set; }
-        
+
         [Required(ErrorMessage = "Type is required")]
         public string Type { get; set; }
-        
+
         [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; }
-        
+
         [Required(ErrorMessage = "Application deadline is required")]
         [DataType(DataType.DateTime)]
         public DateTime? ApplicationDeadline { get; set; }
-        
+
         [Required(ErrorMessage = "Category is required")]
         [Display(Name = "Category")]
         public int? CategoryId { get; set; }
-        
+
         [StringLength(100, ErrorMessage = "Talent area cannot be longer than 100 characters")]
         [Display(Name = "Talent Area")]
         public string TalentArea { get; set; }
-        
+
         // For dropdown lists
         public List<CategoryViewModel> Categories { get; set; } = new();
         public List<string> OpportunityTypes { get; set; } = new();
@@ -127,14 +125,14 @@ namespace Client.Areas.Admin.Models
     public class UpdateApplicationStatusViewModel
     {
         public int ApplicationId { get; set; }
-        
+
         [Required(ErrorMessage = "Status is required")]
         public string Status { get; set; }
-        
+
         [StringLength(1000, ErrorMessage = "Review notes cannot be longer than 1000 characters")]
         [Display(Name = "Review Notes")]
         public string ReviewNotes { get; set; }
-        
+
         public List<string> StatusOptions { get; set; } = new();
     }
 
@@ -167,7 +165,6 @@ namespace Client.Areas.Admin.Models
     }
 
 
-
     public class ApplicationQuestionAnswer
     {
         public string Question { get; set; }
@@ -182,12 +179,12 @@ namespace Client.Extensions
     {
         public static string Truncate(this string value, int maxLength, string truncationSuffix = "...")
         {
-            if (string.IsNullOrEmpty(value)) 
+            if (string.IsNullOrEmpty(value))
+            {
                 return value;
-                
-            return value.Length <= maxLength ? 
-                value : 
-                value.Substring(0, maxLength) + truncationSuffix;
+            }
+
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength) + truncationSuffix;
         }
     }
 }

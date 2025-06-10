@@ -5,37 +5,46 @@ namespace Server.Models;
 
 public class ContestEntry
 {
+    private string? _imageId;
+
+    private string? _videoId;
+
     [Key]
     public int EntryID { get; set; }
 
     public int ContestID { get; set; }
     public Contest Contest { get; set; }
 
-    private string? _videoId;
-    private string? _imageId;
-    
     // Video entry (optional)
-    public string? VideoID 
-    { 
+    public string? VideoID
+    {
         get => _videoId;
-        set 
-        { 
+        set
+        {
             _videoId = value;
-            if (value != null) _imageId = null;
-        } 
+            if (value != null)
+            {
+                _imageId = null;
+            }
+        }
     }
+
     public Video? Video { get; set; }
 
     // Image entry (optional)
-    public string? ImageID 
-    { 
+    public string? ImageID
+    {
         get => _imageId;
-        set 
-        { 
+        set
+        {
             _imageId = value;
-            if (value != null) _videoId = null;
-        } 
+            if (value != null)
+            {
+                _videoId = null;
+            }
+        }
     }
+
     public Image? Image { get; set; }
 
     public int UserID { get; set; }
@@ -52,30 +61,38 @@ public class ContestEntry
     public bool IsWinner { get; set; }
 
     public DateTime SubmissionDate { get; set; }
-    
+
     // Helper property to get the media URL regardless of type
     [NotMapped]
     public string MediaUrl => Video?.VideoURL ?? Image?.ImageURL ?? string.Empty;
-    
+
     // Navigation property for votes
     public ICollection<Vote> Votes { get; set; } = new List<Vote>();
-    
+
     // Helper property to get or set the media type
     [NotMapped]
-    public string MediaType 
-    { 
+    public string MediaType
+    {
         get => VideoID != null ? "video" : "image";
-        set 
+        set
         {
             // When setting MediaType, clear the non-selected media type
             if (value == "video")
             {
-                if (VideoID == null) VideoID = string.Empty;
+                if (VideoID == null)
+                {
+                    VideoID = string.Empty;
+                }
+
                 ImageID = null;
             }
             else if (value == "image")
             {
-                if (ImageID == null) ImageID = string.Empty;
+                if (ImageID == null)
+                {
+                    ImageID = string.Empty;
+                }
+
                 VideoID = null;
             }
         }

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
@@ -71,13 +70,13 @@ public class AuthRepository : IAuthRepository
 
             // Update LastLoginTime using direct SQL
             var loginTime = DateTime.UtcNow;
-            
-            try 
+
+            try
             {
                 // Use direct SQL to update the LastLoginTime
                 await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"UPDATE \"Users\" SET \"LastLoginTime\" = {loginTime} WHERE \"UserID\" = {user.UserID}");
-                
+
                 // Update the user object in memory
                 user.LastLoginTime = loginTime;
             }
@@ -122,36 +121,17 @@ public class AuthRepository : IAuthRepository
             .SingleOrDefaultAsync(x => x.UserID == userId);
     }
 
-    private string CreatePasswordHash(string password)
-    {
-        return BCrypt.Net.BCrypt.HashPassword(password);
-    }
-
-    private bool VerifyPasswordHash(string password, string passwordHash)
-    {
-        return BCrypt.Net.BCrypt.Verify(password, passwordHash);
-    }
-
-    private async Task<string> GenerateUniqueUsername(string baseUsername)
-    {
-        string username = baseUsername;
-        int counter = 1;
-
-        while (await _context.Users.AnyAsync(u => u.Username == username))
-        {
-            username = $"{baseUsername}{counter++}";
-        }
-
-        return username;
-    }
-
     public async Task<string> GenerateOTP(string email)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) throw new Exception("User not found");
+        if (user == null)
+        {
+            throw new Exception("User not found");
+        }
 
         var otp = new Random().Next(100000, 999999).ToString();
-        var otpModel = new OTPs        {
+        var otpModel = new OTPs
+        {
             Email = email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
             CreatedAt = DateTime.UtcNow,
@@ -181,8 +161,8 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
-        
+        var isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+
         if (isValid)
         {
             otpModel.IsUsed = true;
@@ -198,7 +178,10 @@ public class AuthRepository : IAuthRepository
     public async Task<bool> ResetPassword(string email, string newPassword)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) return false;
+        if (user == null)
+        {
+            return false;
+        }
 
         // Check if new password is same as old password
         if (user.PasswordHash != null && BCrypt.Net.BCrypt.Verify(newPassword, user.PasswordHash))
@@ -220,7 +203,8 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        var otpModel = new OTPs        {
+        var otpModel = new OTPs
+        {
             Email = user.Email,
             OTPCode = BCrypt.Net.BCrypt.HashPassword(otp),
             CreatedAt = DateTime.UtcNow,
@@ -237,7 +221,10 @@ public class AuthRepository : IAuthRepository
     public async Task<bool> VerifyOTP(int userId, string otp)
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return false;
+        if (user == null)
+        {
+            return false;
+        }
 
         var otpModel = await _context.OTPs
             .Where(o => o.Email == user.Email && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
@@ -250,8 +237,8 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
-        
+        var isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+
         if (isValid)
         {
             otpModel.IsUsed = true;
@@ -283,16 +270,16 @@ public class AuthRepository : IAuthRepository
             return false;
         }
 
-        bool isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
-        
+        var isValid = BCrypt.Net.BCrypt.Verify(otp, otpModel.OTPCode);
+
         if (isValid)
         {
             // Mark OTP as used
             otpModel.IsUsed = true;
-            
+
             // Update user's verified status
             user.Verified = true;
-            
+
             await _context.SaveChangesAsync();
             _logger.LogInformation($"Email verified successfully for user: {email}");
             return true;
@@ -300,5 +287,25 @@ public class AuthRepository : IAuthRepository
 
         _logger.LogWarning($"Email verification failed for: {email}");
         return false;
+    }
+
+    private string CreatePasswordHash(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
+    private bool VerifyPasswordHash(string password, string passwordHash)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, passwordHash);
+    }
+
+    private async Task<string> GenerateUniqueUsername(string baseUsername)
+    {
+        var username = baseUsername;
+        var counter = 1;
+
+        while (await _context.Users.AnyAsync(u => u.Username == username)) username = $"{baseUsername}{counter++}";
+
+        return username;
     }
 }

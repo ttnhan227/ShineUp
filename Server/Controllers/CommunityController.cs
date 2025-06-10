@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Server.DTOs;
-using Server.Interfaces;
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.DTOs;
+using Server.Interfaces;
 using Server.Models;
+using System.Security.Claims;
 
 namespace Server.Controllers;
 
@@ -14,8 +14,8 @@ namespace Server.Controllers;
 public class CommunityController : ControllerBase
 {
     private readonly ICommunityRepository _communityRepository;
-    private readonly ILogger<CommunityController> _logger;
     private readonly DatabaseContext _db;
+    private readonly ILogger<CommunityController> _logger;
 
     public CommunityController(ICommunityRepository communityRepository, ILogger<CommunityController> logger,
         DatabaseContext db)
@@ -32,9 +32,9 @@ public class CommunityController : ControllerBase
             .Where(p => p.PrivacyID == 1 || p.PrivacyID == 3)
             .ToListAsync();
     }
-    
+
     /// <summary>
-    /// Lấy danh sách cộng đồng mà người dùng hiện tại là thành viên
+    ///     Lấy danh sách cộng đồng mà người dùng hiện tại là thành viên
     /// </summary>
     /// <returns>Danh sách cộng đồng</returns>
     [Authorize]
@@ -44,35 +44,36 @@ public class CommunityController : ControllerBase
         try
         {
             _logger.LogInformation("[DEBUG] GetUserCommunities endpoint called");
-            
+
             // Log all claims for debugging
             var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
             _logger.LogInformation($"[DEBUG] User claims: {string.Join(", ", claims)}");
-            
+
             // Get user ID from claims
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
                 _logger.LogError("[DEBUG] User ID claim not found or invalid");
                 return Unauthorized("User ID not found in token");
             }
-            
+
             _logger.LogInformation($"[DEBUG] Fetching communities for user ID: {userId}");
-            
+
             var communities = await _communityRepository.GetUserCommunitiesAsync(userId);
             _logger.LogInformation($"[DEBUG] Found {communities?.Count() ?? 0} communities for user {userId}");
-            
+
             return Ok(communities ?? new List<CommunityDTO>());
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"[DEBUG] Error in GetUserCommunities. Error: {ex.Message}");
-            return StatusCode(500, new { message = "An error occurred while retrieving your communities.", error = ex.Message });
+            return StatusCode(500,
+                new { message = "An error occurred while retrieving your communities.", error = ex.Message });
         }
     }
 
     /// <summary>
-    /// Lấy danh sách bài viết trong cộng đồng
+    ///     Lấy danh sách bài viết trong cộng đồng
     /// </summary>
     /// <param name="communityId">ID của cộng đồng</param>
     /// <returns>Danh sách bài viết</returns>
@@ -89,7 +90,7 @@ public class CommunityController : ControllerBase
             }
 
             var posts = await _communityRepository.GetCommunityPostsAsync(communityId, userId);
-            
+
             var postDtos = posts.Select(p => new PostListResponseDto
             {
                 PostID = p.PostID,
@@ -125,7 +126,7 @@ public class CommunityController : ControllerBase
         }
     }
 
-    
+
     /// Lấy thông tin chi tiết của một cộng đồng theo ID
     /// Bao gồm: thông tin cơ bản, danh sách thành viên, vai trò của user hiện tại
     [HttpGet("{communityId}")]
@@ -134,9 +135,9 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            int userId = 0; // Default to 0 for unauthenticated users
-            
-            try 
+            var userId = 0; // Default to 0 for unauthenticated users
+
+            try
             {
                 userId = GetUserId(); // Lấy userId từ token nếu có
             }
@@ -144,10 +145,12 @@ public class CommunityController : ControllerBase
             {
                 // User không đăng nhập, sử dụng userId = 0
             }
-            
+
             if (communityId <= 0)
+            {
                 return BadRequest("Invalid community ID.");
-                
+            }
+
             var community = await _communityRepository.GetCommunityDetailsAsync(communityId, userId);
             return Ok(community);
         }
@@ -173,7 +176,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            int userId = GetUserId();
+            var userId = GetUserId();
             var result = await _communityRepository.CreateCommunityAsync(dto, userId);
             return Ok(result);
         }
@@ -203,7 +206,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            int userId = GetUserId();
+            var userId = GetUserId();
             await _communityRepository.JoinCommunityAsync(communityId, userId);
             return NoContent();
         }
@@ -219,7 +222,7 @@ public class CommunityController : ControllerBase
     {
         try
         {
-            int userId = GetUserId();
+            var userId = GetUserId();
             await _communityRepository.LeaveCommunityAsync(communityId, userId);
             return NoContent();
         }
@@ -234,23 +237,29 @@ public class CommunityController : ControllerBase
     public async Task<IActionResult> TransferModerator(int communityId, [FromQuery] int newModeratorId)
     {
         if (communityId <= 0 || newModeratorId <= 0)
+        {
             return BadRequest("Invalid community or user ID");
+        }
 
         try
         {
-            int currentModeratorId = GetUserId();
-            
+            var currentModeratorId = GetUserId();
+
             // Verify current user is a member and moderator of the community
-            bool isMember = await _communityRepository.IsUserMemberAsync(communityId, currentModeratorId);
-            bool isModerator = await _communityRepository.IsUserModeratorAsync(communityId, currentModeratorId);
-            
+            var isMember = await _communityRepository.IsUserMemberAsync(communityId, currentModeratorId);
+            var isModerator = await _communityRepository.IsUserModeratorAsync(communityId, currentModeratorId);
+
             if (!isMember || !isModerator)
+            {
                 return Forbid("You don't have permission to perform this action");
+            }
 
             // Verify new moderator is a member of the community
-            bool isNewModeratorMember = await _communityRepository.IsUserMemberAsync(communityId, newModeratorId);
+            var isNewModeratorMember = await _communityRepository.IsUserMemberAsync(communityId, newModeratorId);
             if (!isNewModeratorMember)
+            {
                 return BadRequest("The specified user is not a member of this community");
+            }
 
             await _communityRepository.TransferModeratorAsync(communityId, currentModeratorId, newModeratorId);
             return NoContent();
@@ -265,7 +274,8 @@ public class CommunityController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid argument during moderator transfer for community {CommunityId}", communityId);
+            _logger.LogWarning(ex, "Invalid argument during moderator transfer for community {CommunityId}",
+                communityId);
             return BadRequest(ex.Message);
         }
         catch (Exception ex)
@@ -297,19 +307,19 @@ public class CommunityController : ControllerBase
         try
         {
             var userId = GetUserId();
-            
+
             // Check if user is Moderator of this community
             if (!await IsUserModeratorAsync(communityId, userId))
             {
                 return Forbid("You must be an Moderator to update this community.");
             }
-            
+
             // Ensure the community ID in the path matches the DTO
             if (communityId != dto.CommunityID)
             {
                 return BadRequest("Community ID in the path does not match the request body.");
             }
-            
+
             var result = await _communityRepository.UpdateCommunityAsync(communityId, dto, userId);
             return Ok(result);
         }
@@ -335,7 +345,7 @@ public class CommunityController : ControllerBase
         try
         {
             var requesterId = GetUserId();
-        
+
             // Sử dụng helper method để kiểm tra quyền Moderator
             if (!await IsUserModeratorAsync(communityId, requesterId))
             {
@@ -344,7 +354,7 @@ public class CommunityController : ControllerBase
                 {
                     return Forbid("Only Moderator can remove other members.");
                 }
-            
+
                 // Kiểm tra xem người bị xóa có phải Moderator không
                 if (await IsUserModeratorAsync(communityId, userId))
                 {
@@ -357,16 +367,14 @@ public class CommunityController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RemoveMember failed for communityId: {CommunityId}, userId: {UserId}", 
+            _logger.LogError(ex, "RemoveMember failed for communityId: {CommunityId}, userId: {UserId}",
                 communityId, userId);
             return BadRequest(new { error = ex.Message });
         }
     }
 
 
-
     /// Helper method để lấy vai trò của user trong cộng đồng
-  
     private async Task<string?> GetUserRoleAsync(int communityId, int userId)
     {
         var member = await _db.CommunityMembers.AsNoTracking()
@@ -376,7 +384,6 @@ public class CommunityController : ControllerBase
 
 
     /// Helper method kiểm tra xem user có phải là thành viên của cộng đồng không
-  
     private async Task<bool> IsUserMemberAsync(int communityId, int userId)
     {
         return await _db.CommunityMembers.AnyAsync(m => m.CommunityID == communityId && m.UserID == userId);
@@ -384,13 +391,14 @@ public class CommunityController : ControllerBase
 
 
     /// Helper method kiểm tra xem user có phải là Moderator của cộng đồng không
-    private int GetUserId() 
+    private int GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             throw new UnauthorizedAccessException("User is not authenticated or invalid user ID.");
         }
+
         return userId;
     }
 
@@ -402,7 +410,8 @@ public class CommunityController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking if user {UserId} is Moderator of community {CommunityId}", userId, communityId);
+            _logger.LogError(ex, "Error checking if user {UserId} is Moderator of community {CommunityId}", userId,
+                communityId);
             return false;
         }
     }

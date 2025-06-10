@@ -1,7 +1,6 @@
-namespace Client.Models
+namespace Client.Models;
+
+public class GoogleAuthViewModel
 {
-    public class GoogleAuthViewModel
-    {
-        public string IdToken { get; set; }
-    }
+    public string IdToken { get; set; }
 }

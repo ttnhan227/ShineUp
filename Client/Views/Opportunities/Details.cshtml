@@ -1,5 +1,5 @@
 @using System.Security.Claims
-@model Client.Models.OpportunityViewModel
+@model OpportunityViewModel
 @{
     ViewData["Title"] = Model.Title;
     var isOwner = User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier)?.Value == Model.PostedByUserId.ToString();
@@ -38,7 +38,8 @@
                             </div>
                         </div>
                         <div class="dropdown">
-                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="opportunityActions" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                                    id="opportunityActions" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-three-dots"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="opportunityActions">
@@ -52,9 +53,10 @@
                                     @if (Model.Status == OpportunityStatus.Open)
                                     {
                                         <li>
-                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus"
+                                                  asp-route-id="@Model.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
-                                                <input type="hidden" name="status" value="close" />
+                                                <input type="hidden" name="status" value="close"/>
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="bi bi-x-circle me-2"></i>Close
                                                 </button>
@@ -64,25 +66,29 @@
                                     else if (Model.Status == OpportunityStatus.Draft)
                                     {
                                         <li>
-                                            <form asp-controller="Opportunities" asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                            <form asp-controller="Opportunities" asp-action="UpdateStatus"
+                                                  asp-route-id="@Model.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
-                                                <input type="hidden" name="status" value="publish" />
+                                                <input type="hidden" name="status" value="publish"/>
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="bi bi-check-circle me-2"></i>Publish
                                                 </button>
                                             </form>
                                         </li>
                                     }
+
                                     <li>
                                         <form asp-action="Delete" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="dropdown-item text-danger" 
+                                            <button type="submit" class="dropdown-item text-danger"
                                                     onclick="return confirm('Are you sure you want to delete this opportunity?')">
                                                 <i class="bi bi-trash me-2"></i>Delete
                                             </button>
                                         </form>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
                                 }
                                 <li>
                                     <a class="dropdown-item" href="#">
@@ -96,7 +102,7 @@
                     <div class="mb-4">
                         <h5 class="mb-3">Opportunity Details</h5>
                         <div class="mb-3">@Html.Raw(Model.Description.Replace("\n", "<br/>"))</div>
-                        
+
                         @if (!string.IsNullOrEmpty(Model.TalentArea))
                         {
                             <div class="mb-3">
@@ -126,7 +132,7 @@
                             <div>Posted by <strong>@Model.PostedByUserName</strong></div>
                             <div>Posted on @Model.CreatedAt.ToString("MMMM d, yyyy")</div>
                         </div>
-                        
+
                         @if (User.Identity.IsAuthenticated)
                         {
                             if (isOwner)
@@ -148,14 +154,16 @@
                             }
                             else
                             {
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#applyModal">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                        data-bs-target="#applyModal">
                                     <i class="bi bi-send me-1"></i> Apply Now
                                 </button>
                             }
                         }
                         else
                         {
-                            <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">
+                            <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@Context.Request.Path"
+                               class="btn btn-primary">
                                 <i class="bi bi-box-arrow-in-right me-1"></i> Sign in to Apply
                             </a>
                         }
@@ -249,10 +257,11 @@
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
                         <label for="coverLetter" class="form-label">Cover Letter</label>
-                        <textarea class="form-control" id="coverLetter" name="CoverLetter" rows="6" required 
+                        <textarea class="form-control" id="coverLetter" name="CoverLetter" rows="6" required
                                   placeholder="Tell us why you're a good fit for this opportunity..."></textarea>
                         <div class="form-text">
-                            Include any relevant experience, skills, or other information that makes you a strong candidate.
+                            Include any relevant experience, skills, or other information that makes you a strong
+                            candidate.
                         </div>
                     </div>
                     <div class="form-check mb-3">

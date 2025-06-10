@@ -1,7 +1,7 @@
-@model Client.Models.EditPostViewModel
+@model EditPostViewModel
 
 @{
-ViewData["Title"] = "Edit Post";
+    ViewData["Title"] = "Edit Post";
 }
 
 <div class="main-content-container">
@@ -11,21 +11,23 @@ ViewData["Title"] = "Edit Post";
             <div class="post-creation-card mb-4">
                 <div class="post-creation-header">
                     <h5 class="mb-0">
-                        <i class='bx bx-edit me-2'></i>Edit Post
+                        <i class="bx bx-edit me-2"></i>Edit Post
                     </h5>
                 </div>
                 <div class="post-creation-body">
                     <form asp-action="Edit" method="post" enctype="multipart/form-data">
-                        <input type="hidden" asp-for="PostID" />
+                        <input type="hidden" asp-for="PostID"/>
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="form-group mb-3">
-                            <input asp-for="Title" class="form-control post-input" placeholder="Performance Title" required />
+                            <input asp-for="Title" class="form-control post-input" placeholder="Performance Title"
+                                   required/>
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
-                            <textarea asp-for="Content" class="form-control post-input" rows="5" placeholder="Share your talent story..."></textarea>
+                            <textarea asp-for="Content" class="form-control post-input" rows="5"
+                                      placeholder="Share your talent story..."></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
                         </div>
 
@@ -35,7 +37,8 @@ ViewData["Title"] = "Edit Post";
                                     <option value="">Select Category</option>
                                     @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                                     {
-                                    <option value="@category.Value" selected="@(category.Value == Model.CategoryID.ToString() ? "selected" : null)">@category.Text</option>
+                                        <option value="@category.Value"
+                                                selected="@(category.Value == Model.CategoryID.ToString() ? "selected" : null)">@category.Text</option>
                                     }
                                 </select>
                             </div>
@@ -47,7 +50,8 @@ ViewData["Title"] = "Edit Post";
                                 <select asp-for="PrivacyID" class="custom-select">
                                     @foreach (var privacy in ViewBag.PrivacyOptions ?? new List<SelectListItem>())
                                     {
-                                    <option value="@privacy.Value" selected="@(privacy.Value == Model.PrivacyID.ToString() ? "selected" : null)">@privacy.Text</option>
+                                        <option value="@privacy.Value"
+                                                selected="@(privacy.Value == Model.PrivacyID.ToString() ? "selected" : null)">@privacy.Text</option>
                                     }
                                 </select>
                             </div>
@@ -56,66 +60,73 @@ ViewData["Title"] = "Edit Post";
 
                         @if (Model.CurrentMediaFiles != null && Model.CurrentMediaFiles.Any())
                         {
-                        <div class="form-group mb-3 media-upload-group">
-                            <label class="control-label">
-                                <i class='bx bx-image me-1'></i>Current Media
-                            </label>
-                            <div class="media-grid">
-                                @if (Model.CurrentMediaFiles.Count == 1)
-                                {
-                                var media = Model.CurrentMediaFiles[0];
-                                <div class="media-item">
-                                    @if (media.Type == "image")
+                            <div class="form-group mb-3 media-upload-group">
+                                <label class="control-label">
+                                    <i class='bx bx-image me-1'></i>Current Media
+                                </label>
+                                <div class="media-grid">
+                                    @if (Model.CurrentMediaFiles.Count == 1)
                                     {
-                                    <img src="@media.Url" alt="Media" class="clickable-image" data-fullsize="@media.Url">
-                                    }
-                                    else if (media.Type == "video")
-                                    {
-                                    <video controls preload="metadata">
-                                        <source src="@media.Url" type="video/mp4">
-                                    </video>
-                                    }
-                                </div>
-                                }
-                                else
-                                {
-                                <div class="media-grid-container @(GetGridClass(Model.CurrentMediaFiles.Count))">
-                                    @foreach (var media in Model.CurrentMediaFiles.Take(4))
-                                    {
-                                    <div class="media-item">
-                                        @if (media.Type == "image")
-                                        {
-                                        <img src="@media.Url" alt="Media" class="clickable-image" data-fullsize="@media.Url">
-                                        }
-                                        else if (media.Type == "video")
-                                        {
-                                        <video controls preload="metadata">
-                                            <source src="@media.Url" type="video/mp4">
-                                        </video>
-                                        }
-                                        @if (Model.CurrentMediaFiles.Count > 4 && media == Model.CurrentMediaFiles.Skip(3).First())
-                                        {
-                                        <div class="media-overlay">
-                                            +@(Model.CurrentMediaFiles.Count - 4)
+                                        var media = Model.CurrentMediaFiles[0];
+                                        <div class="media-item">
+                                            @if (media.Type == "image")
+                                            {
+                                                <img src="@media.Url" alt="Media" class="clickable-image"
+                                                     data-fullsize="@media.Url">
+                                            }
+                                            else if (media.Type == "video")
+                                            {
+                                                <video controls preload="metadata">
+                                                    <source src="@media.Url" type="video/mp4">
+                                                </video>
+                                            }
                                         </div>
-                                        }
-                                    </div>
+                                    }
+                                    else
+                                    {
+                                        <div
+                                            class="media-grid-container @(GetGridClass(Model.CurrentMediaFiles.Count))">
+                                            @foreach (var media in Model.CurrentMediaFiles.Take(4))
+                                            {
+                                                <div class="media-item">
+                                                    @if (media.Type == "image")
+                                                    {
+                                                        <img src="@media.Url" alt="Media" class="clickable-image"
+                                                             data-fullsize="@media.Url">
+                                                    }
+                                                    else if (media.Type == "video")
+                                                    {
+                                                        <video controls preload="metadata">
+                                                            <source src="@media.Url" type="video/mp4">
+                                                        </video>
+                                                    }
+                                                    @if (Model.CurrentMediaFiles.Count > 4 && media == Model.CurrentMediaFiles.Skip(3).First())
+                                                    {
+                                                        <div class="media-overlay">
+                                                            +@(Model.CurrentMediaFiles.Count - 4)
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
                                     }
                                 </div>
-                                }
                             </div>
-                        </div>
                         }
 
                         <div class="form-group mb-3 media-upload-group">
                             <div class="d-flex gap-2">
-                                <label for="imagesInput" class="media-upload-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add photos">
-                                    <i class='bx bx-image'></i>
-                                    <input type="file" id="imagesInput" name="Images" class="d-none" multiple accept="image/*" />
+                                <label for="imagesInput" class="media-upload-btn" data-bs-toggle="tooltip"
+                                       data-bs-placement="bottom" title="Add photos">
+                                    <i class="bx bx-image"></i>
+                                    <input type="file" id="imagesInput" name="Images" class="d-none" multiple
+                                           accept="image/*"/>
                                 </label>
-                                <label for="videosInput" class="media-upload-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add videos">
-                                    <i class='bx bx-video'></i>
-                                    <input type="file" id="videosInput" name="Videos" class="d-none" multiple accept="video/*" />
+                                <label for="videosInput" class="media-upload-btn" data-bs-toggle="tooltip"
+                                       data-bs-placement="bottom" title="Add videos">
+                                    <i class="bx bx-video"></i>
+                                    <input type="file" id="videosInput" name="Videos" class="d-none" multiple
+                                           accept="video/*"/>
                                 </label>
                             </div>
                             <div id="mediaPreview" class="row g-2 mt-2"></div>
@@ -125,10 +136,10 @@ ViewData["Title"] = "Edit Post";
                             <div></div>
                             <div>
                                 <button type="submit" class="btn btn-primary rounded-pill px-4">
-                                    <i class='bx bx-save me-1'></i>Save Changes
+                                    <i class="bx bx-save me-1"></i>Save Changes
                                 </button>
                                 <a asp-action="Index" class="btn btn-secondary rounded-pill px-4">
-                                    <i class='bx bx-arrow-back me-1'></i>Back to List
+                                    <i class="bx bx-arrow-back me-1"></i>Back to List
                                 </a>
                             </div>
                         </div>
@@ -148,19 +159,20 @@ ViewData["Title"] = "Edit Post";
                 <div class="category-card">
                     <div class="category-header">
                         <h5 class="mb-0">
-                            <i class='bx bx-category me-2'></i> Talent Categories
+                            <i class="bx bx-category me-2"></i> Talent Categories
                         </h5>
                     </div>
                     <div class="category-list">
-                        <a href="@Url.Action("Index", "Posts")" class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
-                            <i class='bx bx-grid-alt'></i> All Performances
+                        <a href="@Url.Action("Index", "Posts")"
+                           class="category-item @(ViewBag.SelectedCategory == null ? "active" : "")">
+                            <i class="bx bx-grid-alt"></i> All Performances
                         </a>
                         @foreach (var category in ViewBag.Categories ?? new List<SelectListItem>())
                         {
-                        <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
-                           class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
-                            <i class='bx bx-category'></i> @category.Text
-                        </a>
+                            <a href="@Url.Action("CategoryPosts", "Posts", new { categoryId = category.Value })"
+                               class="category-item @(ViewBag.SelectedCategory?.ToString() == category.Value ? "active" : "")">
+                                <i class='bx bx-category'></i> @category.Text
+                            </a>
                         }
                     </div>
                 </div>
@@ -169,7 +181,7 @@ ViewData["Title"] = "Edit Post";
             <div class="trending-card">
                 <div class="trending-header">
                     <h5 class="mb-0">
-                        <i class='bx bx-trending-up me-2'></i> Trending Talents
+                        <i class="bx bx-trending-up me-2"></i> Trending Talents
                     </h5>
                 </div>
                 <div class="trending-list">
@@ -192,110 +204,112 @@ ViewData["Title"] = "Edit Post";
 </div>
 
 @section Scripts {
-@await Html.PartialAsync("_ValidationScriptsPartial")
-<script>
-    // Tooltip initialization
-    $(function () {
-        $('[data-bs-toggle="tooltip"]').tooltip();
-    });
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        // Tooltip initialization
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
 
-    // Preview selected images
-    document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
-        const previewContainer = document.createElement('div');
-        previewContainer.className = 'row g-2';
+        // Preview selected images
+        document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row g-2';
 
-        Array.from(e.target.files).forEach(file => {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-3';
-                    col.innerHTML = `
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3';
+                        col.innerHTML = `
                             <div class="media-item">
                                 <img src="${e.target.result}" style="height: 150px; object-fit: cover;">
                             </div>
                         `;
-                    previewContainer.appendChild(col);
-                };
-                reader.readAsDataURL(file);
+                        previewContainer.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const existingPreview = document.querySelector('#mediaPreview');
+            if (existingPreview) {
+                existingPreview.innerHTML = '';
+                existingPreview.appendChild(previewContainer);
             }
         });
 
-        const existingPreview = document.querySelector('#mediaPreview');
-        if (existingPreview) {
-            existingPreview.innerHTML = '';
-            existingPreview.appendChild(previewContainer);
-        }
-    });
+        // Preview selected videos
+        document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'row g-2';
 
-    // Preview selected videos
-    document.querySelector('input[name="Videos"]').addEventListener('change', function (e) {
-        const previewContainer = document.createElement('div');
-        previewContainer.className = 'row g-2';
-
-        Array.from(e.target.files).forEach(file => {
-            if (file.type.startsWith('video/')) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-6';
-                    col.innerHTML = `
+            Array.from(e.target.files).forEach(file => {
+                if (file.type.startsWith('video/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6';
+                        col.innerHTML = `
                             <div class="media-item">
                                 <video src="${e.target.result}" style="height: 200px; object-fit: cover;" controls></video>
                             </div>
                         `;
-                    previewContainer.appendChild(col);
-                };
-                reader.readAsDataURL(file);
+                        previewContainer.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const existingPreview = document.querySelector('#mediaPreview');
+            if (existingPreview) {
+                existingPreview.innerHTML = '';
+                existingPreview.appendChild(previewContainer);
             }
         });
 
-        const existingPreview = document.querySelector('#mediaPreview');
-        if (existingPreview) {
-            existingPreview.innerHTML = '';
-            existingPreview.appendChild(previewContainer);
-        }
-    });
+        // Image popup functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            const images = document.querySelectorAll('.clickable-image');
+            const popup = document.getElementById('imagePopup');
+            const popupImage = document.getElementById('popupImage');
+            const closeBtn = document.getElementById('closePopup');
 
-    // Image popup functionality
-    document.addEventListener('DOMContentLoaded', function () {
-        const images = document.querySelectorAll('.clickable-image');
-        const popup = document.getElementById('imagePopup');
-        const popupImage = document.getElementById('popupImage');
-        const closeBtn = document.getElementById('closePopup');
-
-        images.forEach(image => {
-            image.addEventListener('click', function (e) {
-                e.preventDefault();
-                popupImage.src = this.dataset.fullsize;
-                popup.style.display = 'flex';
+            images.forEach(image => {
+                image.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    popupImage.src = this.dataset.fullsize;
+                    popup.style.display = 'flex';
+                });
             });
-        });
 
-        closeBtn.addEventListener('click', function () {
-            popup.style.display = 'none';
-            popupImage.src = '';
-        });
-
-        popup.addEventListener('click', function (e) {
-            if (e.target === popup) {
+            closeBtn.addEventListener('click', function () {
                 popup.style.display = 'none';
                 popupImage.src = '';
-            }
+            });
+
+            popup.addEventListener('click', function (e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popupImage.src = '';
+                }
+            });
         });
-    });
-</script>
+    </script>
 }
 
 @functions {
-private string GetGridClass(int mediaCount)
-{
-return (mediaCount > 4 ? 4 : mediaCount) switch
-{
-2 => "grid-2",
-3 => "grid-3",
-4 => "grid-4",
-_ => "grid-4"
-};
-}
+
+    private string GetGridClass(int mediaCount)
+    {
+        return (mediaCount > 4 ? 4 : mediaCount) switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            4 => "grid-4",
+            _ => "grid-4"
+        };
+    }
+
 }

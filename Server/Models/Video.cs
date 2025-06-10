@@ -10,6 +10,7 @@ public class Video
 
     [ForeignKey("Post")]
     public int? PostID { get; set; }
+
     public Post? Post { get; set; }
 
     [ForeignKey("User")]
@@ -29,7 +30,7 @@ public class Video
     // New simple fields for talent discovery
     public int ViewCount { get; set; } = 0;
     public string SkillLevel { get; set; } = "Beginner"; // Beginner, Intermediate, Advanced
-    public string? Location { get; set; }  // Optional location
+    public string? Location { get; set; } // Optional location
 
     [ForeignKey("Privacy")] public int? PrivacyID { get; set; }
 

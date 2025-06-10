@@ -1,6 +1,4 @@
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Html
-@model Client.Models.ManageApplicationsViewModel
+@model ManageApplicationsViewModel
 @{
     ViewData["Title"] = $"Manage Applications - {Model.OpportunityTitle}";
 }
@@ -9,7 +7,8 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-action="Index">Opportunities</a></li>
-            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.OpportunityId">@Model.OpportunityTitle</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details"
+                                           asp-route-id="@Model.OpportunityId">@Model.OpportunityTitle</a></li>
             <li class="breadcrumb-item active" aria-current="page">Manage Applications</li>
         </ol>
     </nav>
@@ -31,7 +30,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    
+
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -53,117 +52,125 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
-                            <tr>
-                                <th>Applicant</th>
-                                <th>Applied On</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Applied On</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            @foreach (var application in Model.Applications.OrderByDescending(a => a.AppliedAt))
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            @if (!string.IsNullOrEmpty(application.User?.ProfileImageURL))
-                                            {
-                                                <img src="@application.User.ProfileImageURL" alt="@application.User.FullName" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                                            }
-                                            else
-                                            {
-                                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-person fs-5"></i>
-                                                </div>
-                                            }
-                                            <div>
-                                                <h6 class="mb-0">@(application.User?.FullName ?? application.UserName ?? "User")</h6>
-                                                @if (!string.IsNullOrEmpty(application.User?.Email))
-                                                {
-                                                    <small class="text-muted">@application.User.Email</small>
-                                                }
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>@application.AppliedAt.ToString("MMM d, yyyy")</td>
-                                    <td>
-                                        @{
-                                            var statusClass = application.Status switch
-                                            {
-                                                ApplicationStatus.Pending => "bg-warning text-dark",
-                                                ApplicationStatus.UnderReview => "bg-info",
-                                                ApplicationStatus.Shortlisted => "bg-primary",
-                                                ApplicationStatus.Accepted => "bg-success",
-                                                ApplicationStatus.Rejected => "bg-danger",
-                                                ApplicationStatus.Withdrawn => "bg-secondary",
-                                                _ => "bg-secondary"
-                                            };
+                        @foreach (var application in Model.Applications.OrderByDescending(a => a.AppliedAt))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(application.User?.ProfileImageURL))
+                                        {
+                                            <img src="@application.User.ProfileImageURL"
+                                                 alt="@application.User.FullName" class="rounded-circle me-2"
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
                                         }
-                                        <span class="badge @statusClass">@application.Status</span>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                                                    type="button" 
-                                                    data-bs-toggle="dropdown" 
-                                                    aria-expanded="false">
-                                                Update Status
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <a class="dropdown-item status-update" 
-                                                       href="#" 
-                                                       data-application-id="@application.ApplicationID" 
-                                                       data-status="@ApplicationStatus.Pending">
-                                                        <i class="bi bi-hourglass me-2 text-warning"></i> Set as Pending
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item status-update" 
-                                                       href="#" 
-                                                       data-application-id="@application.ApplicationID" 
-                                                       data-status="@ApplicationStatus.UnderReview">
-                                                        <i class="bi bi-search me-2 text-info"></i> Set as Under Review
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item status-update" 
-                                                       href="#" 
-                                                       data-application-id="@application.ApplicationID" 
-                                                       data-status="@ApplicationStatus.Shortlisted">
-                                                        <i class="bi bi-star-fill me-2 text-primary"></i> Shortlist
-                                                    </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item status-update text-success" 
-                                                       href="#" 
-                                                       data-application-id="@application.ApplicationID" 
-                                                       data-status="@ApplicationStatus.Accepted">
-                                                        <i class="bi bi-check-circle-fill me-2"></i> Accept Application
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item status-update text-danger" 
-                                                       href="#" 
-                                                       data-application-id="@application.ApplicationID" 
-                                                       data-status="@ApplicationStatus.Rejected">
-                                                        <i class="bi bi-x-circle-fill me-2"></i> Reject Application
-                                                    </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item" 
-                                                       asp-action="ApplicationDetails" 
-                                                       asp-route-id="@application.ApplicationID">
-                                                        <i class="bi bi-eye me-2"></i> View Details
-                                                    </a>
-                                                </li>
-                                            </ul>
+                                        else
+                                        {
+                                            <div
+                                                class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person fs-5"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <h6 class="mb-0">@(application.User?.FullName ?? application.UserName ?? "User")</h6>
+                                            @if (!string.IsNullOrEmpty(application.User?.Email))
+                                            {
+                                                <small class="text-muted">@application.User.Email</small>
+                                            }
                                         </div>
-                                    </td>
-                                </tr>
-                            }
+                                    </div>
+                                </td>
+                                <td>@application.AppliedAt.ToString("MMM d, yyyy")</td>
+                                <td>
+                                    @{
+                                        var statusClass = application.Status switch
+                                        {
+                                            ApplicationStatus.Pending => "bg-warning text-dark",
+                                            ApplicationStatus.UnderReview => "bg-info",
+                                            ApplicationStatus.Shortlisted => "bg-primary",
+                                            ApplicationStatus.Accepted => "bg-success",
+                                            ApplicationStatus.Rejected => "bg-danger",
+                                            ApplicationStatus.Withdrawn => "bg-secondary",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@application.Status</span>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                            Update Status
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item status-update"
+                                                   href="#"
+                                                   data-application-id="@application.ApplicationID"
+                                                   data-status="@ApplicationStatus.Pending">
+                                                    <i class="bi bi-hourglass me-2 text-warning"></i> Set as Pending
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item status-update"
+                                                   href="#"
+                                                   data-application-id="@application.ApplicationID"
+                                                   data-status="@ApplicationStatus.UnderReview">
+                                                    <i class="bi bi-search me-2 text-info"></i> Set as Under Review
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item status-update"
+                                                   href="#"
+                                                   data-application-id="@application.ApplicationID"
+                                                   data-status="@ApplicationStatus.Shortlisted">
+                                                    <i class="bi bi-star-fill me-2 text-primary"></i> Shortlist
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item status-update text-success"
+                                                   href="#"
+                                                   data-application-id="@application.ApplicationID"
+                                                   data-status="@ApplicationStatus.Accepted">
+                                                    <i class="bi bi-check-circle-fill me-2"></i> Accept Application
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item status-update text-danger"
+                                                   href="#"
+                                                   data-application-id="@application.ApplicationID"
+                                                   data-status="@ApplicationStatus.Rejected">
+                                                    <i class="bi bi-x-circle-fill me-2"></i> Reject Application
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item"
+                                                   asp-action="ApplicationDetails"
+                                                   asp-route-id="@application.ApplicationID">
+                                                    <i class="bi bi-eye me-2"></i> View Details
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                         </tbody>
                     </table>
                 </div>
@@ -183,16 +190,24 @@
                     <span class="badge mb-2"></span>
                 </div>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item view-application" href="#"><i class="bi bi-eye me-2"></i>View Details</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-success" href="#" data-status="Accepted"><i class="bi bi-check-circle me-2"></i>Accept</a></li>
-                        <li><a class="dropdown-item text-info" href="#" data-status="Shortlisted"><i class="bi bi-star me-2"></i>Shortlist</a></li>
-                        <li><a class="dropdown-item text-warning" href="#" data-status="UnderReview"><i class="bi bi-search me-2"></i>Mark as Under Review</a></li>
-                        <li><a class="dropdown-item text-danger" href="#" data-status="Rejected"><i class="bi bi-x-circle me-2"></i>Reject</a></li>
+                        <li><a class="dropdown-item view-application" href="#"><i class="bi bi-eye me-2"></i>View
+                                Details</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-success" href="#" data-status="Accepted"><i
+                                    class="bi bi-check-circle me-2"></i>Accept</a></li>
+                        <li><a class="dropdown-item text-info" href="#" data-status="Shortlisted"><i
+                                    class="bi bi-star me-2"></i>Shortlist</a></li>
+                        <li><a class="dropdown-item text-warning" href="#" data-status="UnderReview"><i
+                                    class="bi bi-search me-2"></i>Mark as Under Review</a></li>
+                        <li><a class="dropdown-item text-danger" href="#" data-status="Rejected"><i
+                                    class="bi bi-x-circle me-2"></i>Reject</a></li>
                     </ul>
                 </div>
             </div>
@@ -205,7 +220,8 @@
                         <textarea class="form-control form-control-sm" name="ReviewNotes" rows="2"></textarea>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-sm btn-outline-secondary me-2 cancel-update">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-2 cancel-update">Cancel
+                        </button>
                         <button type="submit" class="btn btn-sm btn-primary">Update Status</button>
                     </div>
                 </form>
@@ -215,7 +231,8 @@
 </div>
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true">
+<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -226,7 +243,7 @@
                 <div class="modal-body">
                     <input type="hidden" id="applicationId" name="id" value="">
                     <input type="hidden" id="newStatus" name="Status" value="">
-                    
+
                     <div class="mb-3">
                         <label for="reviewNotes" class="form-label">Notes (Optional)</label>
                         <textarea class="form-control" id="reviewNotes" name="ReviewNotes" rows="3"></textarea>
@@ -247,17 +264,17 @@
             cursor: move;
             transition: all 0.2s ease;
         }
-        
+
         .application-card:hover {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
             transform: translateY(-2px);
         }
-        
+
         .status-column {
             min-height: 100px;
             padding: 10px;
         }
-        
+
         .status-column.empty {
             display: flex;
             align-items: center;
@@ -270,22 +287,22 @@
             border: 2px dashed #dee2e6;
             border-radius: 0.25rem;
         }
-        
+
         .badge {
             font-size: 0.8em;
             font-weight: 500;
         }
-        
+
         .card-header {
             font-weight: 600;
         }
-        
+
         .dropdown-item i {
             width: 20px;
             text-align: center;
             margin-right: 8px;
         }
-        
+
         .application-notes {
             margin-top: 10px;
             padding-top: 10px;
@@ -296,50 +313,50 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Handle status update from dropdown
-            $('.status-update').on('click', function(e) {
+            $('.status-update').on('click', function (e) {
                 e.preventDefault();
-                
+
                 var applicationId = $(this).data('application-id');
                 var newStatus = $(this).data('status');
                 var applicantName = $(this).closest('tr').find('.fw-bold').text();
-                
+
                 // Set the application ID and status in the modal
                 $('#applicationId').val(applicationId);
                 $('#newStatus').val(newStatus);
                 $('#statusUpdateModalLabel').text('Update Status for ' + applicantName);
                 $('#reviewNotes').val('');
-                
+
                 // Show the modal
                 var modal = new bootstrap.Modal(document.getElementById('statusUpdateModal'));
                 modal.show();
             });
-            
+
             // Handle form submission
-            $('#statusUpdateForm').on('submit', function(e) {
+            $('#statusUpdateForm').on('submit', function (e) {
                 e.preventDefault();
-                
+
                 var applicationId = $('#applicationId').val();
                 var status = $('#newStatus').val();
                 var reviewNotes = $('#reviewNotes').val();
-                
+
                 // Show loading state
                 var submitBtn = $(this).find('button[type="submit"]');
                 var originalBtnText = submitBtn.html();
                 submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...');
-                
+
                 // Prepare the request data - ensure status is sent as a string
                 var requestData = {
                     status: status, // Keep as is (should be the enum string value)
                     reviewNotes: reviewNotes || '' // Ensure reviewNotes is not null
                 };
-                
+
                 console.log('Sending request data:', requestData); // Debug log
-                
+
                 // Get CSRF token
                 var token = $('input[name="__RequestVerificationToken"]').val();
-                
+
                 // Submit the form via AJAX
                 $.ajax({
                     url: '/Opportunities/UpdateApplicationStatus/' + @Model.OpportunityId + '/' + applicationId,
@@ -350,7 +367,7 @@
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
                         'Content-Type': 'application/json'
                     },
-                    success: function(response) {
+                    success: function (response) {
                         if (response && response.success) {
                             // Show success message and reload
                             alert(response.message || 'Application status updated successfully.');
@@ -362,9 +379,9 @@
                             window.location.reload();
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         var errorMessage = 'An error occurred while updating the application status.';
-                        
+
                         try {
                             // Try to parse the error response
                             if (xhr.responseText) {
@@ -381,14 +398,14 @@
                                 errorMessage = `Error ${xhr.status}: ${xhr.statusText}`;
                             }
                         }
-                        
+
                         console.error('Error updating application status:', errorMessage);
                         alert(errorMessage);
                     },
-                    complete: function() {
+                    complete: function () {
                         // Reset button state
                         submitBtn.prop('disabled', false).html(originalBtnText);
-                        
+
                         // Hide the modal
                         var modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
                         modal.hide();
@@ -401,7 +418,8 @@
 }
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel" aria-hidden="true">
+<div class="modal fade" id="statusUpdateModal" tabindex="-1" aria-labelledby="statusUpdateModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -413,10 +431,11 @@
                 <div class="modal-body">
                     <input type="hidden" id="applicationId" name="id" value="">
                     <input type="hidden" id="newStatus" name="Status" value="">
-                    
+
                     <div class="mb-3">
                         <label for="reviewNotes" class="form-label">Notes (Optional)</label>
-                        <textarea class="form-control" id="reviewNotes" name="ReviewNotes" rows="3" placeholder="Add any notes about this status update..."></textarea>
+                        <textarea class="form-control" id="reviewNotes" name="ReviewNotes" rows="3"
+                                  placeholder="Add any notes about this status update..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

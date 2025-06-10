@@ -1,5 +1,5 @@
-@model Client.Areas.Admin.Models.ApplicationDetailViewModel
 @using Client.Extensions
+@model ApplicationDetailViewModel
 @{
     ViewData["Title"] = "Application Details";
     ViewData["ActiveMenu"] = "OpportunityManagement";
@@ -11,14 +11,16 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">
-                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId" class="text-decoration-none text-dark">
-                            <i class='bx bx-arrow-back me-2'></i>
+                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId"
+                           class="text-decoration-none text-dark">
+                            <i class="bx bx-arrow-back me-2"></i>
                         </a>
                         Application Details
                     </h2>
                     <div>
-                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId" class="btn btn-outline-primary">
-                            <i class='bx bx-arrow-back'></i> Back to Applications
+                        <a asp-action="Applications" asp-route-id="@Model.OpportunityId"
+                           class="btn btn-outline-primary">
+                            <i class="bx bx-arrow-back"></i> Back to Applications
                         </a>
                     </div>
                 </div>
@@ -30,7 +32,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
-                    
+
                     <div class="row">
                         <div class="col-md-8">
                             <div class="card mb-4">
@@ -41,7 +43,8 @@
                                     <div class="row mb-4">
                                         <div class="col-md-3 text-center">
                                             <div class="avatar avatar-xxl mb-3">
-                                                <span class="avatar-initial rounded-circle bg-primary text-white display-4">
+                                                <span
+                                                    class="avatar-initial rounded-circle bg-primary text-white display-4">
                                                     @Model.ApplicantName?[0].ToString().ToUpper()
                                                 </span>
                                             </div>
@@ -66,13 +69,15 @@
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label text-muted small mb-1">Applied On</label>
+                                                        <label class="form-label text-muted small mb-1">Applied
+                                                            On</label>
                                                         <p class="mb-0">@Model.AppliedAt.ToString("f")</p>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label text-muted small mb-1">Last Updated</label>
+                                                        <label class="form-label text-muted small mb-1">Last
+                                                            Updated</label>
                                                         <p class="mb-0">@(Model.UpdatedAt?.ToString("f") ?? "-")</p>
                                                     </div>
                                                 </div>
@@ -86,7 +91,8 @@
                                                             <div class="mb-3">
                                                                 <label class="form-label text-muted small mb-1">Portfolio</label>
                                                                 <p class="mb-0">
-                                                                    <a href="@Model.PortfolioUrl" target="_blank" class="text-primary">View Portfolio</a>
+                                                                    <a href="@Model.PortfolioUrl" target="_blank"
+                                                                       class="text-primary">View Portfolio</a>
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -95,9 +101,11 @@
                                                     {
                                                         <div class="col-md-6">
                                                             <div class="mb-3">
-                                                                <label class="form-label text-muted small mb-1">LinkedIn</label>
+                                                                <label
+                                                                    class="form-label text-muted small mb-1">LinkedIn</label>
                                                                 <p class="mb-0">
-                                                                    <a href="@Model.LinkedInUrl" target="_blank" class="text-primary">View Profile</a>
+                                                                    <a href="@Model.LinkedInUrl" target="_blank"
+                                                                       class="text-primary">View Profile</a>
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -106,7 +114,7 @@
                                             }
                                         </div>
                                     </div>
-                                    
+
                                     @if (!string.IsNullOrEmpty(Model.CoverLetter))
                                     {
                                         <div class="mb-4">
@@ -116,24 +124,28 @@
                                             </div>
                                         </div>
                                     }
-                                    
+
                                     @if (Model.AdditionalQuestions != null && Model.AdditionalQuestions.Count > 0)
                                     {
                                         <div class="mb-4">
                                             <h5>Additional Questions</h5>
                                             <div class="accordion" id="questionsAccordion">
-                                                @for (int i = 0; i < Model.AdditionalQuestions.Count; i++)
+                                                @for (var i = 0; i < Model.AdditionalQuestions.Count; i++)
                                                 {
                                                     <div class="accordion-item">
                                                         <h2 class="accordion-header" id="heading@(i)">
-                                                            <button class="accordion-button @(i > 0 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" 
-                                                                    data-bs-target="#collapse@(i)" aria-expanded="@(i == 0 ? "true" : "false")" 
+                                                            <button class="accordion-button @(i > 0 ? "collapsed" : "")"
+                                                                    type="button" data-bs-toggle="collapse"
+                                                                    data-bs-target="#collapse@(i)"
+                                                                    aria-expanded="@(i == 0 ? "true" : "false")"
                                                                     aria-controls="collapse@(i)">
                                                                 @Model.AdditionalQuestions[i].Question
                                                             </button>
                                                         </h2>
-                                                        <div id="collapse@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")" 
-                                                             aria-labelledby="heading@(i)" data-bs-parent="#questionsAccordion">
+                                                        <div id="collapse@(i)"
+                                                             class="accordion-collapse collapse @(i == 0 ? "show" : "")"
+                                                             aria-labelledby="heading@(i)"
+                                                             data-bs-parent="#questionsAccordion">
                                                             <div class="accordion-body">
                                                                 @Model.AdditionalQuestions[i].Answer
                                                             </div>
@@ -145,7 +157,7 @@
                                     }
                                 </div>
                             </div>
-                            
+
                             @if (!string.IsNullOrEmpty(Model.ReviewNotes))
                             {
                                 <div class="card mb-4">
@@ -158,7 +170,7 @@
                                 </div>
                             }
                         </div>
-                        
+
                         <div class="col-md-4">
                             <div class="card mb-4">
                                 <div class="card-header bg-light">
@@ -168,50 +180,56 @@
                                     <h6>@Model.OpportunityTitle</h6>
                                     <p class="text-muted small mb-2">@Model.OpportunityType</p>
                                     <p class="mb-3">@Model.OpportunityDescription.Truncate(100)</p>
-                                    <a asp-action="Details" asp-route-id="@Model.OpportunityId" class="btn btn-sm btn-outline-primary">
+                                    <a asp-action="Details" asp-route-id="@Model.OpportunityId"
+                                       class="btn btn-sm btn-outline-primary">
                                         View Opportunity
                                     </a>
                                 </div>
                             </div>
-                            
+
                             <div class="card">
                                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Update Status</h5>
                                 </div>
                                 <div class="card-body">
-                                    <form asp-action="UpdateApplicationStatus" method="post" class="needs-validation" novalidate>
-                                        <input type="hidden" name="id" value="@Model.ApplicationId" />
-                                        <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
-                                        
+                                    <form asp-action="UpdateApplicationStatus" method="post" class="needs-validation"
+                                          novalidate>
+                                        <input type="hidden" name="id" value="@Model.ApplicationId"/>
+                                        <input type="hidden" name="opportunityId" value="@Model.OpportunityId"/>
+
                                         <div class="mb-3">
                                             <label for="status" class="form-label">Status</label>
                                             <select class="form-select" id="status" name="status" required>
                                                 @foreach (var status in Model.AvailableStatuses)
                                                 {
-                                                    <option value="@status" selected="@(status == Model.Status)">@status</option>
+                                                    <option value="@status"
+                                                            selected="@(status == Model.Status)">@status</option>
                                                 }
                                             </select>
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <label for="reviewNotes" class="form-label">Review Notes</label>
-                                            <textarea class="form-control" id="reviewNotes" name="reviewNotes" rows="4">@Model.ReviewNotes</textarea>
+                                            <textarea class="form-control" id="reviewNotes" name="reviewNotes"
+                                                      rows="4">@Model.ReviewNotes</textarea>
                                             <div class="form-text">Add or update notes about this application.</div>
                                         </div>
-                                        
+
                                         <button type="submit" class="btn btn-primary w-100">
-                                            <i class='bx bx-save me-1'></i> Update Status
+                                            <i class="bx bx-save me-1"></i> Update Status
                                         </button>
                                     </form>
-                                    
-                                    <hr class="my-4" />
-                                    
+
+                                    <hr class="my-4"/>
+
                                     <div class="d-grid gap-2">
-                                        <a href="mailto:@Model.Email?subject=Regarding your application for @Model.OpportunityTitle" class="btn btn-outline-primary">
-                                            <i class='bx bx-envelope me-1'></i> Email Applicant
+                                        <a href="mailto:@Model.Email?subject=Regarding your application for @Model.OpportunityTitle"
+                                           class="btn btn-outline-primary">
+                                            <i class="bx bx-envelope me-1"></i> Email Applicant
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                            <i class='bx bx-trash me-1'></i> Delete Application
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal">
+                                            <i class="bx bx-trash me-1"></i> Delete Application
                                         </button>
                                     </div>
                                 </div>
@@ -239,8 +257,8 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form asp-action="DeleteApplication" method="post" class="d-inline">
-                    <input type="hidden" name="id" value="@Model.ApplicationId" />
-                    <input type="hidden" name="opportunityId" value="@Model.OpportunityId" />
+                    <input type="hidden" name="id" value="@Model.ApplicationId"/>
+                    <input type="hidden" name="opportunityId" value="@Model.OpportunityId"/>
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </div>
@@ -261,6 +279,7 @@
 }
 
 @functions {
+
     string GetStatusBadgeClass(string status)
     {
         return status switch
@@ -274,6 +293,7 @@
             _ => "bg-secondary"
         };
     }
+
 }
 
 @* Using the StringExtensions from Client.Extensions namespace *@

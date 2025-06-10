@@ -18,11 +18,11 @@
                                 @(contest.IsActive ? "Active" : "Ended")
                             </span>
                         </div>
-                        
+
                         <p class="card-text text-muted mb-4">
                             @(contest.Description?.Length > 150 ? contest.Description.Substring(0, 150) + "..." : contest.Description)
                         </p>
-                        
+
                         <div class="mt-auto">
                             <div class="d-flex flex-column gap-2 mb-3">
                                 <div class="d-flex align-items-center">
@@ -38,9 +38,9 @@
                                     </small>
                                 </div>
                             </div>
-                            
+
                             <div class="d-grid">
-                                <a asp-action="Details" asp-route-id="@contest.ContestID" 
+                                <a asp-action="Details" asp-route-id="@contest.ContestID"
                                    class="btn btn-outline-primary">
                                     View Details
                                 </a>

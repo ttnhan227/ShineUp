@@ -1,4 +1,4 @@
-@model Client.Models.VerifyEmailViewModel
+@model VerifyEmailViewModel
 
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -10,7 +10,8 @@
                         <p class="text-muted">Please enter the verification code sent to your email: @Model.Email</p>
                         @if (TempData["VerificationMessage"] != null)
                         {
-                            <p class="alert alert-info mt-2">@TempData["VerificationMessage"] You can use the code previously sent or request a new one below.</p>
+                            <p class="alert alert-info mt-2">@TempData["VerificationMessage"] You can use the code
+                                previously sent or request a new one below.</p>
                         }
                     </div>
 
@@ -18,27 +19,28 @@
 
                     <form asp-controller="Auth" asp-action="VerifyEmail" method="post" class="verify-form">
                         @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="Email" />
-                        
+                        <input type="hidden" asp-for="Email"/>
+
                         <div class="form-group mb-4">
                             <label asp-for="OTP" class="form-label">
-                                <i class='bx bx-key'></i> Verification Code
+                                <i class="bx bx-key"></i> Verification Code
                             </label>
                             <div class="input-group">
-                                <input asp-for="OTP" class="form-control" placeholder="Enter verification code" required maxlength="6" />
+                                <input asp-for="OTP" class="form-control" placeholder="Enter verification code" required
+                                       maxlength="6"/>
                             </div>
                             <span asp-validation-for="OTP" class="text-danger"></span>
                         </div>
 
                         <div class="button-group">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-check'></i> Verify Email
+                                <i class="bx bx-check"></i> Verify Email
                             </button>
                             <button type="button" id="resendBtn" class="btn btn-outline-primary" onclick="resendCode()">
-                                <i class='bx bx-refresh'></i> Resend Code <span id="timer" class="d-none">(60s)</span>
+                                <i class="bx bx-refresh"></i> Resend Code <span id="timer" class="d-none">(60s)</span>
                             </button>
                             <a asp-controller="Auth" asp-action="Login" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to Login
+                                <i class="bx bx-arrow-back"></i> Back to Login
                             </a>
                         </div>
                     </form>
@@ -62,7 +64,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="redirectToLogin()">
-                    <i class='bx bx-check'></i> Continue
+                    <i class="bx bx-check"></i> Continue
                 </button>
             </div>
         </div>
@@ -77,19 +79,19 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
     <link href="~/css/auth.css" rel="stylesheet">
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         console.log('Debug: Script loaded');
         console.log('Debug: Email value:', '@Model.Email');
 
         // Add form submission handler
-        document.querySelector('.verify-form').addEventListener('submit', function(e) {
+        document.querySelector('.verify-form').addEventListener('submit', function (e) {
             console.log('Debug: Form submitted');
             console.log('Debug: OTP value:', document.querySelector('input[name="OTP"]').value);
             console.log('Debug: Email value:', document.querySelector('input[name="Email"]').value);
-            
+
             e.preventDefault();
             showLoading('Verifying email...');
 
@@ -123,7 +125,7 @@
             timerId = setInterval(() => {
                 countdown--;
                 timerSpan.textContent = `(${countdown}s)`;
-                
+
                 if (countdown <= 0) {
                     clearInterval(timerId);
                     btn.disabled = false;
@@ -135,9 +137,9 @@
         function resendCode() {
             console.log('Debug: Resending code');
             console.log('Debug: Email for resend:', '@Model.Email');
-            
+
             showLoading('Resending verification code...');
-            
+
             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
             console.log('Debug: Anti-forgery token:', token);
 
@@ -147,27 +149,27 @@
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
-                body: JSON.stringify({ email: '@Model.Email' })
+                body: JSON.stringify({email: '@Model.Email'})
             })
-            .then(response => {
-                console.log('Debug: Resend response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Debug: Resend response data:', data);
-                document.getElementById('loadingOverlay').classList.add('d-none');
-                if (data.success) {
-                    toastr.success('New verification code has been sent to your email');
-                    startTimer();
-                } else {
-                    toastr.error(data.message || 'Failed to resend verification code');
-                }
-            })
-            .catch(error => {
-                console.error('Debug: Resend error:', error);
-                document.getElementById('loadingOverlay').classList.add('d-none');
-                toastr.error('Failed to resend verification code');
-            });
+                .then(response => {
+                    console.log('Debug: Resend response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Debug: Resend response data:', data);
+                    document.getElementById('loadingOverlay').classList.add('d-none');
+                    if (data.success) {
+                        toastr.success('New verification code has been sent to your email');
+                        startTimer();
+                    } else {
+                        toastr.error(data.message || 'Failed to resend verification code');
+                    }
+                })
+                .catch(error => {
+                    console.error('Debug: Resend error:', error);
+                    document.getElementById('loadingOverlay').classList.add('d-none');
+                    toastr.error('Failed to resend verification code');
+                });
         }
 
         // Start timer if coming back from a resend

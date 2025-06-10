@@ -11,8 +11,8 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class LikesController : ControllerBase
 {
-    private readonly IPostRepository _postRepository;
     private readonly ILogger<LikesController> _logger;
+    private readonly IPostRepository _postRepository;
 
     public LikesController(
         IPostRepository postRepository,
@@ -24,13 +24,15 @@ public class LikesController : ControllerBase
 
     // GET: api/likes/post/5
     [HttpGet("post/{postId}")]
-    [AllowAnonymous]  // Allow anonymous access to see likes
+    [AllowAnonymous] // Allow anonymous access to see likes
     public async Task<ActionResult<IEnumerable<LikeDTO>>> GetLikesForPost(int postId)
     {
         try
         {
             if (!await _postRepository.PostExistsAsync(postId))
+            {
                 return NotFound("Post not found");
+            }
 
             var likes = await _postRepository.GetLikesForPostAsync(postId);
             var likeDtos = likes.Select(l => new LikeDTO
@@ -55,13 +57,15 @@ public class LikesController : ControllerBase
 
     // GET: api/likes/post/5/count
     [HttpGet("post/{postId}/count")]
-    [AllowAnonymous]  // Allow anonymous access to see like counts
+    [AllowAnonymous] // Allow anonymous access to see like counts
     public async Task<ActionResult<int>> GetLikeCountForPost(int postId)
     {
         try
         {
             if (!await _postRepository.PostExistsAsync(postId))
+            {
                 return NotFound("Post not found");
+            }
 
             var count = await _postRepository.GetPostLikesCountAsync(postId);
             return Ok(count);
@@ -72,7 +76,7 @@ public class LikesController : ControllerBase
             return StatusCode(500, "Internal server error while retrieving like count");
         }
     }
-    
+
     // GET: api/likes/post/5/status
     [Authorize] // Keep this endpoint authenticated
     [HttpGet("post/{postId}/status")]
@@ -81,11 +85,13 @@ public class LikesController : ControllerBase
         try
         {
             if (!await _postRepository.PostExistsAsync(postId))
+            {
                 return NotFound("Post not found");
-                
+            }
+
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             var hasLiked = await _postRepository.HasUserLikedPostAsync(postId, userId);
-            
+
             return Ok(hasLiked);
         }
         catch (Exception ex)
@@ -103,13 +109,19 @@ public class LikesController : ControllerBase
         try
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             if (createLikeDto.PostID == null && createLikeDto.VideoID == null)
+            {
                 return BadRequest("Either PostID or VideoID must be provided");
+            }
 
             if (createLikeDto.PostID != null && !await _postRepository.PostExistsAsync(createLikeDto.PostID.Value))
+            {
                 return NotFound("Post not found");
+            }
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -118,52 +130,50 @@ public class LikesController : ControllerBase
             if (createLikeDto.PostID.HasValue)
             {
                 hasLiked = await _postRepository.HasUserLikedPostAsync(createLikeDto.PostID.Value, userId);
-                
+
                 if (hasLiked)
                 {
                     // Unlike the post
                     var success = await _postRepository.UnlikePostAsync(createLikeDto.PostID.Value, userId);
                     if (!success)
+                    {
                         return NotFound("Like not found");
+                    }
 
                     return NoContent();
                 }
-                else
+
+                // Like the post
+                var like = new Like
                 {
-                    // Like the post
-                    var like = new Like
-                    {
-                        PostID = createLikeDto.PostID,
-                        VideoID = createLikeDto.VideoID,
-                        UserID = userId,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    PostID = createLikeDto.PostID,
+                    VideoID = createLikeDto.VideoID,
+                    UserID = userId,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-                    var createdLike = await _postRepository.LikePostAsync(like);
-                    
-                    // Get the like with user data
-                    var likes = await _postRepository.GetLikesForPostAsync(createdLike.PostID.Value);
-                    var createdLikeWithUser = likes.FirstOrDefault(l => l.LikeID == createdLike.LikeID);
-                    
-                    var likeDto = new LikeDTO
-                    {
-                        LikeID = createdLikeWithUser.LikeID,
-                        PostID = createdLikeWithUser.PostID,
-                        VideoID = createdLikeWithUser.VideoID,
-                        UserID = createdLikeWithUser.UserID,
-                        Username = createdLikeWithUser.User?.Username ?? "Unknown",
-                        ProfileImageURL = createdLikeWithUser.User?.ProfileImageURL,
-                        CreatedAt = createdLikeWithUser.CreatedAt
-                    };
+                var createdLike = await _postRepository.LikePostAsync(like);
 
-                    return Ok(likeDto);
-                }
+                // Get the like with user data
+                var likes = await _postRepository.GetLikesForPostAsync(createdLike.PostID.Value);
+                var createdLikeWithUser = likes.FirstOrDefault(l => l.LikeID == createdLike.LikeID);
+
+                var likeDto = new LikeDTO
+                {
+                    LikeID = createdLikeWithUser.LikeID,
+                    PostID = createdLikeWithUser.PostID,
+                    VideoID = createdLikeWithUser.VideoID,
+                    UserID = createdLikeWithUser.UserID,
+                    Username = createdLikeWithUser.User?.Username ?? "Unknown",
+                    ProfileImageURL = createdLikeWithUser.User?.ProfileImageURL,
+                    CreatedAt = createdLikeWithUser.CreatedAt
+                };
+
+                return Ok(likeDto);
             }
-            else
-            {
-                // Handle video likes (if needed)
-                return BadRequest("Video likes are not implemented yet");
-            }
+
+            // Handle video likes (if needed)
+            return BadRequest("Video likes are not implemented yet");
         }
         catch (Exception ex)
         {
@@ -171,6 +181,4 @@ public class LikesController : ControllerBase
             return StatusCode(500, "Internal server error while toggling like");
         }
     }
-
-
 }

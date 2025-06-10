@@ -1,23 +1,21 @@
-using Microsoft.AspNetCore.Mvc;
 using Client.Models;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 
 namespace Client.Controllers;
 
 public class ContestsController : Controller
 {
     private readonly IHttpClientFactory _clientFactory;
-    private readonly ILogger<ContestsController> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<ContestsController> _logger;
 
     public ContestsController(
-        IHttpClientFactory clientFactory, 
+        IHttpClientFactory clientFactory,
         ILogger<ContestsController> logger,
         IHttpContextAccessor httpContextAccessor)
     {
@@ -25,13 +23,13 @@ public class ContestsController : Controller
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
     }
-    
+
     private HttpClient CreateAuthenticatedClient()
     {
         var client = _clientFactory.CreateClient("API");
-        
+
         var token = HttpContext.Request.Cookies["auth_token"];
-        
+
         if (string.IsNullOrEmpty(token) && User.Identity is ClaimsIdentity identity)
         {
             var jwtClaim = identity.FindFirst("JWT");
@@ -57,13 +55,13 @@ public class ContestsController : Controller
             var client = _clientFactory.CreateClient("API");
             // First try to get token from cookie
             var token = HttpContext.Request.Cookies["auth_token"];
-            
+
             // If not found in cookie, try to get from claims
             if (string.IsNullOrEmpty(token) && User.Identity.IsAuthenticated)
             {
                 token = User.FindFirst("JWT")?.Value;
             }
-            
+
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -101,7 +99,8 @@ public class ContestsController : Controller
             var contestResponse = await client.GetAsync($"api/Contests/{id}");
             if (!contestResponse.IsSuccessStatusCode)
             {
-                _logger.LogError("Failed to get contest {ContestId}. Status: {StatusCode}", id, contestResponse.StatusCode);
+                _logger.LogError("Failed to get contest {ContestId}. Status: {StatusCode}", id,
+                    contestResponse.StatusCode);
                 return NotFound();
             }
 
@@ -113,9 +112,9 @@ public class ContestsController : Controller
             var entriesResponse = await client.GetAsync($"api/ContestEntries/contest/{id}");
             var entries = entriesResponse.IsSuccessStatusCode
                 ? await entriesResponse.Content.ReadFromJsonAsync<List<ContestEntryViewModel>>(new JsonSerializerOptions
-                  {
-                      PropertyNameCaseInsensitive = true
-                  })
+                {
+                    PropertyNameCaseInsensitive = true
+                })
                 : new List<ContestEntryViewModel>();
 
             ViewBag.Entries = entries;
@@ -133,12 +132,14 @@ public class ContestsController : Controller
     {
         try
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new InvalidOperationException("User ID claim missing"));
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                                   throw new InvalidOperationException("User ID claim missing"));
             var client = CreateAuthenticatedClient();
             if (client.DefaultRequestHeaders.Authorization == null)
             {
                 _logger.LogWarning("JWT token missing for contest submission");
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id }) });
+                return RedirectToAction("Login", "Auth",
+                    new { returnUrl = Url.Action("Submit", "Contests", new { id }) });
             }
 
             var checkResponse = await client.GetAsync($"api/ContestEntries/user/{userId}/contest/{id}");
@@ -157,9 +158,9 @@ public class ContestsController : Controller
                 return View("Error");
             }
 
-            var model = new SubmitContestEntryViewModel 
-            { 
-                ContestID = id, 
+            var model = new SubmitContestEntryViewModel
+            {
+                ContestID = id,
                 UserID = userId,
                 MediaType = "video" // Default to video
             };
@@ -197,12 +198,14 @@ public class ContestsController : Controller
             if (client.DefaultRequestHeaders.Authorization == null)
             {
                 _logger.LogWarning("JWT token missing for contest submission");
-                return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
+                return RedirectToAction("Login", "Auth",
+                    new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
             }
 
             // Log the start of file upload
-            _logger.LogInformation("Starting file upload for contest {ContestId}, file: {FileName}, size: {FileSize} bytes", 
-                model.ContestID, 
+            _logger.LogInformation(
+                "Starting file upload for contest {ContestId}, file: {FileName}, size: {FileSize} bytes",
+                model.ContestID,
                 model.MediaType == "video" ? model.VideoFile?.FileName : model.ImageFile?.FileName,
                 model.MediaType == "video" ? model.VideoFile?.Length : model.ImageFile?.Length);
 
@@ -216,84 +219,81 @@ public class ContestsController : Controller
                 { new StringContent(model.Title ?? string.Empty), "Title" },
                 { new StringContent(model.Description ?? string.Empty), "Description" }
             };
-            
+
             try
             {
                 // Add the appropriate file
-                IFormFile fileToUpload = model.MediaType == "video" ? model.VideoFile! : model.ImageFile!;
-                
+                var fileToUpload = model.MediaType == "video" ? model.VideoFile! : model.ImageFile!;
+
                 using var fileStream = fileToUpload.OpenReadStream();
                 var fileContent = new StreamContent(fileStream);
                 fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(fileToUpload.ContentType);
-                
+
                 // Use a sanitized filename
                 var fileName = Path.GetFileName(fileToUpload.FileName);
                 formData.Add(fileContent, "file", fileName);
-                
+
                 // Log before sending the request
                 _logger.LogDebug("Sending file upload request to API");
-                
+
                 // Send the request to the API with a timeout
                 var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)); // 10 minute timeout
                 var response = await client.PostAsync("api/ContestEntries/upload", formData, cts.Token);
-                
+
                 // Log the response status
                 _logger.LogInformation("API response status: {StatusCode}", response.StatusCode);
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogInformation("Contest entry submitted successfully for contest {ContestId}", model.ContestID);
-                    
+                    _logger.LogInformation("Contest entry submitted successfully for contest {ContestId}",
+                        model.ContestID);
+
                     TempData["SuccessMessage"] = "Your entry has been submitted successfully!";
                     return RedirectToAction("Details", new { id = model.ContestID });
                 }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to submit contest entry. Status: {StatusCode}, Response: {Response}",
+                    response.StatusCode, errorContent);
+
+                ModelState.AddModelError("", "An error occurred while submitting your entry. Please try again.");
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return RedirectToAction("Login", "Auth",
+                        new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
+                }
+
+                // Handle specific error cases
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    try
+                    {
+                        var errorObj = JsonDocument.Parse(errorContent);
+                        if (errorObj.RootElement.TryGetProperty("errors", out var errors))
+                        {
+                            foreach (var error in errors.EnumerateObject())
+                            foreach (var errorMessage in error.Value.EnumerateArray())
+                                ModelState.AddModelError(error.Name, errorMessage.GetString());
+                        }
+                        else if (errorObj.RootElement.TryGetProperty("title", out var title))
+                        {
+                            ModelState.AddModelError("", title.GetString());
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "An error occurred while submitting the entry.");
+                        }
+                    }
+                    catch
+                    {
+                        ModelState.AddModelError("", errorContent);
+                    }
+                }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("Failed to submit contest entry. Status: {StatusCode}, Response: {Response}", 
-                        response.StatusCode, errorContent);
-                    
-                    ModelState.AddModelError("", "An error occurred while submitting your entry. Please try again.");
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        return RedirectToAction("Login", "Auth", new { returnUrl = Url.Action("Submit", "Contests", new { id = model.ContestID }) });
-                    }
-
-                    // Handle specific error cases
-                    if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                    {
-                        try
-                        {
-                            var errorObj = JsonDocument.Parse(errorContent, new JsonDocumentOptions());
-                            if (errorObj.RootElement.TryGetProperty("errors", out var errors))
-                            {
-                                foreach (var error in errors.EnumerateObject())
-                                {
-                                    foreach (var errorMessage in error.Value.EnumerateArray())
-                                    {
-                                        ModelState.AddModelError(error.Name, errorMessage.GetString());
-                                    }
-                                }
-                            }
-                            else if (errorObj.RootElement.TryGetProperty("title", out var title))
-                            {
-                                ModelState.AddModelError("", title.GetString());
-                            }
-                            else
-                            {
-                                ModelState.AddModelError("", "An error occurred while submitting the entry.");
-                            }
-                        }
-                        catch
-                        {
-                            ModelState.AddModelError("", errorContent);
-                        }
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "An error occurred while submitting the entry. Please try again later.");
-                    }
+                    ModelState.AddModelError("",
+                        "An error occurred while submitting the entry. Please try again later.");
                 }
             }
             catch (OperationCanceledException ex)
@@ -306,6 +306,7 @@ public class ContestsController : Controller
                 _logger.LogError(ex, "Error uploading file for contest {ContestId}", model.ContestID);
                 ModelState.AddModelError("", "An error occurred while uploading your file. Please try again.");
             }
+
             return View(model);
         }
         catch (Exception ex)

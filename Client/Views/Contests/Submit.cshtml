@@ -24,10 +24,11 @@
 
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
-                    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        <input type="hidden" asp-for="ContestID" />
-                        <input type="hidden" asp-for="UserID" />
-                        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video" />
+                    <form asp-action="Submit" method="post" id="entryForm" enctype="multipart/form-data"
+                          class="needs-validation" novalidate>
+                        <input type="hidden" asp-for="ContestID"/>
+                        <input type="hidden" asp-for="UserID"/>
+                        <input type="hidden" asp-for="MediaType" id="mediaTypeInput" value="video"/>
 
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger">
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -45,16 +46,20 @@
                             <div class="ps-4">
                                 <div class="mb-3">
                                     <label asp-for="Title" class="form-label fw-medium">Title <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" asp-for="Title" placeholder="Enter a title for your entry" required>
+                                    <input type="text" class="form-control" asp-for="Title"
+                                           placeholder="Enter a title for your entry" required>
                                     <span asp-validation-for="Title" class="text-danger small d-block mt-1"></span>
                                 </div>
                                 <div class="mb-0">
                                     <label asp-for="Description" class="form-label fw-medium">Description</label>
-                                    <textarea class="form-control" asp-for="Description" rows="4" placeholder="Tell us about your entry (optional)" style="resize: none;"></textarea>
+                                    <textarea class="form-control" asp-for="Description" rows="4"
+                                              placeholder="Tell us about your entry (optional)"
+                                              style="resize: none;"></textarea>
                                     <div class="form-text text-end small">
                                         <span id="charCount">0</span>/500 characters
                                     </div>
-                                    <span asp-validation-for="Description" class="text-danger small d-block mt-1"></span>
+                                    <span asp-validation-for="Description"
+                                          class="text-danger small d-block mt-1"></span>
                                 </div>
                             </div>
                         </div>
@@ -71,14 +76,16 @@
                                 <ul class="nav nav-tabs nav-fill border-bottom mb-3" id="mediaTabs" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active" id="video-tab" data-bs-toggle="tab"
-                                                data-bs-target="#videoTab" type="button" role="tab" aria-controls="video"
+                                                data-bs-target="#videoTab" type="button" role="tab"
+                                                aria-controls="video"
                                                 aria-selected="true" onclick="setMediaType('video')">
                                             <i class="bi bi-camera-video me-2"></i> Video Entry
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="image-tab" data-bs-toggle="tab"
-                                                data-bs-target="#imageTab" type="button" role="tab" aria-controls="image"
+                                                data-bs-target="#imageTab" type="button" role="tab"
+                                                aria-controls="image"
                                                 aria-selected="false" onclick="setMediaType('image')">
                                             <i class="bi bi-image me-2"></i> Image Entry
                                         </button>
@@ -87,11 +94,15 @@
 
                                 <div class="tab-content" id="mediaTabContent">
                                     <!-- Video Tab -->
-                                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel" aria-labelledby="video-tab">
+                                    <div class="tab-pane fade show active" id="videoTab" role="tabpanel"
+                                         aria-labelledby="video-tab">
                                         <div class="mb-3">
-                                            <label asp-for="VideoFile" class="form-label">Video File <span class="text-danger">*</span></label>
-                                            <input type="file" class="form-control" asp-for="VideoFile" accept="video/*" id="videoFileInput">
-                                            <span asp-validation-for="VideoFile" class="text-danger small d-block mt-1"></span>
+                                            <label asp-for="VideoFile" class="form-label">Video File <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="file" class="form-control" asp-for="VideoFile" accept="video/*"
+                                                   id="videoFileInput">
+                                            <span asp-validation-for="VideoFile"
+                                                  class="text-danger small d-block mt-1"></span>
                                             <div class="form-text small text-muted">
                                                 Supported formats: .mp4, .webm, .mov (Max 50MB)
                                             </div>
@@ -103,11 +114,15 @@
                                     </div>
 
                                     <!-- Image Tab -->
-                                    <div class="tab-pane fade" id="imageTab" role="tabpanel" aria-labelledby="image-tab">
+                                    <div class="tab-pane fade" id="imageTab" role="tabpanel"
+                                         aria-labelledby="image-tab">
                                         <div class="mb-3">
-                                            <label asp-for="ImageFile" class="form-label">Image File <span class="text-danger">*</span></label>
-                                            <input type="file" class="form-control" asp-for="ImageFile" accept="image/*" id="imageFileInput">
-                                            <span asp-validation-for="ImageFile" class="text-danger small d-block mt-1"></span>
+                                            <label asp-for="ImageFile" class="form-label">Image File <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="file" class="form-control" asp-for="ImageFile" accept="image/*"
+                                                   id="imageFileInput">
+                                            <span asp-validation-for="ImageFile"
+                                                  class="text-danger small d-block mt-1"></span>
                                             <div class="form-text small text-muted">
                                                 Supported formats: .jpg, .jpeg, .png, .gif (Max 10MB)
                                             </div>
@@ -173,9 +188,9 @@
             color: #495057;
         }
 
-            .nav-tabs .nav-link.active {
-                font-weight: 600;
-            }
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+        }
     </style>
 }
 

@@ -1,17 +1,18 @@
-@model IEnumerable<Client.Models.OpportunityViewModel>
+@model IEnumerable<OpportunityViewModel>
 @{
-    ViewData["Title"] = "Opportunities";
-    var categoryId = ViewContext.RouteData.Values["id"]?.ToString() ?? 
-                   Context.Request.Query["categoryId"].ToString();
-    var categories = ViewBag.Categories as List<CategoryViewModel> ?? new List<CategoryViewModel>();
-    var categoryName = categories.FirstOrDefault(c => c.CategoryID.ToString() == categoryId)?.CategoryName;
+ViewData["Title"] = "Opportunities";
+var categoryId = ViewContext.RouteData.Values["id"]?.ToString() ??
+                 Context.Request.Query["categoryId"].ToString();
+var categories = ViewBag.Categories as List<CategoryViewModel> ?? new List<CategoryViewModel>();
+var categoryName = categories.FirstOrDefault(c => c.CategoryID.ToString() == categoryId)?.CategoryName;
 }
 
 <main class="opportunities-page">
     <div class="container">
         <!-- Page Header -->
         <header class="page-header">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+            <div
+                class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
                 <div class="mb-3 mb-md-0">
                     <h1 class="page-title">
                         @(categoryId != null ? $"{categoryName ?? "Category"} Opportunities" : "All Opportunities")
@@ -51,13 +52,13 @@
                         <div class="mb-4">
                             <h3 class="h6 mb-3">Categories</h3>
                             <div class="nav flex-column nav-pills">
-                                <a asp-action="Index" asp-route-id="" 
+                                <a asp-action="Index" asp-route-id=""
                                    class="nav-link @(string.IsNullOrEmpty(categoryId) ? "active" : "")">
                                     <i class="bi bi-grid me-2"></i>All Opportunities
                                 </a>
                                 @foreach (var category in categories)
                                 {
-                                    <a asp-action="Index" asp-route-id="@category.CategoryID" 
+                                    <a asp-action="Index" asp-route-id="@category.CategoryID"
                                        class="nav-link @(categoryId == category.CategoryID.ToString() ? "active" : "")">
                                         <i class="bi bi-tag me-2"></i>@category.CategoryName
                                     </a>
@@ -77,8 +78,8 @@
                             <i class="bi bi-inbox display-4 text-muted mb-3"></i>
                             <h3 class="h5 mb-3">No opportunities found</h3>
                             <p class="text-muted mb-4">
-                                @(string.IsNullOrEmpty(categoryId) 
-                                    ? "There are currently no opportunities available. Check back later or post a new opportunity." 
+                                @(string.IsNullOrEmpty(categoryId)
+                                    ? "There are currently no opportunities available. Check back later or post a new opportunity."
                                     : "No opportunities found in this category. Try another category or check back later.")
                             </p>
                             @if (User.Identity.IsAuthenticated)
@@ -107,11 +108,13 @@
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <h2 class="h5 mb-1">
-                                                        <a asp-action="Details" asp-route-id="@opportunity.Id" class="text-decoration-none text-dark hover-primary">
+                                                        <a asp-action="Details" asp-route-id="@opportunity.Id"
+                                                           class="text-decoration-none text-dark hover-primary">
                                                             @opportunity.Title
                                                         </a>
                                                     </h2>
-                                                    <div class="d-flex flex-wrap align-items-center text-muted small mb-2">
+                                                    <div
+                                                        class="d-flex flex-wrap align-items-center text-muted small mb-2">
                                                         <span class="me-3">
                                                             <i class="bi @(opportunity.IsRemote ? "bi-globe" : "bi-geo-alt") me-1"></i>
                                                             @(opportunity.IsRemote ? "Remote" : opportunity.Location)
@@ -154,7 +157,8 @@
                                                     </div>
                                                 }
                                                 <div class="mt-auto text-md-end">
-                                                    <a asp-action="Details" asp-route-id="@opportunity.Id" class="btn btn-outline-primary btn-sm">
+                                                    <a asp-action="Details" asp-route-id="@opportunity.Id"
+                                                       class="btn btn-outline-primary btn-sm">
                                                         View Details <i class="bi bi-chevron-right ms-1"></i>
                                                     </a>
                                                 </div>
@@ -172,5 +176,5 @@
 </main>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/opportunities.css" />
+<link rel="stylesheet" href="~/css/opportunities.css"/>
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -23,18 +21,22 @@ public class Post
     public DateTime? UpdatedAt { get; set; }
 
     public int UserID { get; set; }
+
     [ForeignKey("UserID")]
     public User User { get; set; }
 
     public int? CategoryID { get; set; }
+
     [ForeignKey("CategoryID")]
     public Category Category { get; set; }
 
     public int? PrivacyID { get; set; }
+
     [ForeignKey("PrivacyID")]
     public Privacy Privacy { get; set; }
 
     public int? CommunityID { get; set; }
+
     [ForeignKey("CommunityID")]
     public Community? Community { get; set; }
 
@@ -42,4 +44,4 @@ public class Post
     public ICollection<Like> Likes { get; set; }
     public ICollection<Image> Images { get; set; }
     public ICollection<Video> Videos { get; set; }
-} 
+}

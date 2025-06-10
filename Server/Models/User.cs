@@ -9,31 +9,33 @@ public class User
 
     [Required]
     public string Username { get; set; }
-    
+
     public string? FullName { get; set; }
 
     [Required]
     [EmailAddress]
     public string Email { get; set; }
-    
+
     public string? GoogleId { get; set; }
     public string? PasswordHash { get; set; }
-    
+
     public string? Bio { get; set; }
     public string? ProfileImageURL { get; set; }
-    
+
     // Social Media Links
     [Url]
     public string? InstagramUrl { get; set; }
+
     [Url]
     public string? YouTubeUrl { get; set; }
+
     [Url]
     public string? TwitterUrl { get; set; }
-    
+
     // Profile Media
     public string? CoverPhotoUrl { get; set; }
 
-    [ForeignKey("Role")] 
+    [ForeignKey("Role")]
     public int RoleID { get; set; }
 
     public Role Role { get; set; }

@@ -1,10 +1,10 @@
-@model Client.Models.EditCommunityViewModel
+@model EditCommunityViewModel
 @{
     ViewData["Title"] = "Edit Community";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/communities.css" />
+    <link rel="stylesheet" href="~/css/communities.css"/>
 }
 
 <div class="community-container">
@@ -25,12 +25,12 @@
 
                     <form asp-action="Edit" method="post" enctype="multipart/form-data">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input type="hidden" asp-for="CommunityID" />
-                        <input type="hidden" name="communityId" value="@Model.CommunityID" />
+                        <input type="hidden" asp-for="CommunityID"/>
+                        <input type="hidden" name="communityId" value="@Model.CommunityID"/>
 
                         <div class="mb-3">
                             <label asp-for="Name" class="form-label"></label>
-                            <input asp-for="Name" class="form-control" />
+                            <input asp-for="Name" class="form-control"/>
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 
@@ -45,21 +45,23 @@
                         <div class="mb-3">
                             <label asp-for="CoverImage" class="form-label"></label>
                             <div class="input-group">
-                                <input type="file" class="form-control" asp-for="CoverImage" accept="image/*" />
+                                <input type="file" class="form-control" asp-for="CoverImage" accept="image/*"/>
                             </div>
                             <span asp-validation-for="CoverImage" class="text-danger"></span>
-                            
+
                             @if (!string.IsNullOrEmpty(Model.CurrentCoverImageUrl))
                             {
                                 <div class="mt-2">
                                     <p class="small text-muted mb-1">Current Cover Image:</p>
-                                    <img src="@Model.CurrentCoverImageUrl" alt="Cover Image" class="img-thumbnail" style="max-height: 200px;" />
+                                    <img src="@Model.CurrentCoverImageUrl" alt="Cover Image" class="img-thumbnail"
+                                         style="max-height: 200px;"/>
                                 </div>
                             }
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="@Url.Action("Details", new { communityId = Model.CommunityID })" class="btn btn-outline-secondary me-2">
+                            <a href="@Url.Action("Details", new { communityId = Model.CommunityID })"
+                               class="btn btn-outline-secondary me-2">
                                 <i class="fas fa-arrow-left me-1"></i> Back
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -74,32 +76,32 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
     <script>
         // Add any additional client-side validation or UI enhancements here
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Preview image before upload
             const coverImageInput = document.getElementById('CoverImage');
             if (coverImageInput) {
-                coverImageInput.addEventListener('change', function(e) {
+                coverImageInput.addEventListener('change', function (e) {
                     const file = e.target.files[0];
                     if (file) {
                         const reader = new FileReader();
-                        reader.onload = function(e) {
+                        reader.onload = function (e) {
                             const previewContainer = document.createElement('div');
                             previewContainer.className = 'mt-2';
                             previewContainer.innerHTML = `
                                 <p class="small text-muted mb-1">New Cover Image Preview:</p>
                                 <img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
                             `;
-                            
+
                             // Remove any existing preview
                             const existingPreview = document.querySelector('.image-preview');
                             if (existingPreview) {
                                 existingPreview.remove();
                             }
-                            
+
                             previewContainer.classList.add('image-preview');
                             coverImageInput.parentNode.insertAdjacentElement('afterend', previewContainer);
                         };

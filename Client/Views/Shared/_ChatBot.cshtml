@@ -18,7 +18,8 @@
      style="width: 360px; display: none; z-index: 1050;">
 
     <!-- Header -->
-    <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
+    <div
+        class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
         <div class="fw-bold text-secondary"><i class="bi bi-robot me-1"></i>AI ChatBot</div>
         <div class="btn-group">
             <button class="btn btn-sm btn-outline-secondary" onclick="clearCurrentChat()" title="Clear Chat">
@@ -52,7 +53,7 @@
                    class="form-control form-control-sm border-secondary"
                    placeholder="Type your message..."
                    maxlength="1000"
-                   autocomplete="off" />
+                   autocomplete="off"/>
             <button id="send-btn" class="btn btn-sm btn-outline-secondary" title="Send">
                 <i class="bi bi-send-fill"></i>
             </button>
@@ -66,8 +67,8 @@
         try {
             const response = await fetch("/api/chatbot", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message })
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message})
             });
 
             if (!response.ok) throw new Error(await response.text());
@@ -161,6 +162,7 @@
             input.focus();
         }
     }
+
     window.addEventListener("load", () => {
         const historyKey = "chatbot-history-@userId";
         const container = document.getElementById("chat-messages");

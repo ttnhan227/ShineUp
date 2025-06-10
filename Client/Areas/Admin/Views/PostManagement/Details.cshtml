@@ -1,4 +1,4 @@
-@model Client.Areas.Admin.Models.PostDetailViewModel
+@model PostDetailViewModel
 @{
     ViewData["Title"] = "Post Details";
 }
@@ -13,7 +13,7 @@
                         <h2>Post Details</h2>
                         <div>
                             <a asp-action="Index" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to List
+                                <i class="bx bx-arrow-back"></i> Back to List
                             </a>
                         </div>
                     </div>
@@ -32,7 +32,7 @@
                                 <div class="card-header">
                                     <h4>@Model.Title</h4>
                                     <div class="text-muted small">
-                                        <i class='bx bx-time'></i> Created: @Model.CreatedAt.ToString("f")
+                                        <i class="bx bx-time"></i> Created: @Model.CreatedAt.ToString("f")
                                         @if (Model.UpdatedAt.HasValue)
                                         {
                                             <span class="ms-3">
@@ -89,7 +89,7 @@
                                     <div class="mb-3">
                                         <h6 class="text-muted mb-1">Status</h6>
                                         <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" 
+                                            <input class="form-check-input" type="checkbox"
                                                    id="isActive"
                                                    @(Model.IsActive ? "checked" : "")
                                                    onchange="updatePostStatus(@Model.PostID, this.checked)">
@@ -100,9 +100,9 @@
                                     </div>
 
                                     <div class="d-grid gap-2">
-                                        <button type="button" class="btn btn-danger" 
+                                        <button type="button" class="btn btn-danger"
                                                 onclick="confirmDelete(@Model.PostID, '@Model.Title')">
-                                            <i class='bx bx-trash'></i> Delete Post
+                                            <i class="bx bx-trash"></i> Delete Post
                                         </button>
                                     </div>
                                 </div>
@@ -138,9 +138,9 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
-    <link href="~/admin/assets/css/admin.css" rel="stylesheet" />
-    
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
+    <link href="~/admin/assets/css/admin.css" rel="stylesheet"/>
+
     <script>
         function updatePostStatus(postId, isActive) {
             fetch(`/Admin/PostManagement/UpdateStatus/${postId}`, {
@@ -151,24 +151,24 @@
                 },
                 body: JSON.stringify(isActive)
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the post status.');
-                window.location.reload();
-            });
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the post status.');
+                    window.location.reload();
+                });
         }
 
         function confirmDelete(postId, postTitle) {
             document.getElementById('postTitle').textContent = postTitle;
             const form = document.getElementById('deleteForm');
             form.action = `/Admin/PostManagement/Delete/${postId}`;
-            
+
             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
             modal.show();
         }

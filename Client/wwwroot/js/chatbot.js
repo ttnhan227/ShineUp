@@ -52,7 +52,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({message: message})
                 });
 
                 if (!response.ok) throw new Error('Lỗi kết nối tới chatbot.');
@@ -84,7 +84,7 @@
         function saveMessage(text, type) {
             try {
                 const history = JSON.parse(sessionStorage.getItem(chatStorageKey)) || [];
-                history.push({ text, type, timestamp: new Date().toISOString() });
+                history.push({text, type, timestamp: new Date().toISOString()});
 
                 // Giới hạn tối đa 100 tin nhắn
                 if (history.length > 100) {

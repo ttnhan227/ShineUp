@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
@@ -14,9 +10,9 @@ namespace Server.Repositories.Admin;
 
 public class ContestManagementRepository : IContestManagementRepository
 {
-    private readonly DatabaseContext _context;
-    private readonly IContestRepositories _contestRepositories;
     private readonly IContestEntryRepositories _contestEntryRepositories;
+    private readonly IContestRepositories _contestRepositories;
+    private readonly DatabaseContext _context;
 
     public ContestManagementRepository(
         DatabaseContext context,
@@ -33,13 +29,13 @@ public class ContestManagementRepository : IContestManagementRepository
         // First, get all contests with their entries and users
         var contests = await _context.Contests
             .Include(c => c.ContestEntries)
-                .ThenInclude(e => e.User)
+            .ThenInclude(e => e.User)
             .OrderByDescending(c => c.StartDate)
             .ToListAsync();
 
         // Get all entry IDs to fetch their vote counts in a single query
         var entryIds = contests.SelectMany(c => c.ContestEntries).Select(e => e.EntryID).ToList();
-        
+
         // Get vote counts for all entries in one query
         var voteCounts = await _context.Votes
             .Where(v => entryIds.Contains(v.EntryID))
@@ -80,19 +76,21 @@ public class ContestManagementRepository : IContestManagementRepository
         // Get the contest with its entries and related data
         var contest = await _context.Contests
             .Include(c => c.ContestEntries)
-                .ThenInclude(e => e.User)
+            .ThenInclude(e => e.User)
             .Include(c => c.ContestEntries)
-                .ThenInclude(e => e.Video)
+            .ThenInclude(e => e.Video)
             .Include(c => c.ContestEntries)
-                .ThenInclude(e => e.Image)
+            .ThenInclude(e => e.Image)
             .FirstOrDefaultAsync(c => c.ContestID == id);
 
         if (contest == null)
+        {
             return null;
+        }
 
         // Get entry IDs to fetch their vote counts
         var entryIds = contest.ContestEntries.Select(e => e.EntryID).ToList();
-        
+
         // Get vote counts for all entries in one query
         var voteCounts = await _context.Votes
             .Where(v => entryIds.Contains(v.EntryID))
@@ -119,7 +117,7 @@ public class ContestManagementRepository : IContestManagementRepository
                 Title = e.Title,
                 Description = e.Description,
                 SubmissionDate = e.SubmissionDate,
-                MediaUrl = !string.IsNullOrEmpty(e.VideoID) ? (e.Video?.VideoURL) : (e.Image?.ImageURL),
+                MediaUrl = !string.IsNullOrEmpty(e.VideoID) ? e.Video?.VideoURL : e.Image?.ImageURL,
                 MediaType = !string.IsNullOrEmpty(e.VideoID) ? "video" : "image",
                 VoteCount = voteCounts.TryGetValue(e.EntryID, out var count) ? count : 0,
                 HasVoted = false,
@@ -158,7 +156,9 @@ public class ContestManagementRepository : IContestManagementRepository
     {
         var contest = await _contestRepositories.GetByIdAsync(id);
         if (contest == null)
+        {
             return null;
+        }
 
         contest.Title = updateContestDto.Title;
         contest.Description = updateContestDto.Description;
@@ -176,14 +176,13 @@ public class ContestManagementRepository : IContestManagementRepository
     {
         var contest = await _contestRepositories.GetByIdAsync(id);
         if (contest == null)
+        {
             return false;
+        }
 
         // First delete all entries for this contest
         var entries = await _contestEntryRepositories.GetEntriesByContestAsync(id);
-        foreach (var entry in entries)
-        {
-            await _contestEntryRepositories.DeleteAsync(entry.EntryID);
-        }
+        foreach (var entry in entries) await _contestEntryRepositories.DeleteAsync(entry.EntryID);
 
         // Then delete the contest
         await _contestRepositories.DeleteAsync(id);
@@ -204,7 +203,9 @@ public class ContestManagementRepository : IContestManagementRepository
     {
         var entry = await _contestEntryRepositories.GetByIdAsync(entryId);
         if (entry == null)
+        {
             return false;
+        }
 
         await _contestEntryRepositories.DeleteAsync(entryId);
         return true;
@@ -217,7 +218,9 @@ public class ContestManagementRepository : IContestManagementRepository
             .FirstOrDefaultAsync(c => c.ContestID == contestId);
 
         if (contest == null)
+        {
             return null;
+        }
 
         return new ContestStatsDTO
         {
@@ -226,31 +229,33 @@ public class ContestManagementRepository : IContestManagementRepository
             LastEntryDate = contest.ContestEntries.Any() ? contest.ContestEntries.Max(e => e.SubmissionDate) : null
         };
     }
-    
+
     public async Task<bool> DeclareWinnerAsync(int entryId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
-        
+
         try
         {
             // Get the entry with its contest
             var entry = await _context.ContestEntries
                 .Include(e => e.Contest)
                 .FirstOrDefaultAsync(e => e.EntryID == entryId);
-                
+
             if (entry == null || entry.Contest == null)
+            {
                 return false;
-                
+            }
+
             // Mark the contest as closed
             entry.Contest.IsClosed = true;
-            
+
             // Mark this entry as winner
             entry.IsWinner = true;
-            
+
             // Save changes
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            
+
             return true;
         }
         catch

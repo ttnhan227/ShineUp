@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace Server.Models;
 
 public class CommunityMember
@@ -16,4 +13,3 @@ public class CommunityMember
 
     public CommunityRole Role { get; set; } = CommunityRole.Member;
 }
-

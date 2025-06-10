@@ -10,5 +10,4 @@ public class PrivacyViewModel
     [StringLength(50, ErrorMessage = "Privacy name cannot exceed 50 characters")]
     [Display(Name = "Privacy Name")]
     public string Name { get; set; } = string.Empty;
-
 }

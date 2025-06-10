@@ -1,4 +1,4 @@
-@model Client.Areas.Admin.Models.OpportunityDetailViewModel
+@model OpportunityDetailViewModel
 @{
     ViewData["Title"] = "Opportunity Details";
     ViewData["ActiveMenu"] = "OpportunityManagement";
@@ -12,10 +12,10 @@
                     <h2 class="mb-0">@Model.Title</h2>
                     <div>
                         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning me-2">
-                            <i class='bx bx-edit'></i> Edit
+                            <i class="bx bx-edit"></i> Edit
                         </a>
                         <a asp-action="Index" class="btn btn-secondary">
-                            <i class='bx bx-arrow-back'></i> Back to List
+                            <i class="bx bx-arrow-back"></i> Back to List
                         </a>
                     </div>
                 </div>
@@ -27,29 +27,29 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
-                    
+
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <h4 class="mb-4">Opportunity Information</h4>
-                            
+
                             <dl class="row">
                                 <dt class="col-sm-3">Type</dt>
                                 <dd class="col-sm-9">@Model.Type</dd>
-                                
+
                                 <dt class="col-sm-3">Status</dt>
                                 <dd class="col-sm-9">
                                     <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
                                 </dd>
-                                
+
                                 <dt class="col-sm-3">Category</dt>
                                 <dd class="col-sm-9">@Model.CategoryName</dd>
-                                
+
                                 @if (!string.IsNullOrEmpty(Model.TalentArea))
                                 {
                                     <dt class="col-sm-3">Talent Area</dt>
                                     <dd class="col-sm-9">@Model.TalentArea</dd>
                                 }
-                                
+
                                 <dt class="col-sm-3">Location</dt>
                                 <dd class="col-sm-9">
                                     @if (Model.IsRemote)
@@ -61,26 +61,26 @@
                                         @Model.Location
                                     }
                                 </dd>
-                                
+
                                 <dt class="col-sm-3">Application Deadline</dt>
                                 <dd class="col-sm-9">@(Model.ApplicationDeadline?.ToString("f") ?? "No deadline")</dd>
-                                
+
                                 <dt class="col-sm-3">Created</dt>
                                 <dd class="col-sm-9">@Model.CreatedAt.ToString("f")</dd>
-                                
+
                                 @if (Model.UpdatedAt.HasValue)
                                 {
                                     <dt class="col-sm-3">Last Updated</dt>
                                     <dd class="col-sm-9">@Model.UpdatedAt.Value.ToString("f")</dd>
                                 }
                             </dl>
-                            
+
                             <h5 class="mt-4 mb-3">Description</h5>
                             <div class="bg-light p-3 rounded">
                                 @Html.Raw(Model.Description.Replace("\n", "<br />"))
                             </div>
                         </div>
-                        
+
                         <div class="col-md-4">
                             <div class="card border-0 shadow-sm">
                                 <div class="card-header bg-primary text-white">
@@ -88,17 +88,19 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-grid gap-2">
-                                        <a asp-action="Applications" asp-route-id="@Model.Id" class="btn btn-outline-primary mb-2">
-                                            <i class='bx bx-group'></i> View Applications (@Model.ApplicationCount)
+                                        <a asp-action="Applications" asp-route-id="@Model.Id"
+                                           class="btn btn-outline-primary mb-2">
+                                            <i class="bx bx-group"></i> View Applications (@Model.ApplicationCount)
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning mb-2">
-                                            <i class='bx bx-edit'></i> Edit Opportunity
+                                        <a asp-action="Edit" asp-route-id="@Model.Id"
+                                           class="btn btn-outline-warning mb-2">
+                                            <i class="bx bx-edit"></i> Edit Opportunity
                                         </a>
                                         @if (Model.Status == "Open")
                                         {
                                             <form asp-action="UpdateStatus" method="post" class="d-grid">
-                                                <input type="hidden" name="id" value="@Model.Id" />
-                                                <input type="hidden" name="status" value="Closed" />
+                                                <input type="hidden" name="id" value="@Model.Id"/>
+                                                <input type="hidden" name="status" value="Closed"/>
                                                 <button type="submit" class="btn btn-outline-secondary mb-2">
                                                     <i class='bx bx-lock-alt'></i> Close Opportunity
                                                 </button>
@@ -107,20 +109,21 @@
                                         else if (Model.Status == "Closed" || Model.Status == "Draft")
                                         {
                                             <form asp-action="UpdateStatus" method="post" class="d-grid">
-                                                <input type="hidden" name="id" value="@Model.Id" />
-                                                <input type="hidden" name="status" value="Open" />
+                                                <input type="hidden" name="id" value="@Model.Id"/>
+                                                <input type="hidden" name="status" value="Open"/>
                                                 <button type="submit" class="btn btn-outline-success mb-2">
                                                     <i class='bx bx-check-circle'></i> Reopen Opportunity
                                                 </button>
                                             </form>
                                         }
-                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                            <i class='bx bx-trash'></i> Delete Opportunity
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal">
+                                            <i class="bx bx-trash"></i> Delete Opportunity
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="card border-0 shadow-sm mt-4">
                                 <div class="card-header bg-info text-white">
                                     <h5 class="mb-0">Statistics</h5>
@@ -132,11 +135,13 @@
                                             <strong>@Model.ApplicationCount</strong>
                                         </div>
                                         <div class="progress" style="height: 5px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: @(Math.Min(Model.ApplicationCount * 10, 100))%" 
-                                                 aria-valuenow="@Model.ApplicationCount" aria-valuemin="0" aria-valuemax="10"></div>
+                                            <div class="progress-bar bg-primary" role="progressbar"
+                                                 style="width: @(Math.Min(Model.ApplicationCount * 10, 100))%"
+                                                 aria-valuenow="@Model.ApplicationCount" aria-valuemin="0"
+                                                 aria-valuemax="10"></div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between mb-1">
                                             <span>Days Remaining</span>
@@ -154,12 +159,15 @@
                                         {
                                             var daysRemaining = (Model.ApplicationDeadline.Value - DateTime.Now).Days;
                                             var totalDays = (Model.ApplicationDeadline.Value - Model.CreatedAt).Days;
-                                            var progress = totalDays > 0 ? (daysRemaining / (double)totalDays) * 100 : 0;
-                                            
+                                            var progress = totalDays > 0 ? daysRemaining / (double)totalDays * 100 : 0;
+
                                             <div class="progress" style="height: 5px;">
-                                                <div class="progress-bar bg-@(daysRemaining > 7 ? "success" : daysRemaining > 3 ? "warning" : "danger")" 
-                                                     role="progressbar" style="width: @(Math.Max(0, Math.Min(100, (int)progress)))%" 
-                                                     aria-valuenow="@daysRemaining" aria-valuemin="0" aria-valuemax="@totalDays">
+                                                <div
+                                                    class="progress-bar bg-@(daysRemaining > 7 ? "success" : daysRemaining > 3 ? "warning" : "danger")"
+                                                    role="progressbar"
+                                                    style="width: @(Math.Max(0, Math.Min(100, (int)progress)))%"
+                                                    aria-valuenow="@daysRemaining" aria-valuemin="0"
+                                                    aria-valuemax="@totalDays">
                                                 </div>
                                             </div>
                                         }
@@ -189,7 +197,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form asp-action="Delete" method="post" class="d-inline">
-                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="id" value="@Model.Id"/>
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </div>
@@ -210,6 +218,7 @@
 }
 
 @functions {
+
     string GetStatusBadgeClass(string status)
     {
         return status switch
@@ -222,4 +231,5 @@
             _ => "bg-secondary"
         };
     }
+
 }

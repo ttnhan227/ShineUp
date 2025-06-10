@@ -13,10 +13,14 @@ public interface IOpportunityRepository
     Task<OpportunityDTO> UpdateOpportunityAsync(int id, UpdateOpportunityDTO opportunityDto, int userId);
     Task<bool> DeleteOpportunityAsync(int id, int userId);
     Task<bool> UserOwnsOpportunity(int opportunityId, int userId);
-    
+
     // Application related methods
-    Task<OpportunityApplicationDTO> ApplyForOpportunityAsync(CreateOpportunityApplicationDTO applicationDto, int userId);
+    Task<OpportunityApplicationDTO>
+        ApplyForOpportunityAsync(CreateOpportunityApplicationDTO applicationDto, int userId);
+
     Task<IEnumerable<OpportunityApplicationDTO>> GetUserApplicationsAsync(int userId);
     Task<IEnumerable<OpportunityApplicationDTO>> GetOpportunityApplicationsAsync(int opportunityId, int userId);
-    Task<OpportunityApplicationDTO> UpdateApplicationStatusAsync(int applicationId, UpdateOpportunityApplicationDTO updateDto, int userId);
+
+    Task<OpportunityApplicationDTO> UpdateApplicationStatusAsync(int applicationId,
+        UpdateOpportunityApplicationDTO updateDto, int userId);
 }

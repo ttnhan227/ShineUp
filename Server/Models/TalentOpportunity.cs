@@ -37,12 +37,10 @@ public class TalentOpportunity
     public User PostedByUser { get; set; }
     public int? CategoryId { get; set; }
     public Category? Category { get; set; }
-    
+
     // Talent area for this opportunity (matches User.TalentArea)
     public string? TalentArea { get; set; }
-    
+
     // Applications
     public ICollection<OpportunityApplication> Applications { get; set; } = new List<OpportunityApplication>();
 }
-
-

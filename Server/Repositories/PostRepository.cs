@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
 
@@ -46,8 +45,8 @@ public class PostRepository : IPostRepository
             // For authenticated users, show:
             // 1. All public posts
             // 2. Their own posts (regardless of privacy setting)
-            query = query.Where(p => 
-                p.Privacy.Name == "Public" || 
+            query = query.Where(p =>
+                p.Privacy.Name == "Public" ||
                 p.UserID == userId.Value
             );
         }
@@ -169,6 +168,51 @@ public class PostRepository : IPostRepository
         return await _context.Posts.AnyAsync(p => p.PostID == postId);
     }
 
+    public async Task<User> GetUserByIdAsync(int userId)
+    {
+        return await _context.Users.FindAsync(userId);
+    }
+
+    public async Task<Image> AddImageAsync(Image image)
+    {
+        _context.Images.Add(image);
+        await _context.SaveChangesAsync();
+        return image;
+    }
+
+    public async Task<Video> AddVideoAsync(Video video)
+    {
+        _context.Videos.Add(video);
+        await _context.SaveChangesAsync();
+        return video;
+    }
+
+    public async Task RemoveAllMediaFromPostAsync(int postId)
+    {
+        var post = await _context.Posts
+            .Include(p => p.Images)
+            .Include(p => p.Videos)
+            .FirstOrDefaultAsync(p => p.PostID == postId);
+
+        if (post != null)
+        {
+            _context.Images.RemoveRange(post.Images);
+            _context.Videos.RemoveRange(post.Videos);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<Post>> GetPostsByCommunityIdAsync(int communityId)
+    {
+        return await _context.Posts
+            .Where(p => p.CommunityID == communityId)
+            .Include(p => p.User)
+            .Include(p => p.Comments)
+            .Include(p => p.Likes)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
     #region Comment Methods
 
     public async Task<Comment> AddCommentToPostAsync(Comment comment)
@@ -225,12 +269,16 @@ public class PostRepository : IPostRepository
         {
             var comment = await _context.Comments.FindAsync(commentId);
             if (comment == null)
+            {
                 return false;
+            }
 
             // Only the comment owner or post owner can delete the comment
             var post = await _context.Posts.FindAsync(comment.PostID);
             if (comment.UserID != userId && (post == null || post.UserID != userId))
+            {
                 return false;
+            }
 
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
@@ -269,7 +317,9 @@ public class PostRepository : IPostRepository
                 .FirstOrDefaultAsync(l => l.UserID == like.UserID && l.PostID == like.PostID);
 
             if (existingLike != null)
+            {
                 return existingLike; // Already liked
+            }
 
             like.CreatedAt = DateTime.UtcNow;
             _context.Likes.Add(like);
@@ -291,7 +341,9 @@ public class PostRepository : IPostRepository
                 .FirstOrDefaultAsync(l => l.PostID == postId && l.UserID == userId);
 
             if (like == null)
+            {
                 return false;
+            }
 
             _context.Likes.Remove(like);
             await _context.SaveChangesAsync();
@@ -349,49 +401,4 @@ public class PostRepository : IPostRepository
     }
 
     #endregion
-
-    public async Task<User> GetUserByIdAsync(int userId)
-    {
-        return await _context.Users.FindAsync(userId);
-    }
-
-    public async Task<Image> AddImageAsync(Image image)
-    {
-        _context.Images.Add(image);
-        await _context.SaveChangesAsync();
-        return image;
-    }
-
-    public async Task<Video> AddVideoAsync(Video video)
-    {
-        _context.Videos.Add(video);
-        await _context.SaveChangesAsync();
-        return video;
-    }
-
-    public async Task RemoveAllMediaFromPostAsync(int postId)
-    {
-        var post = await _context.Posts
-            .Include(p => p.Images)
-            .Include(p => p.Videos)
-            .FirstOrDefaultAsync(p => p.PostID == postId);
-
-        if (post != null)
-        {
-            _context.Images.RemoveRange(post.Images);
-            _context.Videos.RemoveRange(post.Videos);
-            await _context.SaveChangesAsync();
-        }
-    }
-    public async Task<List<Post>> GetPostsByCommunityIdAsync(int communityId)
-    {
-        return await _context.Posts
-            .Where(p => p.CommunityID == communityId)
-            .Include(p => p.User)
-            .Include(p => p.Comments)
-            .Include(p => p.Likes)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-    }
-
-} 
+}
