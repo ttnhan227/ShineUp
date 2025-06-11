@@ -337,6 +337,279 @@
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script>
+    // Safe querySelector function
+    function safeQuerySelector(selector, context = document) {
+        try {
+            if (selector === '#') return null; // Handle empty hash
+            if (typeof selector !== 'string') return null;
+            return context.querySelector(selector);
+        } catch (e) {
+            console.warn('Invalid selector:', selector, e);
+            return null;
+        }
+    }
+
+    // Safe querySelectorAll function
+    function safeQuerySelectorAll(selector, context = document) {
+        try {
+            if (selector === '#') return []; // Handle empty hash
+            if (typeof selector !== 'string') return [];
+            return Array.from(context.querySelectorAll(selector));
+        } catch (e) {
+            console.warn('Invalid selector:', selector, e);
+            return [];
+        }
+    }
+
+    // Override the native querySelector to be more defensive
+    const originalQuerySelector = Document.prototype.querySelector;
+    Document.prototype.querySelector = function(selector) {
+        try {
+            return originalQuerySelector.call(this, selector);
+        } catch (e) {
+            console.warn('Error in querySelector:', selector, e);
+            return null;
+        }
+    };
+
+    // Override the native querySelectorAll to be more defensive
+    const originalQuerySelectorAll = Document.prototype.querySelectorAll;
+    Document.prototype.querySelectorAll = function(selector) {
+        try {
+            return originalQuerySelectorAll.call(this, selector);
+        } catch (e) {
+            console.warn('Error in querySelectorAll:', selector, e);
+            return [];
+        }
+    };
+
+    // Notification loading functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize variables
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationList = document.getElementById('notification-list');
+        const unreadCount = document.getElementById('unread-count');
+        let isLoading = false;
+
+        function showError(message) {
+            console.error('Notification Error:', message);
+            if (notificationList) {
+                notificationList.innerHTML = `
+                    <div class="text-center p-3 text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> ${message}
+                    </div>`;
+            }
+        }
+
+        function showLoading() {
+            if (notificationList) {
+                notificationList.innerHTML = `
+                    <div class="text-center p-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading notifications...</span>
+                    </div>`;
+            }
+        }
+
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'Just now';
+            
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            
+            if (interval >= 1) return interval + ' years ago';
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return interval + ' months ago';
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval + ' days ago';
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return interval + ' hours ago';
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return interval + ' minutes ago';
+            return 'Just now';
+        }
+
+        function updateNotificationUI(notifications) {
+            console.log('Updating UI with notifications:', notifications);
+            
+            if (!Array.isArray(notifications)) {
+                console.error('Notifications is not an array:', notifications);
+                showError('Invalid notifications format');
+                return;
+            }
+
+            try {
+                // Update unread count - handle both camelCase and PascalCase properties
+                const unreadNotifications = notifications.filter(n => {
+                    // Handle both Status and status properties
+                    const status = typeof n.Status !== 'undefined' ? n.Status : n.status;
+                    // Check for 0, '0', or 'Unread' status (0 = Unread, 1 = Read)
+                    return status === 0 || status === '0' || status === 'Unread';
+                });
+                
+                if (unreadCount) {
+                    const unreadCountValue = unreadNotifications.length;
+                    unreadCount.textContent = unreadCountValue > 99 ? '99+' : unreadCountValue;
+                    unreadCount.style.display = unreadCountValue > 0 ? 'block' : 'none';
+                    console.log(`Updated unread count to: ${unreadCountValue}`);
+                }
+
+                // Update notification list
+                if (notificationList) {
+                    if (notifications.length === 0) {
+                        notificationList.innerHTML = `
+                            <div class="text-center p-3">
+                                <span>No new notifications</span>
+                            </div>`;
+                        return;
+                    }
+
+
+                    notificationList.innerHTML = notifications.map(notification => {
+                        // Handle both PascalCase and camelCase property names
+                        const status = typeof notification.Status !== 'undefined' ? notification.Status : notification.status;
+                        const message = notification.Message || notification.message || 'No message';
+                        const createdAt = notification.CreatedAt || notification.createdAt;
+                        const notificationId = notification.NotificationID || notification.notificationID;
+                        const url = notification.Url || notification.url || '#';
+                        
+                        // Check if notification is unread (0 = Unread, 1 = Read)
+                        const isUnread = status === 0 || status === '0' || status === 'Unread';
+                        
+                        console.log('Processing notification:', {
+                            id: notificationId,
+                            status: status,
+                            isUnread: isUnread,
+                            message: message
+                        });
+                        const timeAgo = formatTimeAgo(createdAt);
+                        
+                        return `
+                            <a href="${url}" class="list-group-item list-group-item-action ${isUnread ? 'list-group-item-primary' : ''}"
+                               data-notification-id="${notificationId}">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <div class="me-2">
+                                        <p class="mb-1">${message}</p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> ${timeAgo}
+                                        </small>
+                                    </div>
+                                    ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                                </div>
+                            </a>`;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error updating notification UI:', error);
+                showError('Error displaying notifications');
+            }
+        }
+
+        async function loadNotifications() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            showLoading();
+            
+            try {
+                console.log('Loading notifications...');
+                const apiUrl = '/notifications/recent';
+                console.log('Making request to:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const responseText = await response.text();
+                console.log('Raw response text:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    console.log('Parsed JSON data:', data);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', e);
+                    throw new Error('Invalid JSON response from server');
+                }
+                
+                if (!data) {
+                    throw new Error('No data received from server');
+                }
+                
+                // Handle the nested $values array from the API response
+                let notifications = [];
+                
+                if (Array.isArray(data)) {
+                    notifications = data;
+                } else if (data.$values && Array.isArray(data.$values)) {
+                    notifications = data.$values;
+                } else if (data.notifications) {
+                    notifications = Array.isArray(data.notifications) ? data.notifications : [];
+                } else if (data.items) {
+                    notifications = Array.isArray(data.items) ? data.items : [];
+                }
+                
+                console.log(`Processing ${notifications.length} notifications`);
+                
+                if (notifications.length === 0) {
+                    console.log('No notifications returned from API');
+                } else {
+                    console.log('First notification sample:', JSON.stringify(notifications[0], null, 2));
+                }
+                
+                updateNotificationUI(notifications);
+                return notifications;
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                showError('Failed to load notifications. Please try again.');
+                throw error;
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Handle notification dropdown
+        if (notificationDropdown) {
+            console.log('Setting up notification dropdown handler');
+            
+            // Load notifications when dropdown is shown
+            notificationDropdown.addEventListener('shown.bs.dropdown', function() {
+                console.log('Notification dropdown shown, loading notifications...');
+                loadNotifications().catch(error => {
+                    console.error('Error loading notifications:', error);
+                    showError('Failed to load notifications');
+                });
+            });
+            
+            // Also load notifications on page load after a short delay
+            console.log('Loading initial notifications...');
+            setTimeout(() => {
+                loadNotifications().catch(error => {
+                    console.error('Error loading initial notifications:', error);
+                });
+            }, 500);
+        } else {
+            console.error('Notification dropdown element not found');
+        }
+    });
+
+    // Toastr configuration
     toastr.options = {
         "closeButton": true,
         "progressBar": true,
@@ -344,19 +617,33 @@
         "timeOut": "5000"
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const notificationDropdown = document.getElementById('notificationDropdown');
-        if (notificationDropdown) {
-            notificationDropdown.addEventListener('shown.bs.dropdown', loadNotifications);
-        }
-        updateUnreadCount();
-    });
+    // Format time ago function
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
 
-    document.getElementById('logoutForm').addEventListener('submit', function () {
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
+            }
+        }
+        return 'just now';
+    }
+
+    document.getElementById('logoutForm')?.addEventListener('submit', function () {
         localStorage.clear();
         sessionStorage.clear();
     });
-
 
     function updateUnreadCount() {
         fetch('/notifications/unread-count')
@@ -420,45 +707,32 @@
     }
 
     function markAsRead(notificationId, element) {
+        // Get the anti-forgery token safely using our safe selector
+        const tokenElement = safeQuerySelector('input[name="__RequestVerificationToken"]');
+        const token = tokenElement ? tokenElement.value : '';
+        
         fetch(`/notifications/mark-as-read/${notificationId}`, {
             method: 'POST',
             headers: {
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value,
+                'RequestVerificationToken': token,
                 'Content-Type': 'application/json'
             },
             credentials: 'same-origin'
         })
-            .then(response => {
-                if (response.ok) {
-                    if (element) {
-                        element.classList.remove('unread');
-                    }
-                    updateUnreadCount();
-                }
-            })
-            .catch(error => console.error('Error marking notification as read:', error));
-    }
-
-    function formatTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            week: 604800,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-        }
-        return 'just now';
+            if (element && element.classList) {
+                element.classList.remove('unread');
+            }
+            updateUnreadCount();
+            return response.json();
+        })
+        .catch(error => {
+            console.error('Error marking notification as read:', error);
+            toastr.error('Failed to mark notification as read');
+        });
     }
 
     setInterval(updateUnreadCount, 30000);

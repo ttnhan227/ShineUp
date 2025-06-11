@@ -63,6 +63,18 @@
 
 
 <script>
+    // Safe querySelector function
+    function safeQuerySelector(selector, context = document) {
+        try {
+            if (selector === '#') return null; // Handle empty hash
+            if (typeof selector !== 'string') return null;
+            return (context || document).querySelector(selector);
+        } catch (e) {
+            console.warn('Invalid selector:', selector, e);
+            return null;
+        }
+    }
+
     async function sendMessageToBot(message) {
         try {
             const response = await fetch("/api/chatbot", {
@@ -111,18 +123,26 @@
 
     function clearCurrentChat() {
         if (confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch sử chat?")) {
-            document.getElementById("chat-messages").innerHTML = "";
+            const chatMessages = safeQuerySelector("#chat-messages");
+            if (chatMessages) {
+                chatMessages.innerHTML = "";
+            }
             localStorage.removeItem("chatbot-history-@userId");
         }
     }
 
 
     function showLoading(show) {
-        document.getElementById("chat-loading").style.display = show ? "block" : "none";
+        const loading = safeQuerySelector("#chat-loading");
+        if (loading) {
+            loading.style.display = show ? "block" : "none";
+        }
     }
 
     function appendMessage(sender, message) {
-        const container = document.getElementById("chat-messages");
+        const container = safeQuerySelector("#chat-messages");
+        if (!container) return;
+        
         const msg = document.createElement("div");
         msg.className = `alert ${sender === "user" ? "alert-primary text-end" : "alert-secondary text-start"} mb-2 py-1 px-2`;
         msg.innerHTML = message.replace(/\n/g, "<br/>");
@@ -165,20 +185,30 @@
 
     window.addEventListener("load", () => {
         const historyKey = "chatbot-history-@userId";
-        const container = document.getElementById("chat-messages");
-        const history = localStorage.getItem(historyKey);
-        if (history) {
-            container.innerHTML = history;
-            container.scrollTop = container.scrollHeight;
+        const container = safeQuerySelector("#chat-messages");
+        if (container) {
+            const history = localStorage.getItem(historyKey);
+            if (history) {
+                container.innerHTML = history;
+                container.scrollTop = container.scrollHeight;
+            }
         }
     });
 
 
-    document.getElementById("send-btn").addEventListener("click", handleSend);
-    document.getElementById("user-input").addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !isProcessing) {
-            e.preventDefault();
-            handleSend();
-        }
-    });
+    const sendBtn = safeQuerySelector("#send-btn");
+    const userInput = safeQuerySelector("#user-input");
+    
+    if (sendBtn) {
+        sendBtn.addEventListener("click", handleSend);
+    }
+    
+    if (userInput) {
+        userInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" && !isProcessing) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+    }
 </script>

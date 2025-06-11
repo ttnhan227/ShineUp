@@ -175,6 +175,51 @@ public class NotificationsController : Controller
     }
 
     // GET: Notifications/UnreadCount
+    // GET: Notifications/Recent
+    [HttpGet("recent")]
+    public async Task<IActionResult> Recent()
+    {
+        _logger.LogInformation("Getting recent notifications");
+        var client = await GetAuthenticatedClient();
+        if (client == null)
+        {
+            _logger.LogWarning("Unauthorized access to recent notifications");
+            return Unauthorized();
+        }
+
+        try
+        {
+            var response = await client.GetAsync("api/Notifications/recent");
+            var content = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Response status: {response.StatusCode}");
+            _logger.LogInformation($"Response content: {content}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var notifications = JsonSerializer.Deserialize<List<NotificationViewModel>>(content, _jsonOptions);
+                    _logger.LogInformation($"Successfully deserialized {notifications?.Count ?? 0} notifications");
+                    return Ok(notifications);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Error deserializing notifications");
+                    return StatusCode(500, new { error = "Error processing notifications" });
+                }
+            }
+
+            _logger.LogError($"Error from API: {response.StatusCode} - {content}");
+            return StatusCode((int)response.StatusCode, content);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Error getting recent notifications");
+            return StatusCode(500, new { error = "Error getting recent notifications" });
+        }
+    }
+
+    // GET: Notifications/UnreadCount
     [HttpGet("unread-count")]
     public async Task<IActionResult> GetUnreadCount()
     {
