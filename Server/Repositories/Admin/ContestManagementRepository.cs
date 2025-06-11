@@ -134,8 +134,8 @@ public class ContestManagementRepository : IContestManagementRepository
         {
             Title = createContestDto.Title,
             Description = createContestDto.Description,
-            StartDate = createContestDto.StartDate,
-            EndDate = createContestDto.EndDate
+            StartDate = DateTime.SpecifyKind(createContestDto.StartDate, DateTimeKind.Utc),
+            EndDate = DateTime.SpecifyKind(createContestDto.EndDate, DateTimeKind.Utc)
         };
 
         await _contestRepositories.AddAsync(contest);
