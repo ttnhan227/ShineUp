@@ -357,8 +357,81 @@
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <script>
+        // Constants for file size limits in bytes
+        const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+        const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+        
+        // Function to show toast notification
+        function showToast(message, type = 'error') {
+            // Remove any existing toasts
+            $('.toast-container').remove();
+            
+            // Create toast HTML
+            const toastHtml = `
+                <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-${type} text-white">
+                            <strong class="me-auto">${type === 'error' ? 'Error' : 'Success'}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>`;
+                
+            // Add to body and auto-remove after 5 seconds
+            $('body').append(toastHtml);
+            setTimeout(() => $('.toast-container').fadeOut(400, () => $(this).remove()), 5000);
+        }
+        
+        // Function to validate file size
+        function validateFileSize(file, isVideo = false) {
+            const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+            const fileType = isVideo ? 'video' : 'image';
+            
+            if (file.size > maxSize) {
+                const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+                showToast(`The selected ${fileType} '${file.name}' exceeds the maximum size of ${maxSizeMB}MB.`);
+                return false;
+            }
+            return true;
+        }
+        
         $(function () {
             $('[data-bs-toggle="tooltip"]').tooltip();
+            
+            // Handle image file selection
+            $('#imagesInput').on('change', function() {
+                const files = this.files;
+                let allValid = true;
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (!validateFileSize(files[i], false)) {
+                        allValid = false;
+                        this.value = ''; // Clear the file input
+                        break;
+                    }
+                }
+                
+                return allValid;
+            });
+            
+            // Handle video file selection
+            $('#videosInput').on('change', function() {
+                const files = this.files;
+                let allValid = true;
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (!validateFileSize(files[i], true)) {
+                        allValid = false;
+                        this.value = ''; // Clear the file input
+                        break;
+                    }
+                }
+                
+                return allValid;
+            });
 
             // Handle post creation form submission
             $('#createPostForm').on('submit', function (e) {

@@ -9,6 +9,7 @@ using Server.Interfaces.Admin;
 using Server.Repositories;
 using Server.Repositories.Admin;
 using Server.Services;
+using Microsoft.AspNetCore.Http.Features;
 using System.Security.Claims;
 using System.Text;
 
@@ -203,6 +204,16 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Information);
 });
 
+// Configure request size limits for file uploads (100MB to match Cloudinary free tier)
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 100 * 1024 * 1024); // 100MB limit
+
+// Configure form options for file uploads
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB limit
+    options.ValueLengthLimit = 100 * 1024 * 1024;
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
 
 // Build the application
 var app = builder.Build();
