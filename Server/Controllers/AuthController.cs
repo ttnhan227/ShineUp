@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -8,10 +9,6 @@ using Server.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Google.Apis.Auth;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using BCrypt.Net;
 
 namespace Server.Controllers;
 
@@ -22,14 +19,14 @@ public class AuthController : ControllerBase
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
     private readonly DatabaseContext _context;
-    private readonly ILogger<AuthController> _logger;
-    private readonly IGoogleAuthService _googleAuthService;
     private readonly IEmailService _emailService; // Add IEmailService
+    private readonly IGoogleAuthService _googleAuthService;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        DatabaseContext context, 
-        IAuthRepository authRepository, 
-        IConfiguration configuration, 
+        DatabaseContext context,
+        IAuthRepository authRepository,
+        IConfiguration configuration,
         ILogger<AuthController> logger,
         IGoogleAuthService googleAuthService,
         IEmailService emailService) // Inject IEmailService
@@ -62,6 +59,7 @@ public class AuthController : ControllerBase
             {
                 errors.Add("Email", new[] { "This email is already registered" });
             }
+
             if (usernameExists)
             {
                 errors.Add("Username", new[] { "This username is already taken" });
@@ -102,7 +100,11 @@ public class AuthController : ControllerBase
             "Email Verification",
             $"<p><strong>Dear {registeredUser.Username},</strong></p>\n<p>Welcome to ShineUp! Please verify your email address using the following One-Time Password (OTP):</p>\n<h2 style='color:#007bff; background: #f0f8ff; display: inline-block; padding: 8px 24px; border-radius: 8px; letter-spacing: 2px;'>{otp}</h2>\n<p style='margin-top:16px;'>This code is valid for 15 minutes. Please verify your email to activate your account.</p>\n<p>Thank you,<br/>ShineUp Support Team</p>");
 
-        return Ok(new { Message = "Registration successful! Please check your email for verification code.", UserId = registeredUser.UserID });
+        return Ok(new
+        {
+            Message = "Registration successful! Please check your email for verification code.",
+            UserId = registeredUser.UserID
+        });
     }
 
     [HttpPost("login")]
@@ -125,11 +127,11 @@ public class AuthController : ControllerBase
             // User exists, password is correct, but email is not verified.
             // Return a specific status code and payload that the client can use
             // to redirect to the email verification page.
-            return StatusCode(Microsoft.AspNetCore.Http.StatusCodes.Status403Forbidden, new
+            return StatusCode(StatusCodes.Status403Forbidden, new
             {
                 Message = "Your account is not active. Please verify your email first.",
                 RequiresVerification = true,
-                Email = user.Email, // Send email back to help client redirect to OTP page for this email
+                user.Email, // Send email back to help client redirect to OTP page for this email
                 UserId = user.UserID // Add UserId for the client to use
             });
         }
@@ -142,13 +144,13 @@ public class AuthController : ControllerBase
             Token = token,
             User = new
             {
-                UserID = user.UserID,
-                Username = user.Username,
-                Email = user.Email,
-                ProfileImageURL = user.ProfileImageURL,
+                user.UserID,
+                user.Username,
+                user.Email,
+                user.ProfileImageURL,
                 Role = user.Role.Name,
-                RoleID = user.RoleID,
-                Verified = user.Verified
+                user.RoleID,
+                user.Verified
             }
         });
     }
@@ -160,16 +162,16 @@ public class AuthController : ControllerBase
         {
             var payload = await _googleAuthService.VerifyGoogleToken(googleAuth.IdToken);
             var user = await _googleAuthService.HandleGoogleUser(payload);
-            
+
             // Update LastLoginTime for Google logins
             var loginTime = DateTime.UtcNow;
-            
-            try 
+
+            try
             {
                 // Use direct SQL to update the LastLoginTime
                 await _context.Database.ExecuteSqlInterpolatedAsync(
                     $"UPDATE \"Users\" SET \"LastLoginTime\" = {loginTime} WHERE \"UserID\" = {user.UserID}");
-                
+
                 // Update the user object in memory
                 user.LastLoginTime = loginTime;
             }
@@ -180,17 +182,17 @@ public class AuthController : ControllerBase
             }
 
             // For Google users without a password, they need to complete their profile
-            bool needsPassword = string.IsNullOrEmpty(user.PasswordHash);
-            string token = needsPassword ? string.Empty : GenerateToken(user);
+            var needsPassword = string.IsNullOrEmpty(user.PasswordHash);
+            var token = needsPassword ? string.Empty : GenerateToken(user);
 
             var response = new
             {
                 Token = token,
-                Username = user.Username,
-                Email = user.Email,
+                user.Username,
+                user.Email,
                 ProfileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
-                Verified = user.Verified,
-                needsPassword = needsPassword,
+                user.Verified,
+                needsPassword,
                 userId = user.UserID
             };
 
@@ -236,7 +238,7 @@ public class AuthController : ControllerBase
                 model.Email,
                 "Password Reset Request",
                 $"<p><strong>Dear {user.Username},</strong></p>\n<p>We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed:</p>\n<h2 style='color:#007bff; background: #f0f8ff; display: inline-block; padding: 8px 24px; border-radius: 8px; letter-spacing: 2px;'>{otp}</h2>\n<p style='margin-top:16px;'>This code is valid for 15 minutes. If you did not request a password reset, please ignore this email.</p>\n<p>Thank you,<br/>ShineUp Support Team</p>");
-            
+
             return Ok(new { message = "OTP has been sent to your email" });
         }
         catch (Exception ex)
@@ -249,13 +251,13 @@ public class AuthController : ControllerBase
     public IActionResult CompleteProfile(int userId, string email, string fullName)
     {
         _logger.LogInformation($"Serving CompleteProfile page for user ID: {userId}");
-        
+
         // Return the Razor view from the Client project
         // The view is served by the Client project, so we just need to redirect to it
         // The Client project should handle the routing to the correct view
         return Redirect($"~/auth/completeprofile?userId={userId}&email={email}&fullName={fullName}");
     }
-    
+
     [HttpPost("CompleteGoogleProfile")]
     [AllowAnonymous]
     public async Task<IActionResult> CompleteGoogleProfile([FromBody] CompleteProfileDTO model)
@@ -263,7 +265,7 @@ public class AuthController : ControllerBase
         try
         {
             _logger.LogInformation($"Starting profile completion for user ID: {model?.UserId}");
-            
+
             // Validate the model
             if (!ModelState.IsValid)
             {
@@ -271,15 +273,16 @@ public class AuthController : ControllerBase
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
-                
+
                 _logger.LogWarning($"Model validation failed: {string.Join(", ", errors)}");
-                return BadRequest(new { 
-                    success = false, 
+                return BadRequest(new
+                {
+                    success = false,
                     message = "Validation failed",
-                    errors = errors 
+                    errors
                 });
             }
-            
+
             // Find the user
             var user = await _context.Users
                 .Include(u => u.Role)
@@ -288,9 +291,10 @@ public class AuthController : ControllerBase
             if (user == null)
             {
                 _logger.LogWarning($"User not found with ID: {model.UserId}");
-                return NotFound(new { 
+                return NotFound(new
+                {
                     success = false,
-                    message = "User not found" 
+                    message = "User not found"
                 });
             }
 
@@ -301,15 +305,16 @@ public class AuthController : ControllerBase
             if (existingUser != null)
             {
                 _logger.LogWarning($"Username {model.Username} is already taken");
-                return BadRequest(new { 
+                return BadRequest(new
+                {
                     success = false,
-                    message = "Username is already taken" 
+                    message = "Username is already taken"
                 });
             }
 
 
             _logger.LogInformation($"Updating user profile for user ID: {user.UserID}");
-            
+
             // Update user information
             user.Username = model.Username.Trim();
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
@@ -325,16 +330,16 @@ public class AuthController : ControllerBase
 
             // Generate JWT token
             var token = GenerateToken(user);
-            
+
             // Get the user's role name
             var roleName = user.Role?.Name ?? "User";
 
             _logger.LogInformation($"Profile completion successful for user ID: {user.UserID}");
-            
+
             return Ok(new
             {
                 success = true,
-                token = token,
+                token,
                 username = user.Username,
                 email = user.Email,
                 profileImageURL = user.ProfileImageURL ?? "https://via.placeholder.com/30/007bff/FFFFFF?text=U",
@@ -346,9 +351,10 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error completing Google profile for user ID: {model?.UserId}");
-            return StatusCode(500, new { 
+            return StatusCode(500, new
+            {
                 success = false,
-                message = "An error occurred while completing your profile. Please try again." 
+                message = "An error occurred while completing your profile. Please try again."
             });
         }
     }
@@ -369,8 +375,10 @@ public class AuthController : ControllerBase
                     user.Verified = true;
                     await _context.SaveChangesAsync();
                 }
+
                 return Ok(new { message = "Email verified successfully" });
             }
+
             return BadRequest(new { message = "Invalid or expired code" });
         }
         catch (Exception ex)
@@ -390,6 +398,7 @@ public class AuthController : ControllerBase
             {
                 return Ok(new { message = "Password has been reset successfully" });
             }
+
             return BadRequest(new { message = "Password reset failed" });
         }
         catch (Exception ex)
@@ -405,9 +414,10 @@ public class AuthController : ControllerBase
         try
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
-                _logger.LogWarning($"Invalid user ID claim. Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
+                _logger.LogWarning(
+                    $"Invalid user ID claim. Claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
                 return BadRequest(new { success = false, message = "Invalid user ID" });
             }
 
@@ -426,7 +436,7 @@ public class AuthController : ControllerBase
 
             // Generate OTP via repository (handles hashing and saving)
             var otp = await _authRepository.GenerateOTP(user.Email);
-            
+
             // Send OTP email
             var emailBody = $@"
                 <h2>Email Verification</h2>
@@ -444,7 +454,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error sending verification OTP");
+            _logger.LogError(ex, "Error sending verification OTP");
             return StatusCode(500, new { success = false, message = "Internal server error" });
         }
     }
@@ -454,7 +464,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            bool isOtpValid = await _authRepository.VerifyEmail(model.Email, model.OTP);
+            var isOtpValid = await _authRepository.VerifyEmail(model.Email, model.OTP);
 
             if (!isOtpValid)
             {
@@ -475,7 +485,7 @@ public class AuthController : ControllerBase
                 _logger.LogError($"User not found for email {model.Email} after successful OTP verification.");
                 return StatusCode(500, new { message = "Internal server error during verification." });
             }
-            
+
             // Activate the account if it's not already (VerifyEmail sets Verified, not IsActive)
             if (!user.IsActive)
             {
@@ -486,10 +496,12 @@ public class AuthController : ControllerBase
             // Generate new token with updated claims
             var token = GenerateToken(user);
 
-            return Ok(new {
+            return Ok(new
+            {
                 message = "Email verified successfully",
-                token = token,
-                user = new {
+                token,
+                user = new
+                {
                     username = user.Username,
                     email = user.Email,
                     verified = user.Verified, // Should be true now
@@ -513,10 +525,14 @@ public class AuthController : ControllerBase
             var userId = int.Parse(User.FindFirst("UserID")?.Value);
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == userId);
             if (user == null)
+            {
                 return NotFound(new { message = "User not found" });
+            }
 
             if (user.Verified)
+            {
                 return BadRequest(new { message = "Email is already verified" });
+            }
 
             var otp = await _authRepository.GenerateOTP(user.Email);
             // _authRepository.GenerateOTP already saves the hashed OTP.
@@ -536,8 +552,9 @@ public class AuthController : ControllerBase
 
     private string GenerateToken(User user)
     {
-        _logger.LogInformation($"[AuthController] Generating token for user ID: {user.UserID}, Email: {user.Email}, Username: {user.Username}");
-        
+        _logger.LogInformation(
+            $"[AuthController] Generating token for user ID: {user.UserID}, Email: {user.Email}, Username: {user.Username}");
+
         var securityKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
@@ -553,7 +570,8 @@ public class AuthController : ControllerBase
             new Claim("RoleID", user.RoleID.ToString())
         };
 
-        _logger.LogInformation($"[AuthController] Token claims: {string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}"))}");
+        _logger.LogInformation(
+            $"[AuthController] Token claims: {string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}"))}");
 
         var token = new JwtSecurityToken(
             _configuration["Jwt:Issuer"],
@@ -565,8 +583,7 @@ public class AuthController : ControllerBase
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         _logger.LogInformation($"[AuthController] Token generated successfully for user ID: {user.UserID}");
-        
+
         return tokenString;
     }
-
 }

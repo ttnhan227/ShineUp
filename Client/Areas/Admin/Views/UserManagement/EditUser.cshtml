@@ -1,4 +1,4 @@
-@model Client.Models.UserViewModel
+@model UserViewModel
 @{
     ViewData["Title"] = "Edit User Role";
 }
@@ -14,15 +14,15 @@
                         <input type="hidden" asp-for="UserID"/>
                         <div class="profile-details">
                             <div class="profile-detail-item">
-                                <label><i class='bx bx-user'></i> Username</label>
+                                <label><i class="bx bx-user"></i> Username</label>
                                 <input class="form-control" asp-for="Username" readonly/>
                             </div>
                             <div class="profile-detail-item">
-                                <label><i class='bx bx-envelope'></i> Email</label>
+                                <label><i class="bx bx-envelope"></i> Email</label>
                                 <input class="form-control" asp-for="Email" readonly/>
                             </div>
                             <div class="profile-detail-item">
-                                <label><i class='bx bx-shield'></i> Role</label>
+                                <label><i class="bx bx-shield"></i> Role</label>
                                 <select class="form-select" name="RoleID" required>
                                     <option value="1" selected="@(Model.RoleID == 1)">User</option>
                                     <option value="2" selected="@(Model.RoleID == 2)">Admin</option>
@@ -32,10 +32,10 @@
                         </div>
                         <div class="button-group mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-save'></i> Save Changes
+                                <i class="bx bx-save"></i> Save Changes
                             </button>
                             <a asp-action="Index" class="btn btn-secondary">
-                                <i class='bx bx-x'></i> Cancel
+                                <i class="bx bx-x"></i> Cancel
                             </a>
                         </div>
                     </form>
@@ -46,6 +46,6 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
     <link href="~/admin/assets/css/admin.css" rel="stylesheet"/>
 }

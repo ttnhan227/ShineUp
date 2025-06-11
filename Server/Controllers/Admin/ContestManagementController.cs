@@ -2,220 +2,223 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.DTOs.Admin;
 using Server.Interfaces.Admin;
-using System.Security.Claims;
 using Server.Models;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
-namespace Server.Controllers.Admin
+namespace Server.Controllers.Admin;
+
+[Authorize(Roles = "Admin")]
+[Route("api/admin/[controller]")]
+[ApiController]
+public class ContestManagementController : ControllerBase
 {
-    [Authorize(Roles = "Admin")]
-    [Route("api/admin/[controller]")]
-    [ApiController]
-    public class ContestManagementController : ControllerBase
+    private readonly ILogger<ContestManagementController> _logger;
+    private readonly IContestManagementRepository _repository;
+
+    public ContestManagementController(
+        IContestManagementRepository repository,
+        ILogger<ContestManagementController> logger)
     {
-        private readonly IContestManagementRepository _repository;
-        private readonly ILogger<ContestManagementController> _logger;
+        _repository = repository;
+        _logger = logger;
+    }
 
-        public ContestManagementController(
-            IContestManagementRepository repository,
-            ILogger<ContestManagementController> logger)
+    // GET: api/admin/ContestManagement
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<AdminContestDTO>>> GetContests()
+    {
+        try
         {
-            _repository = repository;
-            _logger = logger;
+            var contests = await _repository.GetAllContestsAsync();
+            return Ok(contests);
         }
-
-        // GET: api/admin/ContestManagement
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdminContestDTO>>> GetContests()
+        catch (Exception ex)
         {
-            try
-            {
-                var contests = await _repository.GetAllContestsAsync();
-                return Ok(contests);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting all contests");
-                return StatusCode(500, "Internal server error while retrieving contests");
-            }
+            _logger.LogError(ex, "Error getting all contests");
+            return StatusCode(500, "Internal server error while retrieving contests");
         }
+    }
 
-        // GET: api/admin/ContestManagement/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AdminContestDTO>> GetContest(int id)
+    // GET: api/admin/ContestManagement/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AdminContestDTO>> GetContest(int id)
+    {
+        try
         {
-            try
+            var contest = await _repository.GetContestByIdAsync(id);
+            if (contest == null)
             {
-                var contest = await _repository.GetContestByIdAsync(id);
-                if (contest == null)
-                {
-                    return NotFound();
-                }
-                return Ok(contest);
+                return NotFound();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting contest with id {id}");
-                return StatusCode(500, "Internal server error while retrieving contest");
-            }
+
+            return Ok(contest);
         }
-
-        // POST: api/admin/ContestManagement
-        [HttpPost]
-        public async Task<ActionResult<AdminContestDTO>> CreateContest(AdminCreateContestDTO createContestDto)
+        catch (Exception ex)
         {
-            try
-            {
-                if (createContestDto.StartDate >= createContestDto.EndDate)
-                {
-                    return BadRequest("End date must be after start date");
-                }
-
-                if (createContestDto.EndDate < DateTime.UtcNow)
-                {
-                    return BadRequest("End date must be in the future");
-                }
-
-
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                var contest = await _repository.CreateContestAsync(createContestDto, userId);
-                
-                return CreatedAtAction(nameof(GetContest), new { id = contest.ContestID }, contest);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating contest");
-                return StatusCode(500, "Internal server error while creating contest");
-            }
+            _logger.LogError(ex, $"Error getting contest with id {id}");
+            return StatusCode(500, "Internal server error while retrieving contest");
         }
+    }
 
-        // PUT: api/admin/ContestManagement/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateContest(int id, AdminUpdateContestDTO updateContestDto)
+    // POST: api/admin/ContestManagement
+    [HttpPost]
+    public async Task<ActionResult<AdminContestDTO>> CreateContest(AdminCreateContestDTO createContestDto)
+    {
+        try
         {
-            try
+            if (createContestDto.StartDate >= createContestDto.EndDate)
             {
-                if (id != updateContestDto.ContestID)
-                {
-                    return BadRequest("ID in URL does not match ID in request body");
-                }
-
-                if (updateContestDto.StartDate >= updateContestDto.EndDate)
-                {
-                    return BadRequest("End date must be after start date");
-                }
-
-                var existingContest = await _repository.GetContestByIdAsync(id);
-                if (existingContest == null)
-                {
-                    return NotFound();
-                }
-
-
-                var updatedContest = await _repository.UpdateContestAsync(id, updateContestDto);
-                if (updatedContest == null)
-                {
-                    return NotFound();
-                }
-
-                return Ok(updatedContest);
+                return BadRequest("End date must be after start date");
             }
-            catch (Exception ex)
+
+            if (createContestDto.EndDate < DateTime.UtcNow)
             {
-                _logger.LogError(ex, $"Error updating contest with id {id}");
-                return StatusCode(500, "Internal server error while updating contest");
+                return BadRequest("End date must be in the future");
             }
+
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var contest = await _repository.CreateContestAsync(createContestDto, userId);
+
+            return CreatedAtAction(nameof(GetContest), new { id = contest.ContestID }, contest);
         }
-
-        // DELETE: api/admin/ContestManagement/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteContest(int id)
+        catch (Exception ex)
         {
-            try
-            {
-                var result = await _repository.DeleteContestAsync(id);
-                if (!result)
-                {
-                    return NotFound();
-                }
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error deleting contest with id {id}");
-                return StatusCode(500, "Internal server error while deleting contest");
-            }
+            _logger.LogError(ex, "Error creating contest");
+            return StatusCode(500, "Internal server error while creating contest");
         }
+    }
 
-        // GET: api/admin/ContestManagement/5/entries
-        [HttpGet("{id}/entries")]
-        public async Task<ActionResult<IEnumerable<ContestEntry>>> GetContestEntries(int id)
+    // PUT: api/admin/ContestManagement/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateContest(int id, AdminUpdateContestDTO updateContestDto)
+    {
+        try
         {
-            try
+            if (id != updateContestDto.ContestID)
             {
-                var entries = await _repository.GetContestEntriesAsync(id);
-                return Ok(entries);
+                return BadRequest("ID in URL does not match ID in request body");
             }
-            catch (Exception ex)
+
+            if (updateContestDto.StartDate >= updateContestDto.EndDate)
             {
-                _logger.LogError(ex, $"Error getting entries for contest with id {id}");
-                return StatusCode(500, "Internal server error while retrieving contest entries");
+                return BadRequest("End date must be after start date");
             }
+
+            var existingContest = await _repository.GetContestByIdAsync(id);
+            if (existingContest == null)
+            {
+                return NotFound();
+            }
+
+
+            var updatedContest = await _repository.UpdateContestAsync(id, updateContestDto);
+            if (updatedContest == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updatedContest);
         }
-
-        // DELETE: api/admin/ContestManagement/entries/5
-        [HttpDelete("entries/{id}")]
-        public async Task<IActionResult> DeleteContestEntry(int id)
+        catch (Exception ex)
         {
-            try
-            {
-                var result = await _repository.DeleteContestEntryAsync(id);
-                if (!result)
-                    return NotFound();
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting contest entry with ID {ContestEntryId}", id);
-                return StatusCode(500, "Internal server error while deleting contest entry");
-            }
+            _logger.LogError(ex, $"Error updating contest with id {id}");
+            return StatusCode(500, "Internal server error while updating contest");
         }
-        
-        // POST: api/admin/ContestManagement/entries/5/declare-winner
-        [HttpPost("entries/{entryId}/declare-winner")]
-        public async Task<IActionResult> DeclareWinner(int entryId)
-        {
-            try
-            {
-                var result = await _repository.DeclareWinnerAsync(entryId);
-                if (!result)
-                    return NotFound("Entry or contest not found");
-                    
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error declaring winner for entry {EntryId}", entryId);
-                return StatusCode(500, "Internal server error while declaring winner");
-            }
-        }
+    }
 
-        // GET: api/admin/ContestManagement/5/stats
-        [HttpGet("{id}/stats")]
-        public async Task<ActionResult<ContestStatsDTO>> GetContestStats(int id)
+    // DELETE: api/admin/ContestManagement/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteContest(int id)
+    {
+        try
         {
-            try
+            var result = await _repository.DeleteContestAsync(id);
+            if (!result)
             {
-                var stats = await _repository.GetContestStatsAsync(id);
-                return Ok(stats);
+                return NotFound();
             }
-            catch (Exception ex)
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error deleting contest with id {id}");
+            return StatusCode(500, "Internal server error while deleting contest");
+        }
+    }
+
+    // GET: api/admin/ContestManagement/5/entries
+    [HttpGet("{id}/entries")]
+    public async Task<ActionResult<IEnumerable<ContestEntry>>> GetContestEntries(int id)
+    {
+        try
+        {
+            var entries = await _repository.GetContestEntriesAsync(id);
+            return Ok(entries);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting entries for contest with id {id}");
+            return StatusCode(500, "Internal server error while retrieving contest entries");
+        }
+    }
+
+    // DELETE: api/admin/ContestManagement/entries/5
+    [HttpDelete("entries/{id}")]
+    public async Task<IActionResult> DeleteContestEntry(int id)
+    {
+        try
+        {
+            var result = await _repository.DeleteContestEntryAsync(id);
+            if (!result)
             {
-                _logger.LogError(ex, $"Error getting stats for contest with id {id}");
-                return StatusCode(500, "Internal server error while retrieving contest stats");
+                return NotFound();
             }
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting contest entry with ID {ContestEntryId}", id);
+            return StatusCode(500, "Internal server error while deleting contest entry");
+        }
+    }
+
+    // POST: api/admin/ContestManagement/entries/5/declare-winner
+    [HttpPost("entries/{entryId}/declare-winner")]
+    public async Task<IActionResult> DeclareWinner(int entryId)
+    {
+        try
+        {
+            var result = await _repository.DeclareWinnerAsync(entryId);
+            if (!result)
+            {
+                return NotFound("Entry or contest not found");
+            }
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error declaring winner for entry {EntryId}", entryId);
+            return StatusCode(500, "Internal server error while declaring winner");
+        }
+    }
+
+    // GET: api/admin/ContestManagement/5/stats
+    [HttpGet("{id}/stats")]
+    public async Task<ActionResult<ContestStatsDTO>> GetContestStats(int id)
+    {
+        try
+        {
+            var stats = await _repository.GetContestStatsAsync(id);
+            return Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting stats for contest with id {id}");
+            return StatusCode(500, "Internal server error while retrieving contest stats");
         }
     }
 }

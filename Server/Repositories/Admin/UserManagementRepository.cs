@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.DTOs;
 using Server.Interfaces.Admin;
-using Server.Models;
 
 namespace Server.Repositories.Admin;
 
@@ -41,7 +40,10 @@ public class UserManagementRepository : IUserManagementRepository
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.UserID == userId);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         return new UserDTO
         {
@@ -64,7 +66,10 @@ public class UserManagementRepository : IUserManagementRepository
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.UserID == userId);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         user.RoleID = roleId;
         await _context.SaveChangesAsync();
@@ -90,7 +95,10 @@ public class UserManagementRepository : IUserManagementRepository
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.UserID == userId);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return null;
+        }
 
         switch (field.ToLower())
         {
@@ -124,10 +132,13 @@ public class UserManagementRepository : IUserManagementRepository
     public async Task<bool> DeleteUser(int userId)
     {
         var user = await _context.Users.FindAsync(userId);
-        if (user == null) return false;
+        if (user == null)
+        {
+            return false;
+        }
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
         return true;
     }
-} 
+}

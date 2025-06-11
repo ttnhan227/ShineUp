@@ -47,8 +47,7 @@ public class PostViewModel
     [Display(Name = "Community Name")]
     public string? CommunityName { get; set; }
 
-    public List<CommentViewModel> Comments { get; set; } = new List<CommentViewModel>();
-
+    public List<CommentViewModel> Comments { get; set; } = new();
 }
 
 public class MediaFileViewModel

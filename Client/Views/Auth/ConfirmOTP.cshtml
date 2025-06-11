@@ -1,4 +1,4 @@
-@model Client.Models.ConfirmOTPViewModel
+@model ConfirmOTPViewModel
 
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -15,7 +15,7 @@
                         <input type="hidden" asp-for="Email"/>
                         <div class="form-group mb-4">
                             <label asp-for="OTP" class="form-label">
-                                <i class='bx bx-key'></i> Reset Code
+                                <i class="bx bx-key"></i> Reset Code
                             </label>
                             <div class="input-group">
                                 <input asp-for="OTP" class="form-control" placeholder="Enter reset code" required/>
@@ -25,13 +25,13 @@
 
                         <div class="button-group">
                             <button type="submit" class="btn btn-primary">
-                                <i class='bx bx-check'></i> Verify Code
+                                <i class="bx bx-check"></i> Verify Code
                             </button>
                             <button type="button" id="resendBtn" class="btn btn-outline-primary" onclick="resendCode()">
-                                <i class='bx bx-refresh'></i> Resend Code <span id="timer" class="d-none">(60s)</span>
+                                <i class="bx bx-refresh"></i> Resend Code <span id="timer" class="d-none">(60s)</span>
                             </button>
                             <a asp-controller="Auth" asp-action="Login" class="btn btn-secondary">
-                                <i class='bx bx-arrow-back'></i> Back to Login
+                                <i class="bx bx-arrow-back"></i> Back to Login
                             </a>
                         </div>
                     </form>
@@ -49,7 +49,7 @@
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
     <link href="~/css/auth.css" rel="stylesheet">
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>

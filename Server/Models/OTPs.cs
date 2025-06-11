@@ -22,5 +22,6 @@ public class OTPs
     [ForeignKey("User")]
     [Required]
     public int UserID { get; set; }
+
     public User User { get; set; }
 }

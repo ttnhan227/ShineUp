@@ -1,10 +1,10 @@
 @model IEnumerable<OpportunityViewModel>
 @{
-ViewData["Title"] = "Opportunities";
-var categoryId = ViewContext.RouteData.Values["id"]?.ToString() ??
-                 Context.Request.Query["categoryId"].ToString();
-var categories = ViewBag.Categories as List<CategoryViewModel> ?? new List<CategoryViewModel>();
-var categoryName = categories.FirstOrDefault(c => c.CategoryID.ToString() == categoryId)?.CategoryName;
+    ViewData["Title"] = "Opportunities";
+    var categoryId = ViewContext.RouteData.Values["id"]?.ToString() ??
+                     Context.Request.Query["categoryId"].ToString();
+    var categories = ViewBag.Categories as List<CategoryViewModel> ?? new List<CategoryViewModel>();
+    var categoryName = categories.FirstOrDefault(c => c.CategoryID.ToString() == categoryId)?.CategoryName;
 }
 
 <main class="opportunities-page">
@@ -176,5 +176,5 @@ var categoryName = categories.FirstOrDefault(c => c.CategoryID.ToString() == cat
 </main>
 
 @section Styles {
-<link rel="stylesheet" href="~/css/opportunities.css"/>
+    <link rel="stylesheet" href="~/css/opportunities.css"/>
 }

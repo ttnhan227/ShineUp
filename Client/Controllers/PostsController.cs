@@ -312,25 +312,26 @@ public class PostsController : Controller
                     post.HasLiked = false;
                 }
             }
+
             // Get comments for each post
-foreach (var post in posts)
-{
-    var commentsResponse = await client.GetAsync($"api/social/posts/{post.PostID}/comments");
-    if (commentsResponse.IsSuccessStatusCode)
-    {
-        var commentsContent = await commentsResponse.Content.ReadAsStringAsync();
-        var comments = JsonSerializer.Deserialize<List<CommentViewModel>>(commentsContent,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        
-        // Attach comments to the post
-        if (comments != null)
-        {
-            // If you're using a view model that doesn't have a Comments property,
-            // you might need to create a new view model that includes comments
-            post.Comments = comments;
-        }
-    }
-}
+            foreach (var post in posts)
+            {
+                var commentsResponse = await client.GetAsync($"api/social/posts/{post.PostID}/comments");
+                if (commentsResponse.IsSuccessStatusCode)
+                {
+                    var commentsContent = await commentsResponse.Content.ReadAsStringAsync();
+                    var comments = JsonSerializer.Deserialize<List<CommentViewModel>>(commentsContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    // Attach comments to the post
+                    if (comments != null)
+                    {
+                        // If you're using a view model that doesn't have a Comments property,
+                        // you might need to create a new view model that includes comments
+                        post.Comments = comments;
+                    }
+                }
+            }
 
             // Get categories
             var categoriesResponse = await client.GetAsync("api/categories");

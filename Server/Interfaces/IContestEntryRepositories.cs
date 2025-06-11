@@ -1,4 +1,3 @@
-using Server.DTOs;
 using Server.Models;
 
 namespace Server.Interfaces;
@@ -11,7 +10,7 @@ public interface IContestEntryRepositories
     Task AddAsync(ContestEntry entry);
     Task UpdateAsync(ContestEntry entry);
     Task DeleteAsync(int entryId);
-    
+
     // Media specific methods
     Task<bool> IsVideoInUseAsync(string videoId);
     Task<bool> IsImageInUseAsync(string imageId);

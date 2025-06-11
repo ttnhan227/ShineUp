@@ -11,8 +11,8 @@ namespace Server.Controllers;
 [Route("api/[controller]")]
 public class CommentsController : ControllerBase
 {
-    private readonly IPostRepository _postRepository;
     private readonly ILogger<CommentsController> _logger;
+    private readonly IPostRepository _postRepository;
 
     public CommentsController(
         IPostRepository postRepository,
@@ -24,13 +24,15 @@ public class CommentsController : ControllerBase
 
     // GET: api/comments/post/5
     [HttpGet("post/{postId}")]
-    [AllowAnonymous]  // Allow anonymous access to read comments
+    [AllowAnonymous] // Allow anonymous access to read comments
     public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsForPost(int postId)
     {
         try
         {
             if (!await _postRepository.PostExistsAsync(postId))
+            {
                 return NotFound("Post not found");
+            }
 
             var comments = await _postRepository.GetCommentsForPostAsync(postId);
             var commentDtos = comments.Select(c => new CommentDTO
@@ -63,13 +65,20 @@ public class CommentsController : ControllerBase
         try
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             if (createCommentDto.PostID == null && createCommentDto.VideoID == null)
+            {
                 return BadRequest("Either PostID or VideoID must be provided");
+            }
 
-            if (createCommentDto.PostID != null && !await _postRepository.PostExistsAsync(createCommentDto.PostID.Value))
+            if (createCommentDto.PostID != null &&
+                !await _postRepository.PostExistsAsync(createCommentDto.PostID.Value))
+            {
                 return NotFound("Post not found");
+            }
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
@@ -83,10 +92,10 @@ public class CommentsController : ControllerBase
             };
 
             var createdComment = await _postRepository.AddCommentToPostAsync(comment);
-            
+
             // Reload the comment with user data
             var commentWithUser = await _postRepository.GetCommentByIdAsync(createdComment.CommentID);
-            
+
             var commentDto = new CommentDTO
             {
                 CommentID = commentWithUser.CommentID,
@@ -121,10 +130,12 @@ public class CommentsController : ControllerBase
         {
             var comment = await _postRepository.GetCommentByIdAsync(id);
             if (comment == null)
+            {
                 return NotFound("Comment not found");
+            }
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            
+
             // Only the comment owner or post owner can delete the comment
             if (comment.UserID != userId)
             {
@@ -132,7 +143,9 @@ public class CommentsController : ControllerBase
                 {
                     var post = await _postRepository.GetPostByIdAsync(comment.PostID.Value);
                     if (post?.UserID != userId)
+                    {
                         return Forbid();
+                    }
                 }
                 else
                 {
@@ -143,7 +156,9 @@ public class CommentsController : ControllerBase
 
             var success = await _postRepository.DeleteCommentAsync(id, userId);
             if (!success)
+            {
                 return NotFound("Comment not found or you don't have permission to delete it");
+            }
 
             return NoContent();
         }

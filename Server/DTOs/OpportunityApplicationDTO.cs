@@ -32,8 +32,10 @@ public class UpdateOpportunityApplicationDTO
     public bool IsValidStatus()
     {
         if (string.IsNullOrEmpty(Status))
+        {
             return false;
-            
+        }
+
         return Enum.TryParse<ApplicationStatus>(Status, true, out _);
     }
 }
