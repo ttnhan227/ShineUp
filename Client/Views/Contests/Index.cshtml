@@ -14,8 +14,18 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h2 class="card-title h4 mb-0">@contest.Title</h2>
-                            <span class="badge bg-@(contest.IsActive ? "success" : "secondary") ms-2">
-                                @(contest.IsActive ? "Active" : "Ended")
+                            @{
+                                var statusClass = contest.Status switch
+                                {
+                                    "Active" => "bg-success",
+                                    "Upcoming" => "bg-info text-dark",
+                                    "Ended" => "bg-secondary",
+                                    "Closed" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @statusClass ms-2">
+                                @contest.Status
                             </span>
                         </div>
 

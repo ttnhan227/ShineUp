@@ -105,6 +105,7 @@ public class ContestManagementRepository : IContestManagementRepository
             Description = contest.Description,
             StartDate = contest.StartDate,
             EndDate = contest.EndDate,
+            IsClosed = contest.IsClosed,
             ContestEntries = contest.ContestEntries.Select(e => new ContestEntryDTO
             {
                 EntryID = e.EntryID,

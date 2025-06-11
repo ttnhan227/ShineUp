@@ -1,4 +1,4 @@
-﻿namespace Client.Models;
+namespace Client.Models;
 
 public class ContestViewModel
 {
@@ -7,5 +7,18 @@ public class ContestViewModel
     public string Description { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public bool IsActive => DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
+    public bool IsClosed { get; set; }
+    
+    public string Status
+    {
+        get
+        {
+            if (IsClosed) return "Closed";
+            if (DateTime.UtcNow < StartDate) return "Upcoming";
+            if (DateTime.UtcNow > EndDate) return "Ended";
+            return "Active";
+        }
+    }
+    
+    public bool IsActive => !IsClosed && DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
 }

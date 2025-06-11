@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
@@ -39,6 +39,7 @@ public class ContestRepositories : IContestRepositories
             existing.Description = contest.Description;
             existing.StartDate = contest.StartDate;
             existing.EndDate = contest.EndDate;
+            existing.IsClosed = contest.IsClosed;
 
             await _context.SaveChangesAsync();
         }

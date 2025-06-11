@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
@@ -79,10 +79,10 @@ public class ContestsController : ControllerBase
         contest.Description = dto.Description;
         contest.StartDate = dto.StartDate;
         contest.EndDate = dto.EndDate;
+        contest.IsClosed = dto.IsClosed;
 
         await _repository.UpdateAsync(contest);
-        //return NoContent(); // 204, api nội bộ
-        return Ok(dto); // hoặc return Ok(contest);
+        return Ok(contest);
     }
 
     [HttpDelete("{id}")]

@@ -20,4 +20,6 @@ public class ContestDTO
     [Required]
     [DataType(DataType.DateTime)]
     public DateTime EndDate { get; set; }
+
+    public bool IsClosed { get; set; }
 }

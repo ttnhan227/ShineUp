@@ -33,7 +33,16 @@ public class ContestViewModel
     public int TotalVotes { get; set; }
 
     public bool IsActive => !IsClosed && DateTime.Now >= StartDate && DateTime.Now <= EndDate;
-    public string Status => IsClosed ? "Closed" : IsActive ? "Active" : DateTime.Now < StartDate ? "Upcoming" : "Ended";
+    public string Status 
+    {
+        get
+        {
+            if (IsClosed) return "Closed";
+            if (DateTime.Now < StartDate) return "Upcoming";
+            if (DateTime.Now > EndDate) return "Ended";
+            return "Active";
+        }
+    }
 
     [Display(Name = "Time Remaining")]
     public string TimeRemaining
