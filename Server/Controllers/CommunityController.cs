@@ -29,7 +29,7 @@ public class CommunityController : ControllerBase
     public async Task<ActionResult<IEnumerable<Privacy>>> GetAllowedPrivacyOptions()
     {
         return await _db.Privacies
-            .Where(p => p.PrivacyID == 1 || p.PrivacyID == 3)
+            .Where(p => p.PrivacyID == 1 )
             .ToListAsync();
     }
 
