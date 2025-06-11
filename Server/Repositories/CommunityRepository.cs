@@ -39,6 +39,7 @@ public class CommunityRepository : ICommunityRepository
             .Include(p => p.Comments)
             .Include(p => p.Images)
             .Include(p => p.Videos)
+            .Include(p => p.Community)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
@@ -647,6 +648,7 @@ public class CommunityRepository : ICommunityRepository
             .Include(p => p.User)
             .Include(p => p.Comments).ThenInclude(c => c.User)
             .Include(p => p.Likes).ThenInclude(l => l.User)
+            .Include(p => p.Community)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }

@@ -187,6 +187,12 @@
                             @foreach (var post in Model.Posts)
                             {
                                 <div class="post-card">
+                                    @if (!string.IsNullOrEmpty(@post.CommunityName))
+                                    {
+                                        <div class="community-badge mb-2">
+                                            <i class='bx bx-group me-1'></i> @post.CommunityName
+                                        </div>
+                                    }
                                     <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID"
                                        class="text-decoration-none">
                                         <div class="post-header">

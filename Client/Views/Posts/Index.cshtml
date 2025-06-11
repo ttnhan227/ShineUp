@@ -94,6 +94,12 @@
                 @foreach (var item in Model)
                 {
                     <div class="post-card mb-4">
+                        @if (!string.IsNullOrEmpty(item.CommunityName))
+                        {
+                            <div class="community-badge mb-2">
+                                <i class='bx bx-group me-1'></i> @item.CommunityName
+                            </div>
+                        }
                         <div class="post-header">
                             <a asp-controller="UserProfile" asp-action="PublicProfile"
                                asp-route-username="@item.Username"
@@ -728,6 +734,18 @@
         });
     </script>
     <style>
+        .community-badge {
+            background-color: #f8f9fa;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            color: #6c757d;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 16px;
+            margin-top: 8px;
+        }
+
         .post-creation-card {
             background: #fff;
             border-radius: 0.75rem;

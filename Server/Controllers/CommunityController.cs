@@ -103,6 +103,8 @@ public class CommunityController : ControllerBase
                 CategoryName = p.Category?.CategoryName,
                 LikesCount = p.Likes?.Count ?? 0,
                 CommentsCount = p.Comments?.Count ?? 0,
+                CommunityID = p.CommunityID,
+                CommunityName = p.Community?.Name,
                 MediaFiles = p.Images.Select(i => new MediaFileDTO
                 {
                     Url = i.ImageURL?.Replace("http://", "https://"),

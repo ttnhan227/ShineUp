@@ -12,6 +12,12 @@
         <div class="col-md-8 offset-md-2 col-xl-6 offset-xl-3">
             <div class="posts-feed">
                 <div class="post-card mb-4">
+                    @if (!string.IsNullOrEmpty(Model.CommunityName))
+                    {
+                        <div class="community-badge mb-2">
+                            <i class='bx bx-group me-1'></i> @Model.CommunityName
+                        </div>
+                    }
                     <div class="post-header">
                         <a asp-controller="UserProfile" asp-action="PublicProfile" asp-route-username="@Model.Username"
                            class="text-decoration-none d-flex align-items-center">

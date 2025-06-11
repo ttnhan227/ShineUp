@@ -26,6 +26,7 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)  
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
@@ -55,11 +56,13 @@ public class PostRepository : IPostRepository
         query = query
             .Include(p => p.User)
             .Include(p => p.Category)
+            .Include(p => p.Community)  // Include Community
             .Include(p => p.Privacy)
             .Include(p => p.Images)
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)
             .OrderByDescending(p => p.CreatedAt);
 
         return await query.ToListAsync();
@@ -70,11 +73,13 @@ public class PostRepository : IPostRepository
         return await _context.Posts
             .Include(p => p.User)
             .Include(p => p.Category)
+            .Include(p => p.Community)  // Include Community
             .Include(p => p.Privacy)
             .Include(p => p.Images)
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)
             .FirstOrDefaultAsync(p => p.PostID == id);
     }
 
@@ -115,6 +120,7 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)
             .OrderByDescending(p => p.CreatedAt);
 
         return await query.ToListAsync();
@@ -136,6 +142,7 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)
             .OrderByDescending(p => p.CreatedAt);
 
         return await query.ToListAsync();
@@ -157,6 +164,8 @@ public class PostRepository : IPostRepository
             .Include(p => p.Videos)
             .Include(p => p.Likes)
             .Include(p => p.Comments)
+            .Include(p => p.Community)
+
             .OrderByDescending(p => p.CreatedAt)
             .Take(count);
 

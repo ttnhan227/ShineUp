@@ -53,6 +53,10 @@ public class PostResponseDto
     public int? CategoryID { get; set; }
     public string? CategoryName { get; set; }
 
+    // Community info
+    public int? CommunityID { get; set; }
+    public string? CommunityName { get; set; }
+
     // Privacy info
     public int? PrivacyID { get; set; }
     public string? PrivacyName { get; set; }
@@ -81,6 +85,10 @@ public class PostListResponseDto
 
     // Category info
     public string? CategoryName { get; set; }
+
+    // Community info
+    public int? CommunityID { get; set; }
+    public string? CommunityName { get; set; }
 
     // Social features
     public int LikesCount { get; set; }

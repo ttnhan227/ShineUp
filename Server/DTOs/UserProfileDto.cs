@@ -29,6 +29,7 @@ public class UpdateProfileDto
 
     // Cover Photo
     public string? CoverPhotoUrl { get; set; }
+    
 }
 
 public class ChangePasswordDTO
