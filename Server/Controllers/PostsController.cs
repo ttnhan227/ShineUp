@@ -172,9 +172,12 @@ public class PostsController : ControllerBase
 
             // Handle media files
             var formFiles = Request.Form.Files;
-            var mediaTypes = Request.Form.ContainsKey("MediaTypes")
-                ? Request.Form["MediaTypes"].ToList()
+            var mediaTypes = Request.Form.ContainsKey("mediaTypes") 
+                ? Request.Form["mediaTypes"].ToList() 
                 : new List<string>();
+
+            _logger.LogInformation("Processing {FileCount} files with {MediaTypeCount} media types", 
+                formFiles.Count, mediaTypes.Count);
 
             for (var i = 0; i < formFiles.Count; i++)
             {
@@ -182,31 +185,19 @@ public class PostsController : ControllerBase
                 // Default to "image" if mediaTypes is empty or doesn't have enough items
                 var mediaType = i < mediaTypes.Count ? mediaTypes[i] : "image";
 
-                if (file.Length > 0)
+                if (file.Length == 0)
                 {
-                    // Upload to Cloudinary
-                    if (mediaType == "image")
-                    {
-                        var uploadResult = await _cloudinaryService.UploadImgAsync(file);
-                        if (uploadResult != null)
-                        {
-                            var image = new Image
-                            {
-                                PostID = post.PostID,
-                                ImageID = uploadResult.PublicId,
-                                UserID = userId,
-                                ImageURL = uploadResult.Url.ToString(),
-                                CloudPublicId = uploadResult.PublicId,
-                                UploadDate = DateTime.UtcNow,
-                                Title = post.Title,
-                                Description = post.Content,
-                                CategoryID = post.CategoryID ?? 1,
-                                PrivacyID = post.PrivacyID ?? 1
-                            };
-                            await _postRepository.AddImageAsync(image);
-                        }
-                    }
-                    else if (mediaType == "video")
+                    _logger.LogWarning("Skipping empty file: {FileName}", file.FileName);
+                    continue;
+                }
+
+
+                try
+                {
+                    _logger.LogInformation("Uploading {MediaType}: {FileName} ({Length} bytes)", 
+                        mediaType, file.FileName, file.Length);
+
+                    if (mediaType.Equals("video", StringComparison.OrdinalIgnoreCase))
                     {
                         var uploadResult = await _cloudinaryService.UploadVideoAsync(file);
                         if (uploadResult != null)
@@ -228,8 +219,36 @@ public class PostsController : ControllerBase
                                 Location = "Unknown"
                             };
                             await _postRepository.AddVideoAsync(video);
+                            _logger.LogInformation("Successfully uploaded video: {PublicId}", uploadResult.PublicId);
                         }
                     }
+                    else // Default to image
+                    {
+                        var uploadResult = await _cloudinaryService.UploadImgAsync(file);
+                        if (uploadResult != null)
+                        {
+                            var image = new Image
+                            {
+                                PostID = post.PostID,
+                                ImageID = uploadResult.PublicId,
+                                UserID = userId,
+                                ImageURL = uploadResult.Url.ToString(),
+                                CloudPublicId = uploadResult.PublicId,
+                                UploadDate = DateTime.UtcNow,
+                                Title = post.Title,
+                                Description = post.Content,
+                                CategoryID = post.CategoryID ?? 1,
+                                PrivacyID = post.PrivacyID ?? 1
+                            };
+                            await _postRepository.AddImageAsync(image);
+                            _logger.LogInformation("Successfully uploaded image: {PublicId}", uploadResult.PublicId);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error uploading {MediaType}: {FileName}", mediaType, file.FileName);
+                    // Continue with other files even if one fails
                 }
             }
 

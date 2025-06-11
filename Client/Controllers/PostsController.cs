@@ -144,6 +144,7 @@ public class PostsController : Controller
             if (ImageFiles != null && ImageFiles.Count > 0)
             {
                 foreach (var image in ImageFiles)
+                {
                     if (image != null && image.Length > 0)
                     {
                         _logger.LogInformation("Processing image: {FileName} ({Length} bytes)",
@@ -153,14 +154,17 @@ public class PostsController : Controller
                         await image.CopyToAsync(ms);
                         var fileContent = new ByteArrayContent(ms.ToArray());
                         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(image.ContentType);
-                        formData.Add(fileContent, "ImageFiles", image.FileName);
+                        formData.Add(fileContent, "files", image.FileName);
+                        formData.Add(new StringContent("image"), "mediaTypes");
                     }
+                }
             }
 
             // Add videos
             if (VideoFiles != null && VideoFiles.Count > 0)
             {
                 foreach (var video in VideoFiles)
+                {
                     if (video != null && video.Length > 0)
                     {
                         _logger.LogInformation("Processing video: {FileName} ({Length} bytes)",
@@ -170,8 +174,10 @@ public class PostsController : Controller
                         await video.CopyToAsync(ms);
                         var fileContent = new ByteArrayContent(ms.ToArray());
                         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(video.ContentType);
-                        formData.Add(fileContent, "VideoFiles", video.FileName);
+                        formData.Add(fileContent, "files", video.FileName);
+                        formData.Add(new StringContent("video"), "mediaTypes");
                     }
+                }
             }
 
             _logger.LogInformation("Sending request to API...");
