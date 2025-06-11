@@ -85,7 +85,12 @@ public class UserProfileController : ControllerBase
                     { "LastLoginTime", userDto.LastLoginTime },
                     { "CreatedAt", userDto.CreatedAt },
                     { "IsActive", userDto.IsActive },
-                    { "Verified", userDto.Verified }
+                    { "Verified", userDto.Verified },
+                    { "CoverPhotoUrl", userDto.CoverPhotoUrl },
+                    { "InstagramUrl", userDto.InstagramUrl },
+                    { "YouTubeUrl", userDto.YouTubeUrl },
+                    { "TwitterUrl", userDto.TwitterUrl }
+                    
                 };
 
                 // Only include Email and Bio if they are not null

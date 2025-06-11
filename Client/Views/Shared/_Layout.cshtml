@@ -16,14 +16,13 @@
     <link rel="stylesheet" href="~/css/contests.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/opportunities.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/communities.css" asp-append-version="true"/>
-    <!-- Add to your Layout or _ViewImports.cshtml -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     @RenderSection("Styles", false)
     <style>
         :root {
-            --primary: #2a69b8; /* Professional blue for talent focus */
+            --primary: #2a69b8;
             --primary-dark: #1e4a8a;
             --text-dark: #1a1a1a;
             --text-muted: #5c6b7a;
@@ -39,7 +38,6 @@
             line-height: 1.5;
         }
 
-        /* Header */
         header {
             background: var(--bg-white);
             border-bottom: 1px solid var(--border);
@@ -78,7 +76,6 @@
             background-color: rgba(42, 105, 184, 0.05);
         }
 
-        /* Profile Image */
         .profile-image-placeholder-sm {
             width: 34px;
             height: 34px;
@@ -94,7 +91,6 @@
             color: var(--text-muted);
         }
 
-        /* Dropdowns */
         .dropdown-menu {
             border: none;
             border-radius: 8px;
@@ -114,7 +110,6 @@
             color: var(--primary);
         }
 
-        /* Buttons */
         .btn-primary {
             background: var(--primary);
             border: none;
@@ -128,14 +123,12 @@
             background: var(--primary-dark);
         }
 
-        /* Main Content */
         .main-content-container {
             max-width: 1240px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
 
-        /* Footer */
         .footer {
             background: var(--bg-white);
             border-top: 1px solid var(--border);
@@ -154,7 +147,6 @@
             color: var(--primary-dark);
         }
 
-        /* Notifications */
         .notification-dropdown {
             width: 360px;
             max-height: 450px;
@@ -188,7 +180,6 @@
             border-radius: 10px;
         }
 
-        /* Talent-specific */
         .navbar-nav .talent-cta {
             background: var(--primary);
             color: var(--bg-white) !important;
@@ -215,8 +206,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="" asp-controller="Opportunities"
-                           asp-action="Index">Opportunities</a>
+                        <a class="nav-link" asp-area="" asp-controller="Opportunities" asp-action="Index">Opportunities</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-area="" asp-controller="Contests" asp-action="Index">Contests</a>
@@ -232,86 +222,82 @@
                     </li>
                     @if (User.Identity?.IsAuthenticated == true && User.HasClaim(c => c.Type == "RoleID" && c.Value == "2"))
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin
-                                Dashboard</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Admin Dashboard</a>
+                    </li>
                     }
                 </ul>
                 <ul class="navbar-nav align-items-center">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-                        var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
+                    var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                    var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
 
-                        <!-- Notification Dropdown -->
-                        <li class="nav-item dropdown me-2">
-                            <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class='bx bx-bell fs-4'></i>
-                                <span id="unread-count"
-                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                      style="display: none;">0</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0"
-                                 aria-labelledby="notificationDropdown">
-                                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-                                    <h6 class="mb-0 fw-bold">Notifications</h6>
-                                    <a href="/Notifications" class="text-primary small">View All</a>
-                                </div>
-                                <div id="notification-list" class="list-group list-group-flush">
-                                    <div class="text-center p-3">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                        <span class="ms-2">Loading notifications...</span>
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class='bx bx-bell fs-4'></i>
+                            <span id="unread-count"
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  style="display: none;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end notification-dropdown p-0"
+                             aria-labelledby="notificationDropdown">
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <a href="/Notifications" class="text-primary small">View All</a>
+                            </div>
+                            <div id="notification-list" class="list-group list-group-flush">
+                                <div class="text-center p-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
                                     </div>
+                                    <span class="ms-2">Loading notifications...</span>
                                 </div>
                             </div>
-                        </li>
+                        </div>
+                    </li>
 
-                        <!-- Profile Dropdown -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown"
-                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                @if (!string.IsNullOrEmpty(profileImageUrl))
-                                {
-                                    <img src="@profileImageUrl" alt="Profile" class="rounded-circle me-2"
-                                         style="width: 34px; height: 34px; object-fit: cover;"/>
-                                }
-                                else
-                                {
-                                    <div class="profile-image-placeholder-sm me-2">
-                                        <i class='bx bx-user'></i>
-                                    </div>
-                                }
-                                <span class="fw-bold d-none d-lg-inline">@userEmail</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile"
-                                       asp-action="PublicProfile" asp-route-username="@User.Identity.Name">Profile</a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post"
-                                          id="logoutForm">
-                                        <button type="submit"
-                                                class="btn btn-link text-dark p-0 border-0 bg-transparent">Logout
-                                        </button>
-                                    </form>
-
-                                </li>
-                            </ul>
-                        </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (!string.IsNullOrEmpty(profileImageUrl))
+                            {
+                            <img src="@profileImageUrl" alt="Profile" class="rounded-circle me-2"
+                                 style="width: 34px; height: 34px; object-fit: cover;"/>
+                            }
+                            else
+                            {
+                            <div class="profile-image-placeholder-sm me-2">
+                                <i class='bx bx-user'></i>
+                            </div>
+                            }
+                            <span class="fw-bold d-none d-lg-inline">@userEmail</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                            <li><a class="dropdown-item" asp-area="" asp-controller="UserProfile"
+                                   asp-action="PublicProfile" asp-route-username="@User.Identity.Name">Profile</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form class="dropdown-item" asp-controller="Auth" asp-action="Logout" method="post"
+                                      id="logoutForm">
+                                    <button type="submit"
+                                            class="btn btn-link text-dark p-0 border-0 bg-transparent">Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
                     }
                     else
                     {
-                        <li class="nav-item ms-2">
-                            <a class="nav-link btn btn-outline-primary talent-cta rounded-pill px-3"
-                               asp-controller="Auth" asp-action="Login">Login</a>
-                        </li>
+                    <li class="nav-item ms-2">
+                        <a class="nav-link btn btn-outline-primary talent-cta rounded-pill px-3"
+                           asp-controller="Auth" asp-action="Login">Login</a>
+                    </li>
                     }
                 </ul>
             </div>
@@ -340,11 +326,10 @@
     // Safe querySelector function
     function safeQuerySelector(selector, context = document) {
         try {
-            if (selector === '#') return null; // Handle empty hash
-            if (typeof selector !== 'string') return null;
+            if (!selector || selector === '#') return null;
             return context.querySelector(selector);
         } catch (e) {
-            console.warn('Invalid selector:', selector, e);
+            console.error('Invalid selector:', e);
             return null;
         }
     }
@@ -352,47 +337,41 @@
     // Safe querySelectorAll function
     function safeQuerySelectorAll(selector, context = document) {
         try {
-            if (selector === '#') return []; // Handle empty hash
-            if (typeof selector !== 'string') return [];
+            if (!selector || selector === '#') return [];
             return Array.from(context.querySelectorAll(selector));
         } catch (e) {
-            console.warn('Invalid selector:', selector, e);
+            console.error('Invalid selector:', e);
             return [];
         }
     }
 
-    // Override the native querySelector to be more defensive
-    const originalQuerySelector = Document.prototype.querySelector;
-    Document.prototype.querySelector = function(selector) {
-        try {
-            return originalQuerySelector.call(this, selector);
-        } catch (e) {
-            console.warn('Error in querySelector:', selector, e);
-            return null;
+    // Format time ago function
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Just now';
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) return `${interval} ${unit}${interval > 1 ? 's' : ''} ago`;
         }
-    };
+        return 'Just now';
+    }
 
-    // Override the native querySelectorAll to be more defensive
-    const originalQuerySelectorAll = Document.prototype.querySelectorAll;
-    Document.prototype.querySelectorAll = function(selector) {
-        try {
-            return originalQuerySelectorAll.call(this, selector);
-        } catch (e) {
-            console.warn('Error in querySelectorAll:', selector, e);
-            return [];
-        }
-    };
-
-    // Notification loading functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize variables
-        const notificationDropdown = document.getElementById('notificationDropdown');
-        const notificationList = document.getElementById('notification-list');
-        const unreadCount = document.getElementById('unread-count');
+    // Notification handling
+    document.addEventListener('DOMContentLoaded', function () {
+        const notificationDropdown = safeQuerySelector('#notificationDropdown');
+        const notificationList = safeQuerySelector('#notification-list');
+        const unreadCount = safeQuerySelector('#unread-count');
         let isLoading = false;
 
         function showError(message) {
-            console.error('Notification Error:', message);
             if (notificationList) {
                 notificationList.innerHTML = `
                     <div class="text-center p-3 text-danger">
@@ -413,113 +392,13 @@
             }
         }
 
-        function formatTimeAgo(dateString) {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'Just now';
-            
-            const seconds = Math.floor((new Date() - date) / 1000);
-            let interval = Math.floor(seconds / 31536000);
-            
-            if (interval >= 1) return interval + ' years ago';
-            interval = Math.floor(seconds / 2592000);
-            if (interval >= 1) return interval + ' months ago';
-            interval = Math.floor(seconds / 86400);
-            if (interval >= 1) return interval + ' days ago';
-            interval = Math.floor(seconds / 3600);
-            if (interval >= 1) return interval + ' hours ago';
-            interval = Math.floor(seconds / 60);
-            if (interval >= 1) return interval + ' minutes ago';
-            return 'Just now';
-        }
-
-        function updateNotificationUI(notifications) {
-            console.log('Updating UI with notifications:', notifications);
-            
-            if (!Array.isArray(notifications)) {
-                console.error('Notifications is not an array:', notifications);
-                showError('Invalid notifications format');
-                return;
-            }
-
-            try {
-                // Update unread count - handle both camelCase and PascalCase properties
-                const unreadNotifications = notifications.filter(n => {
-                    // Handle both Status and status properties
-                    const status = typeof n.Status !== 'undefined' ? n.Status : n.status;
-                    // Check for 0, '0', or 'Unread' status (0 = Unread, 1 = Read)
-                    return status === 0 || status === '0' || status === 'Unread';
-                });
-                
-                if (unreadCount) {
-                    const unreadCountValue = unreadNotifications.length;
-                    unreadCount.textContent = unreadCountValue > 99 ? '99+' : unreadCountValue;
-                    unreadCount.style.display = unreadCountValue > 0 ? 'block' : 'none';
-                    console.log(`Updated unread count to: ${unreadCountValue}`);
-                }
-
-                // Update notification list
-                if (notificationList) {
-                    if (notifications.length === 0) {
-                        notificationList.innerHTML = `
-                            <div class="text-center p-3">
-                                <span>No new notifications</span>
-                            </div>`;
-                        return;
-                    }
-
-
-                    notificationList.innerHTML = notifications.map(notification => {
-                        // Handle both PascalCase and camelCase property names
-                        const status = typeof notification.Status !== 'undefined' ? notification.Status : notification.status;
-                        const message = notification.Message || notification.message || 'No message';
-                        const createdAt = notification.CreatedAt || notification.createdAt;
-                        const notificationId = notification.NotificationID || notification.notificationID;
-                        const url = notification.Url || notification.url || '#';
-                        
-                        // Check if notification is unread (0 = Unread, 1 = Read)
-                        const isUnread = status === 0 || status === '0' || status === 'Unread';
-                        
-                        console.log('Processing notification:', {
-                            id: notificationId,
-                            status: status,
-                            isUnread: isUnread,
-                            message: message
-                        });
-                        const timeAgo = formatTimeAgo(createdAt);
-                        
-                        return `
-                            <a href="${url}" class="list-group-item list-group-item-action ${isUnread ? 'list-group-item-primary' : ''}"
-                               data-notification-id="${notificationId}">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <div class="me-2">
-                                        <p class="mb-1">${message}</p>
-                                        <small class="text-muted">
-                                            <i class="bi bi-clock"></i> ${timeAgo}
-                                        </small>
-                                    </div>
-                                    ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
-                                </div>
-                            </a>`;
-                    }).join('');
-                }
-            } catch (error) {
-                console.error('Error updating notification UI:', error);
-                showError('Error displaying notifications');
-            }
-        }
-
         async function loadNotifications() {
-            if (isLoading) return;
-            
+            if (isLoading || !notificationList) return;
             isLoading = true;
             showLoading();
-            
+
             try {
-                console.log('Loading notifications...');
-                const apiUrl = '/notifications/recent';
-                console.log('Making request to:', apiUrl);
-                
-                const response = await fetch(apiUrl, {
+                const response = await fetch('/notifications/recent', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -527,221 +406,117 @@
                     },
                     credentials: 'same-origin'
                 });
-                
-                console.log('Response status:', response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Error response:', errorText);
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const responseText = await response.text();
-                console.log('Raw response text:', responseText);
-                
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                    console.log('Parsed JSON data:', data);
-                } catch (e) {
-                    console.error('Failed to parse JSON:', e);
-                    throw new Error('Invalid JSON response from server');
-                }
-                
-                if (!data) {
-                    throw new Error('No data received from server');
-                }
-                
-                // Handle the nested $values array from the API response
-                let notifications = [];
-                
-                if (Array.isArray(data)) {
-                    notifications = data;
-                } else if (data.$values && Array.isArray(data.$values)) {
-                    notifications = data.$values;
-                } else if (data.notifications) {
-                    notifications = Array.isArray(data.notifications) ? data.notifications : [];
-                } else if (data.items) {
-                    notifications = Array.isArray(data.items) ? data.items : [];
-                }
-                
-                console.log(`Processing ${notifications.length} notifications`);
-                
-                if (notifications.length === 0) {
-                    console.log('No notifications returned from API');
-                } else {
-                    console.log('First notification sample:', JSON.stringify(notifications[0], null, 2));
-                }
-                
+
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                const data = await response.json();
+                const notifications = Array.isArray(data) ? data : (data.$values || data.notifications || data.items || []);
+
+                if (!Array.isArray(notifications)) throw new Error('Invalid notifications format');
                 updateNotificationUI(notifications);
-                return notifications;
             } catch (error) {
-                console.error('Error loading notifications:', error);
-                showError('Failed to load notifications. Please try again.');
-                throw error;
+                console.error('Failed to load notifications:', error);
+                showError('Failed to load notifications');
             } finally {
                 isLoading = false;
             }
         }
 
-        // Handle notification dropdown
-        if (notificationDropdown) {
-            console.log('Setting up notification dropdown handler');
-            
-            // Load notifications when dropdown is shown
-            notificationDropdown.addEventListener('shown.bs.dropdown', function() {
-                console.log('Notification dropdown shown, loading notifications...');
-                loadNotifications().catch(error => {
-                    console.error('Error loading notifications:', error);
-                    showError('Failed to load notifications');
-                });
-            });
-            
-            // Also load notifications on page load after a short delay
-            console.log('Loading initial notifications...');
-            setTimeout(() => {
-                loadNotifications().catch(error => {
-                    console.error('Error loading initial notifications:', error);
-                });
-            }, 500);
-        } else {
-            console.error('Notification dropdown element not found');
+        function updateNotificationUI(notifications) {
+            if (!notificationList || !unreadCount) return;
+
+            const unreadNotifications = notifications.filter(n =>
+                (n.Status ?? n.status) === 0 || (n.Status ?? n.status) === '0' || (n.Status ?? n.status) === 'Unread'
+            );
+
+            unreadCount.textContent = unreadNotifications.length > 99 ? '99+' : unreadNotifications.length;
+            unreadCount.style.display = unreadNotifications.length > 0 ? 'block' : 'none';
+
+            notificationList.innerHTML = notifications.length === 0 ? `
+                <div class="text-center p-3">
+                    <span>No new notifications</span>
+                </div>` : notifications.map(n => {
+                const isUnread = (n.Status ?? n.status) === 0 || (n.Status ?? n.status) === '0' || (n.Status ?? n.status) === 'Unread';
+                return `
+                    <a href="${n.Url ?? n.url ?? '#'}" class="list-group-item list-group-item-action ${isUnread ? 'list-group-item-primary' : ''}"
+                       data-notification-id="${n.NotificationID ?? n.notificationID}"
+                       onclick="markAsRead(${n.NotificationID ?? n.notificationID}, this)">
+                        <div class="d-flex w-100 justify-content-between">
+                            <div class="me-2">
+                                <p class="mb-1">${n.Message ?? n.message ?? 'No message'}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> ${formatTimeAgo(n.CreatedAt ?? n.createdAt)}
+                                </small>
+                            </div>
+                            ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
+                        </div>
+                    </a>`;
+            }).join('');
         }
-    });
 
-    // Toastr configuration
-    toastr.options = {
-        "closeButton": true,
-        "progressBar": true,
-        "positionClass": "toast-top-right",
-        "timeOut": "5000"
-    };
+        async function markAsRead(notificationId, element) {
+            const tokenElement = safeQuerySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenElement?.value ?? '';
 
-    // Format time ago function
-    function formatTimeAgo(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            week: 604800,
-            day: 86400,
-            hour: 3600,
-            minute: 60
+            try {
+                const response = await fetch(`/notifications/mark-as-read/${notificationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) throw new Error('Failed to mark as read');
+                element?.classList.remove('list-group-item-primary');
+                await updateUnreadCount();
+            } catch (error) {
+                console.error('Error marking notification:', error);
+                toastr.error('Failed to mark notification as read');
+            }
+        }
+
+        async function updateUnreadCount() {
+            try {
+                const response = await fetch('/notifications/unread-count');
+                if (!response.ok) throw new Error('Failed to fetch unread count');
+                const data = await response.json();
+                if (unreadCount) {
+                    unreadCount.textContent = data.count > 9 ? '9+' : data.count;
+                    unreadCount.style.display = data.count > 0 ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error fetching unread count:', error);
+                if (unreadCount) unreadCount.style.display = 'none';
+            }
+        }
+
+        if (notificationDropdown) {
+            notificationDropdown.addEventListener('shown.bs.dropdown', loadNotifications);
+            setTimeout(loadNotifications, 500);
+        }
+
+        setInterval(updateUnreadCount, 30000);
+
+        // Toastr configuration
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            timeOut: '5000'
         };
 
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
-            }
-        }
-        return 'just now';
-    }
-
-    document.getElementById('logoutForm')?.addEventListener('submit', function () {
-        localStorage.clear();
-        sessionStorage.clear();
-    });
-
-    function updateUnreadCount() {
-        fetch('/notifications/unread-count')
-            .then(response => response.ok ? response.json() : Promise.reject('Failed to fetch unread count'))
-            .then(data => {
-                const unreadCount = data.count || 0;
-                const badge = document.getElementById('unread-count');
-                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                badge.style.display = unreadCount > 0 ? 'block' : 'none';
-            })
-            .catch(error => {
-                console.error('Error fetching unread count:', error);
-                const badge = document.getElementById('unread-count');
-                if (badge) badge.style.display = 'none';
-            });
-    }
-
-
-    function loadNotifications() {
-        const notificationList = document.getElementById('notification-list');
-        if (!notificationList) return;
-
-        notificationList.innerHTML = `
-            <div class="text-center p-3">
-                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <span class="ms-2">Loading notifications...</span>
-            </div>`;
-
-        fetch('/notifications/recent-notifications')
-            .then(response => response.ok ? response.json() : Promise.reject('Failed to load notifications'))
-            .then(notifications => {
-                if (!notifications || notifications.length === 0) {
-                    notificationList.innerHTML = `
-                        <div class="notification-empty p-3 text-center">
-                            <i class='bx bx-bell-off fs-3 mb-2'></i>
-                            <p class="mb-0">No notifications yet</p>
-                        </div>`;
-                    return;
-                }
-
-                notificationList.innerHTML = notifications.map(notification => `
-                    <div class="notification-item ${notification.status === 'Read' ? '' : 'unread'}" 
-                         onclick="markAsRead(${notification.notificationID}, this)">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="notification-message">${notification.message}</div>
-                            <small class="notification-time ms-2">${formatTimeAgo(notification.createdAt)}</small>
-                        </div>
-                    </div>
-                `).join('');
-            })
-            .catch(error => {
-                console.error('Error loading notifications:', error);
-                notificationList.innerHTML = `
-                    <div class="notification-empty p-3 text-center">
-                        <i class='bx bx-error fs-3 mb-2'></i>
-                        <p class="mb-0">Failed to load notifications</p>
-                    </div>`;
-            });
-    }
-
-    function markAsRead(notificationId, element) {
-        // Get the anti-forgery token safely using our safe selector
-        const tokenElement = safeQuerySelector('input[name="__RequestVerificationToken"]');
-        const token = tokenElement ? tokenElement.value : '';
-        
-        fetch(`/notifications/mark-as-read/${notificationId}`, {
-            method: 'POST',
-            headers: {
-                'RequestVerificationToken': token,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            if (element && element.classList) {
-                element.classList.remove('unread');
-            }
-            updateUnreadCount();
-            return response.json();
-        })
-        .catch(error => {
-            console.error('Error marking notification as read:', error);
-            toastr.error('Failed to mark notification as read');
+        // Clear storage on logout
+        safeQuerySelector('#logoutForm')?.addEventListener('submit', () => {
+            localStorage.clear();
+            sessionStorage.clear();
         });
-    }
-
-    setInterval(updateUnreadCount, 30000);
+    });
 </script>
 @await RenderSectionAsync("Scripts", false)
 @if (!Context.Request.Path.Value.ToLower().Contains("/login"))
 {
-    @Html.Partial("_Chatbot")
+@Html.Partial("_Chatbot")
 }
-
 </body>
 </html>
