@@ -9,7 +9,7 @@ namespace Client.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin")]
-[Route("Admin/[controller]/[action]")]
+[Route("Admin/[controller]")] // Base route for all actions in this controller
 public class CategoryManagementController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -38,6 +38,7 @@ public class CategoryManagementController : Controller
         return client;
     }
 
+    [HttpGet("")] // Maps to /Admin/CategoryManagement
     public async Task<IActionResult> Index()
     {
         try
@@ -64,13 +65,13 @@ public class CategoryManagementController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("Create")] // Maps to /Admin/CategoryManagement/Create
     public IActionResult Create()
     {
         return View(new CategoryViewModel());
     }
 
-    [HttpPost]
+    [HttpPost("Create")] // Maps to /Admin/CategoryManagement/Create
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CategoryViewModel model)
     {
@@ -109,7 +110,7 @@ public class CategoryManagementController : Controller
         return View(model);
     }
 
-    [HttpGet]
+    [HttpGet("Edit/{id}")]
     public async Task<IActionResult> Edit(int id)
     {
         try
@@ -134,7 +135,7 @@ public class CategoryManagementController : Controller
         }
     }
 
-    [HttpPost]
+    [HttpPost("Edit/{id}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, CategoryViewModel model)
     {
