@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Server.Data;
 using Server.Interfaces;
 using Server.Models;
@@ -9,6 +10,7 @@ public class PostRepository : IPostRepository
 {
     private readonly DatabaseContext _context;
     private readonly ILogger<PostRepository> _logger;
+    private IDbContextTransaction _currentTransaction;
 
     public PostRepository(DatabaseContext context, ILogger<PostRepository> logger)
     {
@@ -194,6 +196,61 @@ public class PostRepository : IPostRepository
         _context.Videos.Add(video);
         await _context.SaveChangesAsync();
         return video;
+    }
+
+    // Transaction support
+    public async Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        if (_currentTransaction != null)
+        {
+            return null;
+        }
+
+        _currentTransaction = await _context.Database.BeginTransactionAsync();
+        return _currentTransaction;
+    }
+
+    public async Task CommitTransactionAsync()
+    {
+        try
+        {
+            await _context.SaveChangesAsync();
+            _currentTransaction?.Commit();
+        }
+        catch
+        {
+            await RollbackTransactionAsync();
+            throw;
+        }
+        finally
+        {
+            if (_currentTransaction != null)
+            {
+                _currentTransaction.Dispose();
+                _currentTransaction = null;
+            }
+        }
+    }
+
+    public async Task RollbackTransactionAsync()
+    {
+        try
+        {
+            await _currentTransaction?.RollbackAsync();
+        }
+        finally
+        {
+            if (_currentTransaction != null)
+            {
+                _currentTransaction.Dispose();
+                _currentTransaction = null;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _currentTransaction?.Dispose();
     }
 
     public async Task RemoveAllMediaFromPostAsync(int postId)

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage;
 using Server.DTOs;
 using Server.Interfaces;
 using Server.Models;
 using System.Security.Claims;
+using System.Linq;
 
 namespace Server.Controllers;
 
@@ -14,6 +16,45 @@ public class PostsController : ControllerBase
     private readonly ICloudinaryService _cloudinaryService;
     private readonly ILogger<PostsController> _logger;
     private readonly IPostRepository _postRepository;
+    
+    private PostResponseDto MapToPostResponseDto(Post post)
+    {
+        if (post == null) return null;
+        
+        return new PostResponseDto
+        {
+            PostID = post.PostID,
+            Title = post.Title,
+            Content = post.Content,
+            CreatedAt = post.CreatedAt,
+            UpdatedAt = post.UpdatedAt,
+            UserID = post.UserID,
+            Username = post.User?.Username,
+            FullName = post.User?.FullName,
+            CategoryID = post.CategoryID,
+            CategoryName = post.Category?.CategoryName,
+            CommunityID = post.CommunityID,
+            CommunityName = post.Community?.Name,
+            PrivacyID = post.PrivacyID,
+            PrivacyName = post.Privacy?.Name,
+            LikesCount = post.Likes?.Count ?? 0,
+            CommentsCount = post.Comments?.Count ?? 0,
+            HasLiked = post.Likes?.Any(l => l.UserID == int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value)) ?? false,
+            MediaFiles = (post.Images?.Select(i => new MediaFileDTO
+            {
+                Url = i.ImageURL,
+                Type = "image",
+                PublicId = i.CloudPublicId
+            }) ?? Enumerable.Empty<MediaFileDTO>())
+            .Concat(post.Videos?.Select(v => new MediaFileDTO
+            {
+                Url = v.VideoURL,
+                Type = "video",
+                PublicId = v.CloudPublicId
+            }) ?? Enumerable.Empty<MediaFileDTO>())
+            .ToList()
+        };
+    }
 
     public PostsController(
         IPostRepository postRepository,
@@ -148,6 +189,7 @@ public class PostsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<PostResponseDto>> CreatePost([FromForm] CreatePostDto createPostDto)
     {
+        IDbContextTransaction transaction = null;
         try
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -156,6 +198,13 @@ public class PostsController : ControllerBase
             if (user == null)
             {
                 return Unauthorized();
+            }
+
+            // Start a transaction
+            transaction = await _postRepository.BeginTransactionAsync();
+            if (transaction == null)
+            {
+                return StatusCode(500, "Unable to start a database transaction.");
             }
 
             var post = new Post
@@ -181,6 +230,7 @@ public class PostsController : ControllerBase
                 ? Request.Form["mediaTypes"].ToList() 
                 : new List<string>();
 
+
             _logger.LogInformation("Processing {FileCount} files with {MediaTypeCount} media types", 
                 formFiles.Count, mediaTypes.Count);
 
@@ -189,6 +239,7 @@ public class PostsController : ControllerBase
                 var file = formFiles[i];
                 // Default to "image" if mediaTypes is empty or doesn't have enough items
                 var mediaType = i < mediaTypes.Count ? mediaTypes[i] : "image";
+
 
                 if (file.Length == 0)
                 {
@@ -207,10 +258,12 @@ public class PostsController : ControllerBase
                         var uploadResult = await _cloudinaryService.UploadVideoAsync(file);
                         if (uploadResult != null)
                         {
+                            // Generate a new GUID for the VideoID to avoid conflicts
+                            var videoId = Guid.NewGuid().ToString();
                             var video = new Video
                             {
                                 PostID = post.PostID,
-                                VideoID = uploadResult.PublicId,
+                                VideoID = videoId,
                                 UserID = userId,
                                 VideoURL = uploadResult.Url.ToString(),
                                 CloudPublicId = uploadResult.PublicId,
@@ -232,10 +285,12 @@ public class PostsController : ControllerBase
                         var uploadResult = await _cloudinaryService.UploadImgAsync(file);
                         if (uploadResult != null)
                         {
+                            // Generate a new GUID for the ImageID to avoid conflicts
+                            var imageId = Guid.NewGuid().ToString();
                             var image = new Image
                             {
                                 PostID = post.PostID,
-                                ImageID = uploadResult.PublicId,
+                                ImageID = imageId,
                                 UserID = userId,
                                 ImageURL = uploadResult.Url.ToString(),
                                 CloudPublicId = uploadResult.PublicId,
@@ -253,32 +308,39 @@ public class PostsController : ControllerBase
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error uploading {MediaType}: {FileName}", mediaType, file.FileName);
-                    // Continue with other files even if one fails
+                    // Rollback the transaction if any file upload fails
+                    await _postRepository.RollbackTransactionAsync();
+                    return StatusCode(500, $"Error uploading {file.FileName}: {ex.Message}");
                 }
             }
 
-            return CreatedAtAction(nameof(GetPost), new { id = post.PostID }, new PostResponseDto
-            {
-                PostID = post.PostID,
-                Title = post.Title,
-                Content = post.Content,
-                CreatedAt = post.CreatedAt,
-                UserID = post.UserID,
-                Username = user.Username,
-                FullName = user.FullName,
-                CategoryID = post.CategoryID,
-                CategoryName = post.Category?.CategoryName,
-                PrivacyID = post.PrivacyID,
-                PrivacyName = post.Privacy?.Name,
-                LikesCount = 0,
-                CommentsCount = 0,
-                MediaFiles = new List<MediaFileDTO>() // We'll populate this in the GetPost action
-            });
+            // Commit the transaction if everything succeeds
+            await _postRepository.CommitTransactionAsync();
+            
+            // Refresh the post to get all related data
+            var createdPost = await _postRepository.GetPostByIdAsync(post.PostID);
+            var postDto = MapToPostResponseDto(createdPost);
+            return CreatedAtAction(nameof(GetPost), new { id = post.PostID }, postDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating post");
-            return StatusCode(500, "Internal server error");
+            try
+            {
+                await _postRepository.RollbackTransactionAsync();
+            }
+            catch (Exception rollbackEx)
+            {
+                _logger.LogError(rollbackEx, "Error rolling back transaction");
+            }
+            return StatusCode(500, "Internal server error while creating the post: " + ex.Message);
+        }
+        finally
+        {
+            if (transaction != null)
+            {
+                await transaction.DisposeAsync();
+            }
         }
     }
 

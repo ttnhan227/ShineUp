@@ -1,8 +1,9 @@
 using Server.Models;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Server.Interfaces;
 
-public interface IPostRepository
+public interface IPostRepository : IDisposable
 {
     // Basic CRUD
     Task<IEnumerable<Post>> GetAllPostsAsync();
@@ -40,4 +41,9 @@ public interface IPostRepository
 
     //Hoang Community features
     Task<List<Post>> GetPostsByCommunityIdAsync(int communityId);
+    
+    // Transaction support
+    Task<IDbContextTransaction> BeginTransactionAsync();
+    Task CommitTransactionAsync();
+    Task RollbackTransactionAsync();
 }
