@@ -252,46 +252,47 @@
                     {
                         @foreach (var post in Model.Posts)
                         {
-                            <div class="post-card mb-4 position-relative">
-                                @if (!string.IsNullOrEmpty(@post.CommunityName))
+                            <div class="post-card mb-4">
+                                @if (!string.IsNullOrEmpty(post.CommunityName))
                                 {
-                                    <div class="community-badge mb-2">
+                                    <a href="@Url.Action("Details", "Communities", new { id = post.CommunityID })" class="community-badge mb-2 text-decoration-none" style="cursor:pointer;">
                                         <i class='bx bx-group me-1'></i> @post.CommunityName
-                                    </div>
+                                    </a>
                                 }
-                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID"
-                                   class="text-decoration-none d-block text-dark">
-                                    <div class="post-header">
-                                        <div class="d-flex align-items-center">
-
-                                            <div class="post-avatar">
-                                                @if (!string.IsNullOrEmpty(post.ProfileImageURL))
-                                                {
-                                                    <img src="@post.ProfileImageURL" alt="@post.FullName" class="rounded-circle" width="40" height="40"
-                                                         onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
-                                                }
-                                                else
-                                                {
-                                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle" style="width:40px;height:40px;">
-                                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
-                                                    </div>
-                                                }
-                                            </div><div class="post-meta ms-3">
-                                                <div class="post-author">
-                                                    @post.FullName
-                                                    @if (!string.IsNullOrEmpty(post.CategoryName))
-                                                    {
-                                                        <span class="talent-badge">@post.CategoryName</span>
-                                                    }
+                                <div class="post-header">
+                                    <a asp-controller="UserProfile" asp-action="PublicProfile"
+                                       asp-route-username="@post.Username"
+                                       class="text-decoration-none d-flex align-items-center">
+                                        <div class="post-avatar">
+                                            @if (!string.IsNullOrEmpty(post.ProfileImageURL))
+                                            {
+                                                <img src="@post.ProfileImageURL" alt="@post.FullName">
+                                            }
+                                            else
+                                            {
+                                                <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
+                                                    <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
                                                 </div>
-                                                <div class="post-info">
-                                                    <span>@@@(post.Username?.ToLower()?.Replace(" ", "") ?? "user")</span>
-                                                    <span class="mx-1">·</span>
-                                                    <span>@post.CreatedAt.ToString("MMM dd")</span>
-                                                </div>
+                                            }
+                                        </div>
+                                        <div class="post-meta ms-3">
+                                            <div class="post-author">
+                                                @post.FullName
+                                                @if (!string.IsNullOrEmpty(post.CategoryName))
+                                                {
+                                                    <span class="talent-badge">@post.CategoryName</span>
+                                                }
+                                            </div>
+                                            <div class="post-info">
+                                                <span>@@@post.Username.ToLower().Replace(" ", "")</span>
+                                                <span class="mx-1">·</span>
+                                                <span>@post.CreatedAt.ToString("MMM dd")</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </a>
+                                </div>
+                                <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID"
+                                   class="text-decoration-none">
                                     <div class="post-content">
                                         <h5 class="post-title">@post.Title</h5>
                                         <p class="post-text">@post.Content</p>
@@ -365,42 +366,97 @@
                                         </button>
                                     </div>
                                     <div class="post-action">
-                                        <i class="bx bx-repost"></i>
+                                        <i class='bx bx-repost'></i>
                                         <span>Share</span>
                                     </div>
                                     <div class="post-action">
-                                        <i class="bx bx-bar-chart"></i>
+                                        <i class='bx bx-bar-chart'></i>
                                         <span>Stats</span>
                                     </div>
                                 </div>
 
-                                <div class="comments-section mt-4 pt-4 border-top" id="comments-@post.PostID" style="display: none;">
+                                <div class="comments-section mt-4 pt-4 border-top" id="comments-container-@post.PostID" style="display: none;">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5>Comments</h5>
                                         <button type="button" class="btn-close close-comments" data-post-id="@post.PostID"></button>
                                     </div>
 
+                                    <div id="comments-list-@post.PostID">
+                                        @if (post.Comments != null && post.Comments.Count > 0)
+                                        {
+                                            foreach (var comment in post.Comments)
+                                            {
+                                                <div class="comment mb-3" id="comment-@comment.CommentID">
+                                                    <div class="d-flex">
+                                                        <div class="comment-avatar me-2">
+                                                            @if (!string.IsNullOrEmpty(comment.ProfileImageURL))
+                                                            {
+                                                                <img src="@comment.ProfileImageURL" alt="@comment.FullName" class="rounded-circle" width="32" height="32">
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="d-flex align-items-center justify-content-center bg-light rounded-circle" style="width:32px;height:32px;">
+                                                                    <i class='bx bx-user text-primary'></i>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                        <div class="comment-content flex-grow-1">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <div>
+                                                                    <a href="#" class="fw-bold text-decoration-none">@comment.FullName</a>
+                                                                    <span class="text-muted small ms-2">@@@comment.Username</span>
+                                                                </div>
+                                                                <div class="dropdown">
+                                                                    <button class="btn btn-link text-muted p-0 border-0 bg-transparent" type="button" id="commentMenu-@comment.CommentID" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                        <i class='bx bx-dots-horizontal-rounded'></i>
+                                                                    </button>
+                                                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu-@comment.CommentID">
+                                                                        @if (User.Identity.IsAuthenticated && User.FindFirstValue(ClaimTypes.NameIdentifier) == comment.UserID.ToString())
+                                                                        {
+                                                                            <li>
+                                                                                <button class="dropdown-item edit-comment" data-comment-id="@comment.CommentID">
+                                                                                    <i class='bx bx-edit me-2'></i>Edit
+                                                                                </button>
+                                                                            </li>
+                                                                            <li>
+                                                                                <form asp-controller="Social" asp-action="DeleteComment" method="post" class="delete-comment-form" data-comment-id="@comment.CommentID" data-post-id="@post.PostID">
+                                                                                    @Html.AntiForgeryToken()
+                                                                                    <input type="hidden" name="CommentID" value="@comment.CommentID" />
+                                                                                    <button type="submit" class="dropdown-item text-danger">
+                                                                                        <i class='bx bx-trash me-2'></i>Delete
+                                                                                    </button>
+                                                                                </form>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li><a class="dropdown-item" href="#"><i class='bx bx-flag me-2'></i>Report</a></li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="comment-text mt-1">@comment.Content</div>
+                                                            <div class="comment-actions mt-1">
+                                                                <span class="text-muted small">@comment.CreatedAt.ToString("MMM dd, yyyy hh:mm tt")</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+
                                     @if (User.Identity.IsAuthenticated)
                                     {
-                                        <form asp-controller="Social" asp-action="AddComment" method="post" class="mb-4">
+                                        <form class="add-comment-form mt-3" data-post-id="@post.PostID">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="PostID" value="@post.PostID" />
                                             <div class="input-group">
-                                                <input type="text" name="Content" class="form-control"
-                                                       placeholder="Write a comment..." required>
-                                                <button type="submit" class="btn btn-primary">Post</button>
+                                                <input type="text" name="Content" class="form-control rounded-pill" placeholder="Write a comment..." required>
+                                                <button type="submit" class="btn btn-primary rounded-pill ms-2">Post</button>
                                             </div>
                                         </form>
                                     }
-
-                                    <div class="comments-list" id="comments-list-@post.PostID">
-                                        <!-- Comments will be loaded here via AJAX -->
-                                        <div class="text-center py-2">
-                                            <div class="spinner-border spinner-border-sm" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         }
