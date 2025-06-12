@@ -49,7 +49,30 @@
                                                 </span>
                                             </div>
                                             <h5>@Model.ApplicantName</h5>
-                                            <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                                            @if (Model.Status == "Pending")
+                                            {
+                                                <span class="badge bg-warning text-dark">@Model.Status</span>
+                                            }
+                                            else if (Model.Status == "Accepted")
+                                            {
+                                                <span class="badge bg-success">@Model.Status</span>
+                                            }
+                                            else if (Model.Status == "Rejected")
+                                            {
+                                                <span class="badge bg-danger">@Model.Status</span>
+                                            }
+                                            else if (Model.Status == "Shortlisted")
+                                            {
+                                                <span class="badge bg-info">@Model.Status</span>
+                                            }
+                                            else if (Model.Status == "Withdrawn")
+                                            {
+                                                <span class="badge bg-secondary">@Model.Status</span>
+                                            }
+                                            else if (Model.Status == "UnderReview")
+                                            {
+                                                <span class="badge bg-primary">@Model.Status</span>
+                                            }
                                         </div>
                                         <div class="col-md-9">
                                             <div class="row">
@@ -223,10 +246,10 @@
                                     <hr class="my-4"/>
 
                                     <div class="d-grid gap-2">
-                                        <a href="mailto:@Model.Email?subject=Regarding your application for @Model.OpportunityTitle"
-                                           class="btn btn-outline-primary">
-                                            <i class="bx bx-envelope me-1"></i> Email Applicant
-                                        </a>
+                                        @* <a href="mailto:@Model.Email?subject=Regarding your application for @Model.OpportunityTitle" *@
+                                        @*    class="btn btn-outline-primary"> *@
+                                        @*     <i class="bx bx-envelope me-1"></i> Email Applicant *@
+                                        @* </a> *@
                                         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
                                                 data-bs-target="#deleteModal">
                                             <i class="bx bx-trash me-1"></i> Delete Application
@@ -284,12 +307,12 @@
     {
         return status switch
         {
-            "Pending" => "bg-secondary",
-            "UnderReview" => "bg-info",
-            "Shortlisted" => "bg-primary",
+            "Pending" => "bg-warning text-dark",
+            "UnderReview" => "bg-primary",
+            "Shortlisted" => "bg-info",
             "Accepted" => "bg-success",
             "Rejected" => "bg-danger",
-            "Withdrawn" => "bg-warning",
+            "Withdrawn" => "bg-secondary",
             _ => "bg-secondary"
         };
     }

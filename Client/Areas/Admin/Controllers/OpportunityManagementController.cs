@@ -16,6 +16,7 @@ public class OpportunityManagementController : Controller
 {
     private const string ApiBasePath = "api/admin/opportunities";
     private const string ApiBaseUrl = "api/admin/opportunities";
+    private const string ApiBaseApplicationsUrl = "api/admin/applications";
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<OpportunityManagementController> _logger;
@@ -406,21 +407,70 @@ public class OpportunityManagementController : Controller
                 return NotFound();
             }
 
-            // Set available status options
-            application.AvailableStatuses = new List<string> { "Pending", "InReview", "Approved", "Rejected" };
+            // Set available status options from the ApplicationStatus enum
+            application.AvailableStatuses = Enum.GetNames(typeof(ApplicationStatus))
+                .Where(s => s != nameof(ApplicationStatus.Withdrawn)) // Exclude Withdrawn status from admin options
+                .ToList();
             
             return View(application);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            ModelState.AddModelError("", "An error occurred while retrieving the application details.");
-            return View();
+            _logger.LogError(ex, "Error loading application details for ID {ApplicationId}", id);
+            TempData["ErrorMessage"] = "An error occurred while loading the application details.";
+            return RedirectToAction("Applications", new { id = Request.RouteValues["opportunityId"] });
+        }
+    }
+    
+    // POST: Admin/OpportunityManagement/UpdateApplicationStatus/5
+    [HttpPost("UpdateApplicationStatus")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateApplicationStatus(int id, string status, string reviewNotes, int opportunityId)
+    {
+        try
+        {
+            var client = GetAuthenticatedClient();
+            
+            // Create the request body
+            var requestBody = new 
+            {
+                Status = status,
+                ReviewNotes = reviewNotes
+            };
+            
+            var content = new StringContent(
+                JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json");
+                
+            var response = await client.PutAsync($"{ApiBaseUrl}/applications/{id}/status", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to update application status. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                    
+                TempData["ErrorMessage"] = "Failed to update application status. " + errorContent;
+                return RedirectToAction("ApplicationDetails", new { id });
+            }
+
+            TempData["SuccessMessage"] = "Application status updated successfully.";
+            return RedirectToAction("ApplicationDetails", new { id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for application ID {ApplicationId}", id);
+            TempData["ErrorMessage"] = "An error occurred while updating the application status: " + ex.Message;
+            return RedirectToAction("ApplicationDetails", new { id });
         }
     }
 
-    // POST: Admin/OpportunityManagement/UpdateApplicationStatus/5
+    // This is a duplicate method and should be removed
+    // Keeping it for now to avoid breaking any references
     [HttpPost("applications/{id}/status")]
     [ValidateAntiForgeryToken]
+    [Obsolete("Use the other UpdateApplicationStatus method instead")]
     public async Task<IActionResult> UpdateApplicationStatus(int id, UpdateApplicationStatusViewModel model)
     {
         if (id != model.ApplicationId)
