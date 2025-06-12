@@ -1,126 +1,242 @@
+@using Client.Areas.Admin.Models.Dashboard
+@using System.Text.Json
+@model Client.Areas.Admin.Models.Dashboard.IndexViewModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+ViewData["Title"] = "Admin Dashboard";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">Management</h5>
-                    <div class="nav flex-column nav-pills">
-                        <a asp-controller="UserManagement" asp-action="Index" class="nav-link active">
-                            <i class="bx bx-user"></i> User Management
-                        </a>
-                        <a asp-controller="ContestManagement" asp-action="Index" class="nav-link">
-                            <i class="bx bx-trophy"></i> Contest Management
-                        </a>
-                        <a href="#" class="nav-link disabled">
-                            <i class="bx bx-cog"></i> Site Settings
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+<div class="container-fluid px-4 py-4">
+    <div class="row g-4">
         <!-- Main Content -->
-        <div class="col-md-9">
+        <div class="col-xl-9 col-lg-8">
             <!-- Statistics Cards -->
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="card stat-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
+                <!-- Total Users -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <h6 class="card-subtitle mb-2 text-muted">Total Users</h6>
-                                    <h2 class="card-title mb-0">1,234</h2>
+                                    <h2 class="card-title mb-0">@Model.Stats.TotalUsers.ToString("N0")</h2>
                                 </div>
                                 <div class="stat-icon">
                                     <i class="bx bx-user"></i>
                                 </div>
                             </div>
-                            <div class="mt-3">
+                            <div class="mt-auto">
                                 <span class="text-success">
-                                    <i class="bx bx-up-arrow-alt"></i> 12%
+                                    <i class="bx bx-up-arrow-alt"></i> @Model.Stats.UserGrowthPercentage.ToString("0.0")%
                                 </span>
-                                <span class="text-muted">from last month</span>
+                                <span class="text-muted ms-1">this month</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card stat-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
+
+                <!-- Active Opportunities -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="card-subtitle mb-2 text-muted">Active Opportunities</h6>
+                                    <h2 class="card-title mb-0">@Model.Stats.OpenOpportunities.ToString("N0")</h2>
+                                </div>
+                                <div class="stat-icon">
+                                    <i class="bx bx-briefcase"></i>
+                                </div>
+                            </div>
+                            <div class="mt-auto">
+                                <span class="text-muted">@Model.Stats.TotalOpportunities total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Contests -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <h6 class="card-subtitle mb-2 text-muted">Active Contests</h6>
-                                    <h2 class="card-title mb-0">0</h2>
+                                    <h2 class="card-title mb-0">@Model.Stats.ActiveContests</h2>
                                 </div>
                                 <div class="stat-icon">
                                     <i class="bx bx-trophy"></i>
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <span class="text-muted">Coming soon</span>
+                            <div class="mt-auto">
+                                <span class="text-muted">@Model.Stats.TotalContests total</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card stat-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
+
+                <!-- New Applications -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="card-subtitle mb-2 text-muted">Total Submissions</h6>
-                                    <h2 class="card-title mb-0">0</h2>
+                                    <h6 class="card-subtitle mb-2 text-muted">New Applications</h6>
+                                    <h2 class="card-title mb-0">@Model.Stats.ApplicationsThisMonth.ToString("N0")</h2>
                                 </div>
                                 <div class="stat-icon">
                                     <i class="bx bx-file"></i>
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <span class="text-muted">Coming soon</span>
+                            <div class="mt-auto">
+                                <span class="text-success">
+                                    <i class="bx bx-up-arrow-alt"></i> @Model.Stats.ApplicationGrowthPercentage.ToString("0.0")%
+                                </span>
+                                <span class="text-muted ms-1">this month</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Main Content Row -->
+            <div class="row g-4">
+                <!-- Left Column -->
+                <div class="col-lg-8">
+                    <!-- Recent Activities -->
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-title mb-0">Recent Activities</h5>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="activity-feed">
+                                @if (Model.RecentActivities?.Any() == true)
+                                {
+                                foreach (var activity in Model.RecentActivities.Take(5))
+                                {
+                                <div class="activity-item d-flex align-items-start mb-3">
+                                    <div class="activity-avatar me-3">
+                                        @if (!string.IsNullOrEmpty(activity.UserAvatar))
+                                        {
+                                        <img src="@activity.UserAvatar" class="rounded-circle" width="40" height="40" alt="@activity.UserName" />
+                                        }
+                                        else
+                                        {
+                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bx bx-user text-white"></i>
+                                        </div>
+                                        }
+                                    </div>
+                                    <div class="activity-content flex-grow-1">
+                                        <h6 class="mb-1 fw-semibold">@activity.Title</h6>
+                                        <p class="text-muted mb-1 small">@activity.Description</p>
+                                        <span class="text-muted small">@activity.Timestamp.ToString("MMM dd, yyyy hh:mm tt")</span>
+                                    </div>
+                                </div>
+                                }
+                                }
+                                else
+                                {
+                                <div class="text-center py-4">
+                                    <i class="bx bx-info-circle text-muted" style="font-size: 2rem;"></i>
+                                    <p class="mt-2 mb-0">No recent activities found</p>
+                                </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-lg-4">
+                    <!-- Opportunity Trends -->
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Opportunity Trends</h5>
+                            <div class="chart-container">
+                                <canvas id="opportunityTrendsChart"></canvas>
+                                <div id="opportunityTrendsLoading" class="chart-loading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2 mb-0">Loading opportunity trends...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Content -->
+        <div class="col-xl-3 col-lg-4">
+            <!-- Application Status -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Application Status</h5>
+                    <div class="chart-container">
+                        <canvas id="applicationStatusChart"></canvas>
+                        <div id="applicationStatusLoading" class="chart-loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 mb-0">Loading application status...</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        @if (Model.ApplicationStatuses?.Any() == true)
+                        {
+                        foreach (var status in Model.ApplicationStatuses)
+                        {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">@status.Status</span>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2 fw-semibold">@status.Count</span>
+                                <span class="text-muted small">(@status.Percentage.ToString("0.0")%)</span>
+                            </div>
+                        </div>
+                        }
+                        }
+                        else
+                        {
+                        <p class="text-muted text-center">No application status data available</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Opportunities -->
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">Quick Actions</h5>
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="quick-action-card">
-                                <div class="quick-action-icon">
-                                    <i class="bx bx-user-plus"></i>
-                                </div>
-                                <div class="quick-action-content">
-                                    <h6>User Management</h6>
-                                    <p>Manage user accounts, roles, and permissions</p>
-                                    <a asp-controller="UserManagement" asp-action="Index"
-                                       class="btn btn-primary btn-sm">
-                                        Go to Users
-                                    </a>
-                                </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Recent Opportunities</h5>
+                        <a asp-controller="OpportunityManagement" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="recent-opportunities">
+                        @if (Model.RecentOpportunities?.Any() == true)
+                        {
+                        foreach (var opportunity in Model.RecentOpportunities.Take(3))
+                        {
+                        <div class="opportunity-item mb-3 pb-3 border-bottom">
+                            <h6 class="mb-2 fw-semibold">@opportunity.Title</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-light text-dark">@opportunity.Type</span>
+                                <span class="text-muted small">@opportunity.CreatedAt.ToString("MMM dd")</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">@opportunity.ApplicationCount applications</span>
+                                <span class="badge bg-@(opportunity.Status?.ToLower() == "open" ? "success" : "secondary")">@opportunity.Status</span>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="quick-action-card disabled">
-                                <div class="quick-action-icon">
-                                    <i class="bx bx-trophy"></i>
-                                </div>
-                                <div class="quick-action-content">
-                                    <h6>Contest Management</h6>
-                                    <p>Create and manage contests and submissions</p>
-                                    <button class="btn btn-secondary btn-sm" disabled>
-                                        Coming Soon
-                                    </button>
-                                </div>
-                            </div>
+                        }
+                        }
+                        else
+                        {
+                        <div class="text-center py-4">
+                            <i class="bx bx-info-circle text-muted" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No recent opportunities</p>
                         </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -129,138 +245,405 @@
 </div>
 
 @section Scripts {
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@1.9.2/css/boxicons.min.css" rel="stylesheet">
-    <style>
-        .card {
-            border: none;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
-            overflow: hidden;
-        }
+<link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    // Global chart instances
+    let appStatusChart = null;
+    let opportunityTrendsChart = null;
+    let isInitializing = false;
 
-        .nav-pills .nav-link {
-            color: #525f7f;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: all 0.3s ease;
-        }
+    function initializeCharts() {
+        if (isInitializing) return;
+        isInitializing = true;
 
-        .nav-pills .nav-link i {
-            font-size: 1.25rem;
-        }
+        console.log('Initializing charts...');
 
-        .nav-pills .nav-link:hover {
-            background-color: #f8f9fa;
-            transform: translateX(5px);
-        }
+        // Debug: Log model data
+        console.log('Application Statuses:', @Html.Raw(JsonSerializer.Serialize(Model.ApplicationStatuses)));
+        console.log('Opportunity Trends:', @Html.Raw(JsonSerializer.Serialize(Model.OpportunityTrends)));
 
-        .nav-pills .nav-link.active {
-            background-color: #5e72e4;
-            color: white;
-        }
+        // Application Status Doughnut Chart
+        const appStatusCanvas = document.getElementById('applicationStatusChart');
+        const appStatusLoading = document.getElementById('applicationStatusLoading');
 
-        .nav-pills .nav-link.disabled {
-            color: #8898aa;
-            cursor: not-allowed;
-        }
-
-        .stat-card {
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(94, 114, 228, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-icon i {
-            font-size: 24px;
-            color: #5e72e4;
-        }
-
-        .quick-action-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex;
-            gap: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .quick-action-card:hover {
-            background: #fff;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .quick-action-card.disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .quick-action-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(94, 114, 228, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .quick-action-icon i {
-            font-size: 24px;
-            color: #5e72e4;
-        }
-
-        .quick-action-content {
-            flex-grow: 1;
-        }
-
-        .quick-action-content h6 {
-            margin-bottom: 0.5rem;
-            color: #32325d;
-        }
-
-        .quick-action-content p {
-            color: #8898aa;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
-
-        .btn-primary {
-            background: #5e72e4;
-            border: none;
-        }
-
-        .btn-secondary {
-            background: #8898aa;
-            border: none;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        @@media (max-width: 768px) {
-            .col-md-3 {
-                margin-bottom: 2rem;
+        function destroyChart(chart) {
+            if (chart) {
+                chart.destroy();
             }
         }
-    </style>
+
+        if (!appStatusCanvas || appStatusCanvas.tagName !== 'CANVAS') {
+            console.error('Application status canvas not found or not a canvas element');
+            if (appStatusLoading) {
+                appStatusLoading.innerHTML = '<p class="mt-2 mb-0 text-danger">Chart container not found</p>';
+            }
+            return;
+        }
+
+        try {
+            const container = appStatusCanvas.parentElement;
+            appStatusCanvas.width = container.clientWidth;
+            appStatusCanvas.height = container.clientHeight;
+
+            const appStatuses = @Html.Raw(JsonSerializer.Serialize(Model.ApplicationStatuses ?? new List<ApplicationStatusViewModel>()));
+            const appStatusesArray = Array.isArray(appStatuses) ? appStatuses : [];
+
+            if (!appStatusesArray.length) {
+                console.warn('No application status data available');
+                if (appStatusLoading) {
+                    appStatusLoading.innerHTML = '<p class="mt-2 mb-0 text-warning">No data available</p>';
+                }
+                return;
+            }
+
+            const appStatusCtx = appStatusCanvas.getContext('2d');
+            if (!appStatusCtx) {
+                throw new Error('Failed to get 2D context for applicationStatusChart');
+            }
+
+            destroyChart(appStatusChart);
+
+            const appStatusData = {
+                labels: appStatusesArray.map(s => `${s.Status} (${s.Count})`),
+                datasets: [{
+                    data: appStatusesArray.map(s => s.Count),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#5a5c69'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#4e4e5c'],
+                    hoverBorderColor: 'rgba(234, 236, 244, 1)',
+                }]
+            };
+
+            console.log('Application Status Chart Data:', appStatusData);
+
+            appStatusChart = new Chart(appStatusCtx, {
+                type: 'doughnut',
+                data: appStatusData,
+                options: {
+                    animation: {
+                        onComplete: function() {
+                            const loadingElement = document.getElementById('applicationStatusLoading');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgb(255,255,255)',
+                            bodyFontColor: '#858796',
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            xPadding: 15,
+                            yPadding: 15,
+                            displayColors: false,
+                            caretPadding: 10,
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 10,
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    cutout: '70%',
+                },
+            });
+        } catch (e) {
+            console.error('Error initializing application status chart:', e);
+            if (appStatusLoading) {
+                appStatusLoading.innerHTML = `<p class="mt-2 mb-0 text-danger">Error: ${e.message}</p>`;
+            }
+        }
+
+        // Opportunity Trends Line Chart
+        const trendsCanvas = document.getElementById('opportunityTrendsChart');
+        const trendsLoading = document.getElementById('opportunityTrendsLoading');
+
+        if (!trendsCanvas || trendsCanvas.tagName !== 'CANVAS') {
+            console.error('Opportunity trends canvas not found or not a canvas element');
+            if (trendsLoading) {
+                trendsLoading.innerHTML = '<p class="mt-2 mb-0 text-danger">Chart container not found</p>';
+            }
+            return;
+        }
+
+        try {
+            const container = trendsCanvas.parentElement;
+            trendsCanvas.width = container.clientWidth;
+            trendsCanvas.height = container.clientHeight;
+
+            const trends = @Html.Raw(JsonSerializer.Serialize(Model.OpportunityTrends ?? new List<OpportunityTrendViewModel>()));
+            const trendsArray = Array.isArray(trends) ? trends : [];
+
+            if (!trendsArray.length) {
+                console.warn('No opportunity trends data available');
+                if (trendsLoading) {
+                    trendsLoading.innerHTML = '<p class="mt-2 mb-0 text-warning">No data available</p>';
+                }
+                return;
+            }
+
+            const trendsCtx = trendsCanvas.getContext('2d');
+            if (!trendsCtx) {
+                throw new Error('Failed to get 2D context for opportunityTrendsChart');
+            }
+
+            destroyChart(opportunityTrendsChart);
+
+            const trendsData = {
+                labels: trendsArray.map(t => t.Period || ''),
+                datasets: [
+                    {
+                        label: 'Opportunities',
+                        data: trendsArray.map(t => t.Opportunities || 0),
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Applications',
+                        data: trendsArray.map(t => t.Applications || 0),
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            };
+
+            console.log('Opportunity Trends Chart Data:', trendsData);
+
+            opportunityTrendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: trendsData,
+                options: {
+                    animation: {
+                        onComplete: function() {
+                            const loadingElement = document.getElementById('opportunityTrendsLoading');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        }
+                    },
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Error initializing opportunity trends chart:', e);
+            if (trendsLoading) {
+                trendsLoading.innerHTML = `<p class="mt-2 mb-0 text-danger">Error: ${e.message}</p>`;
+            }
+        } finally {
+            isInitializing = false;
+        }
+    }
+
+    // Handle window resize with debounce
+    let resizeTimer;
+    function handleResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (appStatusChart || opportunityTrendsChart) {
+                initializeCharts();
+            }
+        }, 250);
+    }
+
+    // Cleanup function to destroy charts
+    function cleanupCharts() {
+        if (appStatusChart) {
+            appStatusChart.destroy();
+            appStatusChart = null;
+        }
+        if (opportunityTrendsChart) {
+            opportunityTrendsChart.destroy();
+            opportunityTrendsChart = null;
+        }
+        isInitializing = false;
+    }
+
+    // Initialize charts when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+        window.addEventListener('resize', handleResize);
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanupCharts);
+</script>
+
+<style>
+    :root {
+        --primary: #4e73df;
+        --success: #1cc88a;
+        --secondary: #858796;
+        --light: #f8f9fc;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .container-fluid {
+        background: var(--light);
+    }
+
+    .stat-card {
+        transition: transform 0.2s ease-in-out;
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(78, 115, 223, 0.1);
+        color: var(--primary);
+        font-size: 1.25rem;
+    }
+
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow);
+    }
+
+    .card-title {
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .activity-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eaecf4;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-avatar {
+        flex-shrink: 0;
+    }
+
+    .opportunity-item {
+        transition: background-color 0.2s ease;
+    }
+
+    .opportunity-item:hover {
+        background-color: #f8f9fc;
+        border-radius: 0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .chart-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.9);
+        z-index: 1;
+    }
+
+    #applicationStatusChart,
+    #opportunityTrendsChart {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 0.25rem;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.4em 0.75em;
+        font-size: 0.85em;
+    }
+
+    .text-muted {
+        color: var(--secondary) !important;
+    }
+
+    .text-success {
+        color: var(--success) !important;
+    }
+
+    .text-primary {
+        color: var(--primary) !important;
+    }
+
+    .bg-light {
+        background-color: var(--light) !important;
+    }
+
+    .rounded-circle {
+        border-radius: 50% !important;
+    }
+
+    @media (max-width: 991px) {
+    .chart-container {
+        height: 250px;
+    }
+    }
+
+    @media (max-width: 767px) {
+    .stat-card {
+        min-height: 150px;
+    }
+    .chart-container {
+        height: 200px;
+    }
+    }
+</style>
 }

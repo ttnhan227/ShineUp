@@ -15,7 +15,11 @@ builder.Configuration.SetBasePath(builder.Environment.ContentRootPath)
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
-    .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve; });
+    .AddJsonOptions(options => 
+    { 
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // Enable case-insensitive property matching
+    });
 
 // Configure request size limits
 builder.Services.Configure<IISServerOptions>(options =>

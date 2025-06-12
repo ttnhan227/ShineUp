@@ -182,6 +182,7 @@ builder.Services.AddScoped<IContestManagementRepository, ContestManagementReposi
 builder.Services.AddScoped<IPostManagementRepository, PostManagementRepository>();
 builder.Services.AddScoped<ICategoryManagementRepository, CategoryManagementRepository>();
 builder.Services.AddScoped<IOpportunityManagementRepository, OpportunityManagementRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 
 // Update CORS configuration
