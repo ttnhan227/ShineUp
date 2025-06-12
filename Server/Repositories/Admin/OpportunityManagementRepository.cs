@@ -106,11 +106,12 @@ public class OpportunityManagementRepository : IOpportunityManagementRepository
                 IsRemote = opportunityDto.IsRemote,
                 Type = type,
                 Status = status,
-                ApplicationDeadline = opportunityDto.ApplicationDeadline,
+                ApplicationDeadline = opportunityDto.ApplicationDeadline?.ToUniversalTime(),
                 CategoryId = opportunityDto.CategoryId,
                 TalentArea = opportunityDto.TalentArea,
                 PostedByUserId = 1, // TODO: Get from current user
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.TalentOpportunities.Add(opportunity);
@@ -145,7 +146,7 @@ public class OpportunityManagementRepository : IOpportunityManagementRepository
             opportunity.IsRemote = opportunityDto.IsRemote;
             opportunity.Type = type;
             opportunity.Status = status;
-            opportunity.ApplicationDeadline = opportunityDto.ApplicationDeadline;
+            opportunity.ApplicationDeadline = opportunityDto.ApplicationDeadline?.ToUniversalTime();
             opportunity.CategoryId = opportunityDto.CategoryId;
             opportunity.TalentArea = opportunityDto.TalentArea;
             opportunity.UpdatedAt = DateTime.UtcNow;

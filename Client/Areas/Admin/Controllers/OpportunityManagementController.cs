@@ -14,16 +14,20 @@ namespace Client.Areas.Admin.Controllers;
 [Route("Admin/[controller]/[action]")]
 public class OpportunityManagementController : Controller
 {
+    private const string ApiBasePath = "api/admin/opportunities";
     private const string ApiBaseUrl = "api/admin/opportunities";
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<OpportunityManagementController> _logger;
 
     public OpportunityManagementController(
         IHttpClientFactory httpClientFactory,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<OpportunityManagementController> logger)
     {
         _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     private string GetJwtToken()
@@ -288,24 +292,59 @@ public class OpportunityManagementController : Controller
         try
         {
             var client = GetAuthenticatedClient();
-            var response = await client.GetAsync($"{ApiBaseUrl}/{id}/applications");
-
+            
+            // Get applications for the opportunity
+            var response = await client.GetAsync($"{ApiBasePath}/{id}/applications");
             if (!response.IsSuccessStatusCode)
             {
-                return View(new List<ApplicationListViewModel>());
+                _logger.LogError("Failed to fetch applications. Status: {StatusCode}", response.StatusCode);
+                return View("Error");
             }
 
             var json = await response.Content.ReadAsStringAsync();
             var applications = JsonSerializer.Deserialize<List<ApplicationListViewModel>>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            ViewBag.OpportunityId = id;
-            return View(applications);
+            // Get opportunity details
+            var opportunityResponse = await client.GetAsync($"{ApiBasePath}/{id}");
+            if (!opportunityResponse.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to fetch opportunity details. Status: {StatusCode}", opportunityResponse.StatusCode);
+                return View("Error");
+            }
+
+            var opportunityJson = await opportunityResponse.Content.ReadAsStringAsync();
+            var opportunity = JsonSerializer.Deserialize<OpportunityDetailViewModel>(opportunityJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            // Create the view model
+            var viewModel = new OpportunityApplicationsViewModel
+            {
+                OpportunityId = id,
+                OpportunityTitle = opportunity?.Title ?? "Opportunity",
+                Applications = applications?.Select(a => new ApplicationListItemViewModel
+                {
+                    ApplicationId = a.ApplicationId,
+                    OpportunityId = a.OpportunityId,
+                    OpportunityTitle = a.OpportunityTitle,
+                    ApplicantName = a.UserName,
+                    Email = a.UserEmail,
+                    Status = a.Status,
+                    AppliedAt = a.AppliedAt,
+                    ReviewedAt = a.ReviewedAt
+                }).ToList() ?? new(),
+                StatusCounts = applications?.GroupBy(a => a.Status)
+                    .ToDictionary(g => g.Key, g => g.Count()) ?? new(),
+                ApplicationStatuses = applications?.Select(a => a.Status).Distinct().ToList() ?? new()
+            };
+
+            return View(viewModel);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error retrieving applications for opportunity {OpportunityId}", id);
             ModelState.AddModelError("", "An error occurred while retrieving the applications.");
-            return View(new List<ApplicationListViewModel>());
+            return View(new OpportunityApplicationsViewModel { OpportunityId = id, OpportunityTitle = "Opportunity" });
         }
     }
 
