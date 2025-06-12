@@ -163,8 +163,9 @@ public class ContestManagementRepository : IContestManagementRepository
 
         contest.Title = updateContestDto.Title;
         contest.Description = updateContestDto.Description;
-        contest.StartDate = updateContestDto.StartDate;
-        contest.EndDate = updateContestDto.EndDate;
+        // Ensure dates are specified as UTC
+        contest.StartDate = DateTime.SpecifyKind(updateContestDto.StartDate, DateTimeKind.Utc);
+        contest.EndDate = DateTime.SpecifyKind(updateContestDto.EndDate, DateTimeKind.Utc);
 
         await _contestRepositories.UpdateAsync(contest);
         await _context.SaveChangesAsync();
