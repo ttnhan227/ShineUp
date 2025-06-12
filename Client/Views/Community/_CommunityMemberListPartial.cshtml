@@ -74,16 +74,21 @@ else
                             <div class="btn-group" role="group">
                                 @if (member.Role == CommunityRole.Member)
                                 {
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger d-flex align-items-center me-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#removeMemberModal"
-                                            data-member-id="@member.UserID"
-                                            data-member-name="@member.User?.FullName"
-                                            title="Remove member">
-                                        <i class="bi bi-person-dash me-1"></i>
-                                        <span>Remove</span>
-                                    </button>
+                                    <form method="post"
+                                          asp-controller="Community"
+                                          asp-action="RemoveMember"
+                                          asp-route-communityId="@ViewBag.CommunityId"
+                                          asp-route-userId="@member.UserID"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to remove @(member.User?.FullName ?? member.User?.Username) from this community?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger d-flex align-items-center"
+                                                title="Remove Member">
+                                            <i class="bi bi-person-dash me-1"></i>
+                                            <span>Remove</span>
+                                        </button>
+                                    </form>
                                     <form method="post"
                                           asp-controller="Community"
                                           asp-action="TransferModerator"

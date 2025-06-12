@@ -816,7 +816,7 @@
                 // Remove existing modal and add new one
                 $('#imageModal').remove();
                 $('body').append(modalHtml);
-
+                
                 // Show modal
                 const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
                 imageModal.show();
@@ -860,171 +860,105 @@
             });
         });
 
-        // Handle like toggle
-        $('.toggle-like-form').on('submit', function (e) {
-            e.preventDefault();
-            var $form = $(this);
-            var postId = $form.data('post-id');
-            var $button = $form.find('button');
-            var $icon = $button.find('i');
-            var $count = $button.find('span');
+        $(function () {
+            // Like/Unlike AJAX functionality
+            $(document).on('submit', '.toggle-like-form', function(e) {
+                e.preventDefault();
+                const $form = $(this);
+                const $button = $form.find('button[type="submit"]');
+                const $icon = $button.find('i');
+                const $count = $button.find('span');
+                if ($button.prop('disabled')) return;
+                $button.prop('disabled', true);
 
-            $.ajax({
-                url: '@Url.Action("ToggleLike", "Social")',
-                type: 'POST',
-                data: $form.serialize(),
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function (response) {
-                    if ($icon.hasClass('bx-heart')) {
-                        $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
-                        $count.text(parseInt($count.text()) + 1);
-                    } else {
-                        $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
-                        $count.text(parseInt($count.text()) - 1);
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            if ($icon.hasClass('bx-heart')) {
+                                $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
+                            } else {
+                                $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
+                            }
+                            $count.text(response.likesCount);
+                        } else {
+                            showToast(response.message || 'Error toggling like', 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Error toggling like', 'error');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false);
                     }
-                }
+                });
             });
-        });
 
-        // Toggle comments section (no AJAX, just show/hide)
-        $('.toggle-comments').on('click', function () {
-            var postId = $(this).data('post-id');
-            var $container = $('#comments-container-' + postId);
-            var $icon = $(this).find('i');
-            var isHidden = $container.is(':hidden');
-            $container.toggle();
-            $icon.toggleClass('bx-comment bxs-comment');
-        });
-
-        // Close comments section
-        $('.close-comments').on('click', function () {
-            var postId = $(this).data('post-id');
-            $('#comments-container-' + postId).hide();
-            var $icon = $('.toggle-comments[data-post-id="' + postId + '"] i');
-            $icon.removeClass('bxs-comment').addClass('bx-comment');
-        });
-
-        // Handle comment submission
-        $('.add-comment-form').on('submit', function (e) {
-            e.preventDefault();
-            var $form = $(this);
-            var postId = $form.data('post-id');
-            var $commentsList = $('#comments-list-' + postId);
-            var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
-
-            $.ajax({
-                url: '@Url.Action("AddComment", "Social")',
-                type: 'POST',
-                data: $form.serialize(),
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function () {
-                    $form.find('input[name="Content"]').val('');
-                    $count.text(parseInt($count.text()) + 1);
-                    $.ajax({
-                        url: '@Url.Action("GetComments", "Social")',
-                        type: 'GET',
-                        data: {postId: postId},
-                        success: function (comments) {
-                            $commentsList.empty();
-                            if (comments.length > 0) {
-                                comments.forEach(function (comment) {
-                                    var commentHtml = `
-                                            <div class="comment-item mb-3 d-flex">
-                                                <div class="flex-shrink-0 me-2">
-                                                    <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="comment-header d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <strong>${comment.username}</strong>
-                                                            <small class="text-muted ms-2">${comment.timeAgo}</small>
-                                                        </div>
-                                                        ${comment.userID == '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value' ? `
-                                                            <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
-                                                                <input type="hidden" name="commentId" value="${comment.commentID}" />
-                                                                <input type="hidden" name="postId" value="${postId}" />
-                                                                <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
-                                                                    <i class='bx bx-trash'></i>
-                                                                </button>
-                                                            </form>
-                                                        ` : ''}
-                                                    </div>
-                                                    <div class="comment-content">${comment.content}</div>
-                                                </div>
-                                            </div>`;
-                                    $commentsList.append(commentHtml);
-                                });
-                            } else {
-                                $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
-                            }
-                        }
-                    });
-                }
+            // Toggle comments section
+            $(document).on('click', '.toggle-comments', function () {
+                var postId = $(this).data('post-id');
+                var $container = $('#comments-container-' + postId);
+                var $icon = $(this).find('i');
+                var isHidden = $container.is(':hidden');
+                $container.toggle();
+                $icon.toggleClass('bx-comment bxs-comment');
             });
-        });
 
-        // Handle comment deletion
-        $(document).on('submit', '.delete-comment-form', function (e) {
-            e.preventDefault();
-            var $form = $(this);
-            var commentId = $form.data('comment-id');
-            var postId = $form.data('post-id');
-            var $commentsList = $('#comments-list-' + postId);
-            var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
+            // Add comment
+            $(document).on('submit', '.add-comment-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                var postId = $form.data('post-id');
+                var $commentsList = $('#comments-list-' + postId);
+                var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
 
-            $.ajax({
-                url: '@Url.Action("DeleteComment", "Social")',
-                type: 'POST',
-                data: $form.serialize(),
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function () {
-                    $count.text(parseInt($count.text()) - 1);
-                    $.ajax({
-                        url: '@Url.Action("GetComments", "Social")',
-                        type: 'GET',
-                        data: {postId: postId},
-                        success: function (comments) {
-                            $commentsList.empty();
-                            if (comments.length > 0) {
-                                comments.forEach(function (comment) {
-                                    var commentHtml = `
-                                            <div class="comment-item mb-3 d-flex">
-                                                <div class="flex-shrink-0 me-2">
-                                                    <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="comment-header d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <strong>${comment.username}</strong>
-                                                            <small class="text-muted ms-2">${comment.timeAgo}</small>
-                                                        </div>
-                                                        ${comment.userID == '@User.FindFirst(ClaimTypes.NameIdentifier)?.Value' ? `
-                                                            <form class="delete-comment-form d-inline" data-comment-id="${comment.commentID}" data-post-id="${postId}">
-                                                                <input type="hidden" name="commentId" value="${comment.commentID}" />
-                                                                <input type="hidden" name="postId" value="${postId}" />
-                                                                <button type="submit" class="btn btn-link text-danger p-0 ms-2" onclick="return confirm('Are you sure you want to delete this comment?')">
-                                                                <i class='bx bx-trash'></i>
-                                                            </button>
-                                                        </form>
-                                                    ` : ''}
-                                                </div>
-                                                <div class="comment-content">${comment.content}</div>
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function () {
+                        $form.find('input[name="Content"]').val('');
+                        $count.text(parseInt($count.text()) + 1);
+                        // Reload comments (implement GetComments endpoint to return HTML or JSON)
+                        $.ajax({
+                            url: '/Social/GetComments',
+                            type: 'GET',
+                            data: {postId: postId},
+                            success: function (comments) {
+                                $commentsList.empty();
+                                if (comments.length > 0) {
+                                    comments.forEach(function (comment) {
+                                        var commentHtml = `<div class="comment-item mb-3 d-flex">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="comment-header d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>${comment.username}</strong>
+                                                <small class="text-muted ms-2">${comment.timeAgo}</small>
                                             </div>
-                                        </div>`;
-                                    $commentsList.append(commentHtml);
-                                });
-                            } else {
-                                $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                                        </div>
+                                        <div class="comment-content">${comment.content}</div>
+                                    </div>
+                                </div>`;
+                                        $commentsList.append(commentHtml);
+                                    });
+                                } else {
+                                    $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                                }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
         });
     </script>

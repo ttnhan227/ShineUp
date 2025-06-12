@@ -29,6 +29,8 @@
                         <input type="hidden" name="communityId" value="@Model.CommunityID"/>
 
                         <div class="mb-3">
+                            @Html.ValidationMessageFor(model => model.Name, "This name already be used", new { @class = "text-danger" })
+
                             <label asp-for="Name" class="form-label"></label>
                             <input asp-for="Name" class="form-control"/>
                             <span asp-validation-for="Name" class="text-danger"></span>
