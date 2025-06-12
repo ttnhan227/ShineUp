@@ -63,7 +63,7 @@
                                     </button>
                                 </form>
                             }
-                            <form asp-action="Delete" asp-route-id="@notification.NotificationID" method="post"
+                            <form asp-action="Delete" asp-controller="Notifications" asp-route-id="@notification.NotificationID" method="post"
                                   class="d-inline delete-notification-form">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
@@ -189,25 +189,30 @@
                     url: form.attr('action'),
                     method: 'POST',
                     headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                        'Accept': 'application/json'
                     },
-                    success: function () {
-                        // Remove the notification from the UI
-                        notificationItem.fadeOut(300, function () {
-                            $(this).remove();
-                            checkEmptyState();
-                        });
+                    success: function (response) {
+                        if (response.success) {
+                            // Remove the notification from the UI
+                            notificationItem.fadeOut(300, function () {
+                                $(this).remove();
+                                checkEmptyState();
 
-                        // Update unread count if the deleted notification was unread
-                        if (isUnread) {
-                            updateUnreadCount(-1);
+                                // Update unread count if the deleted notification was unread
+                                if (isUnread) {
+                                    updateUnreadCount(-1);
+                                }
+                            });
+
+                            showToast('Success', 'Notification deleted successfully', 'success');
+                        } else {
+                            showToast('Error', response.message || 'Failed to delete notification', 'danger');
                         }
-
-                        showToast('Success', 'Notification deleted', 'success');
                     },
-                    error: function (xhr) {
-                        console.error('Failed to delete notification', xhr);
-                        showToast('Error', 'Failed to delete notification', 'danger');
+                    error: function(xhr) {
+                        console.error('Error deleting notification:', xhr);
+                        showToast('Error', 'An error occurred while deleting the notification', 'danger');
                     }
                 });
             });

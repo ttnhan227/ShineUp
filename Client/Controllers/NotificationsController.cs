@@ -277,6 +277,37 @@ public class NotificationsController : Controller
         }
     }
 
+    // POST: Notifications/Delete/5
+    [HttpPost("delete/{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var client = await GetAuthenticatedClient();
+        if (client == null)
+        {
+            return Json(new { success = false, message = "Unauthorized" });
+        }
+
+        var apiUrl = $"api/notifications/{id}";
+
+        try
+        {
+            var response = await client.DeleteAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+
+            _logger.LogError($"Failed to delete notification {id}. Status: {response.StatusCode}");
+            return Json(new { success = false, message = "Failed to delete notification" });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, $"Error deleting notification {id}");
+            return Json(new { success = false, message = "Error deleting notification" });
+        }
+    }
+
     private IActionResult HandleError(HttpStatusCode statusCode)
     {
         return statusCode switch

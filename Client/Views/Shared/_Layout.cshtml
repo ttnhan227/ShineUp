@@ -232,7 +232,7 @@
                     var profileImageUrl = User.FindFirst("ProfileImageURL")?.Value;
 
                     <li class="nav-item dropdown me-2">
-                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button"
+                        <a class="nav-link position-relative" asp-controller="Notifications" asp-action="Index" id="notificationDropdown" role="button"
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class='bx bx-bell fs-4'></i>
                             <span id="unread-count"
@@ -445,7 +445,6 @@
                                     <i class="bi bi-clock"></i> ${formatTimeAgo(n.CreatedAt ?? n.createdAt)}
                                 </small>
                             </div>
-                            ${isUnread ? '<span class="badge bg-primary rounded-pill">New</span>' : ''}
                         </div>
                     </a>`;
             }).join('');
