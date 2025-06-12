@@ -2,7 +2,6 @@
     Layout = null;
     var userId = User?.FindFirst("sub")?.Value ?? User?.FindFirst("nameidentifier")?.Value ?? "anonymous";
 }
-
 <!-- Toggle ChatBot Button -->
 <button id="chatbot-toggle"
         class="btn btn-light border border-secondary rounded-circle position-fixed bottom-0 end-0 m-4 shadow-sm"
@@ -18,12 +17,14 @@
      style="width: 360px; display: none; z-index: 1050;">
 
     <!-- Header -->
-    <div
-        class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
+    <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
         <div class="fw-bold text-secondary"><i class="bi bi-robot me-1"></i>AI ChatBot</div>
         <div class="btn-group">
             <button class="btn btn-sm btn-outline-secondary" onclick="clearCurrentChat()" title="Clear Chat">
                 <i class="bi bi-trash3"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="downloadChatLog()" title="Export Chat">
+                <i class="bi bi-download"></i>
             </button>
             <button class="btn btn-sm btn-outline-secondary" onclick="toggleChatbot()" title="Close Chat">
                 <i class="bi bi-x-lg"></i>
@@ -39,8 +40,10 @@
          aria-live="polite">
     </div>
 
-    <!-- Loading -->
-    <div id="chat-loading" class="text-center text-muted py-2" style="display: none;">
+
+
+    <!-- Typing -->
+    <div id="typing-indicator" class="text-center text-muted py-2" style="display: none;">
         <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
         <span class="ms-2 text-secondary">AI is typing...</span>
     </div>
@@ -48,12 +51,8 @@
     <!-- Input -->
     <div class="card-footer p-2 bg-white border-top border-secondary">
         <div class="input-group">
-            <input id="user-input"
-                   type="text"
-                   class="form-control form-control-sm border-secondary"
-                   placeholder="Type your message..."
-                   maxlength="1000"
-                   autocomplete="off"/>
+            <input id="user-input" type="text" class="form-control form-control-sm border-secondary"
+                   placeholder="Type your message..." maxlength="1000" autocomplete="off"/>
             <button id="send-btn" class="btn btn-sm btn-outline-secondary" title="Send">
                 <i class="bi bi-send-fill"></i>
             </button>
@@ -61,154 +60,181 @@
     </div>
 </div>
 
-
 <script>
-    // Safe querySelector function
-    function safeQuerySelector(selector, context = document) {
-        try {
-            if (selector === '#') return null; // Handle empty hash
-            if (typeof selector !== 'string') return null;
-            return (context || document).querySelector(selector);
-        } catch (e) {
-            console.warn('Invalid selector:', selector, e);
-            return null;
-        }
-    }
-
-    async function sendMessageToBot(message) {
-        try {
-            const response = await fetch("/api/chatbot", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({message})
-            });
-
-            if (!response.ok) throw new Error(await response.text());
-
-            const data = await response.json();
-            return data.message;
-        } catch (err) {
-            console.error("❌ ChatBot Error:", err);
-            return "[ChatBot Error]: " + err.message;
-        }
-    }
-
-    const WELCOME_MESSAGE = "👋 Hi! I'm your AI assistant. How can I help you today? You can ask me about:\n" +
-        "• Finding talents\n" +
-        "• Posting opportunities\n" +
-        "• Agency services\n" +
-        "• General inquiries";
+    const userId = "@userId";
+    const historyKey = "chatbot-history-" + userId;
 
     const elements = {
         box: document.getElementById('chatbot-box'),
         messages: document.getElementById('chat-messages'),
         input: document.getElementById('user-input'),
         sendBtn: document.getElementById('send-btn'),
-        loading: document.getElementById('chat-loading')
+        typing: document.getElementById('typing-indicator'),
     };
 
+    const WELCOME_MESSAGE = "👋 Hello! I'm your AI assistant. You can ask me about:\n• How to upload a video\n• Join communities\n• Find a mentor\n• Anything else related to the platform";
+
     function toggleChatbot() {
-        const box = elements.box;
-        const wasHidden = box.style.display === 'none';
-        box.style.display = wasHidden ? 'block' : 'none';
+        const wasHidden = elements.box.style.display === 'none';
+        elements.box.style.display = wasHidden ? 'block' : 'none';
 
         if (wasHidden) {
-            elements.input.focus();
-            // Show welcome message if chat is empty
+            setTimeout(() => elements.input.focus(), 100);
             if (elements.messages.children.length === 0) {
-                appendMessage('bot', WELCOME_MESSAGE);
+                appendMessage("bot", WELCOME_MESSAGE);
             }
         }
     }
 
     function clearCurrentChat() {
-        if (confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch sử chat?")) {
-            const chatMessages = safeQuerySelector("#chat-messages");
-            if (chatMessages) {
-                chatMessages.innerHTML = "";
-            }
-            localStorage.removeItem("chatbot-history-@userId");
+        if (confirm("Are you sure you want to clear the chat history?")) {
+            elements.messages.innerHTML = "";
+            localStorage.removeItem(historyKey);
         }
     }
 
-
-    function showLoading(show) {
-        const loading = safeQuerySelector("#chat-loading");
-        if (loading) {
-            loading.style.display = show ? "block" : "none";
+    function showTypingIndicator(show) {
+        elements.typing.style.display = show ? "block" : "none";
+        if (show) {
+            elements.typing.scrollIntoView({behavior: "smooth"});
         }
     }
 
     function appendMessage(sender, message) {
-        const container = safeQuerySelector("#chat-messages");
-        if (!container) return;
-        
+        if (elements.suggestions) elements.suggestions.style.display = "none";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `position-relative`;
+
         const msg = document.createElement("div");
-        msg.className = `alert ${sender === "user" ? "alert-primary text-end" : "alert-secondary text-start"} mb-2 py-1 px-2`;
-        msg.innerHTML = message.replace(/\n/g, "<br/>");
-        container.appendChild(msg);
-        container.scrollTop = container.scrollHeight;
+        msg.className = `alert ${sender === "user" ? "alert-primary text-end" : "alert-secondary text-start"} mb-2 py-1 px-2 pe-4`;
+        msg.innerHTML = sender === "bot" ? "" : message.replace(/\n/g, "<br/>");
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn btn-sm btn-light position-absolute top-0 end-0 me-1 mt-1 p-0 border-0";
+        copyBtn.innerHTML = `<i class="bi bi-clipboard" title="Copy message"></i>`;
+        copyBtn.style.fontSize = "0.8rem";
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(msg.innerText).then(() => {
+                copyBtn.innerHTML = `<i class="bi bi-clipboard-check text-success" title="Copied!"></i>`;
+                setTimeout(() => copyBtn.innerHTML = `<i class="bi bi-clipboard" title="Copy message"></i>`, 1500);
+            });
+        };
+
+        wrapper.appendChild(msg);
+        wrapper.appendChild(copyBtn);
+        elements.messages.appendChild(wrapper);
+
+        if (sender === "bot") {
+            typeMessage(msg, message);
+        }
+
+        saveChatHistory();
+        elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
+    function typeMessage(element, text, speed = 10) {
+        element.innerHTML = '';
+        let i = 0;
+        function typeChar() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i) === '\n' ? '<br/>' : text.charAt(i);
+                i++;
+                elements.messages.scrollTop = elements.messages.scrollHeight;
+                setTimeout(typeChar, speed);
+            }
+        }
+        typeChar();
+    }
+
+    async function sendMessageToBot(message) {
+        const res = await fetch("/api/chatbot", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message})
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        return data.message;
     }
 
     let isProcessing = false;
 
     async function handleSend() {
         if (isProcessing) return;
-
-        const input = document.getElementById("user-input");
-        const sendBtn = document.getElementById("send-btn");
-        const message = input.value.trim();
-
+        const message = elements.input.value.trim();
         if (!message) return;
 
+        isProcessing = true;
+        elements.input.disabled = true;
+        elements.sendBtn.disabled = true;
+
+        appendMessage("user", message);
+        elements.input.value = "";
+        showTypingIndicator(true);
+
         try {
-            isProcessing = true;
-            input.disabled = true;
-            sendBtn.disabled = true;
-
-            appendMessage("user", message);
-            input.value = "";
-            showLoading(true);
-
             const reply = await sendMessageToBot(message);
+            showTypingIndicator(false);
             appendMessage("bot", reply);
-        } catch (error) {
-            appendMessage("bot", "⚠️ Something went wrong. Please try again.");
+        } catch (e) {
+            showTypingIndicator(false);
+            appendMessage("bot", "⚠️ Error connecting to chatbot. Please try again.");
         } finally {
-            showLoading(false);
             isProcessing = false;
-            input.disabled = false;
-            sendBtn.disabled = false;
-            input.focus();
+            elements.input.disabled = false;
+            elements.sendBtn.disabled = false;
+            elements.input.focus();
         }
     }
 
-    window.addEventListener("load", () => {
-        const historyKey = "chatbot-history-@userId";
-        const container = safeQuerySelector("#chat-messages");
-        if (container) {
-            const history = localStorage.getItem(historyKey);
-            if (history) {
-                container.innerHTML = history;
-                container.scrollTop = container.scrollHeight;
-            }
+    function saveChatHistory() {
+        localStorage.setItem(historyKey, elements.messages.innerHTML);
+    }
+
+    function restoreChatHistory() {
+        const history = localStorage.getItem(historyKey);
+        if (history) {
+            elements.messages.innerHTML = history;
+            elements.messages.scrollTop = elements.messages.scrollHeight;
+        }
+    }
+
+    function downloadChatLog() {
+        const time = new Date().toISOString().replace(/[:.]/g, '-');
+        let content = "";
+        const chats = elements.messages.querySelectorAll(".alert");
+        chats.forEach(el => {
+            const isUser = el.classList.contains("alert-primary");
+            content += `${isUser ? "User" : "Bot"}: ${el.textContent.trim()}\n\n`;
+        });
+
+        const blob = new Blob([content || "No chat content"], {type: "text/plain"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chatlog-${time}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    elements.sendBtn.addEventListener("click", handleSend);
+    elements.input.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !isProcessing) {
+            e.preventDefault();
+            handleSend();
         }
     });
 
+    elements.messages.addEventListener("click", () => elements.input.focus());
 
-    const sendBtn = safeQuerySelector("#send-btn");
-    const userInput = safeQuerySelector("#user-input");
-    
-    if (sendBtn) {
-        sendBtn.addEventListener("click", handleSend);
-    }
-    
-    if (userInput) {
-        userInput.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" && !isProcessing) {
-                e.preventDefault();
-                handleSend();
-            }
+    document.querySelectorAll(".suggestion").forEach(btn => {
+        btn.addEventListener("click", () => {
+            elements.input.value = btn.innerText;
+            handleSend();
         });
-    }
+    });
+
+    window.addEventListener("load", restoreChatHistory);
 </script>
