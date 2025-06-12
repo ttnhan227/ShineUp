@@ -65,21 +65,7 @@
                                             <option value="@privacy.Value">@privacy.Text</option>
                                         }
                                     </select>
-                                    @if (ViewBag.UserCommunities != null && ((IEnumerable<SelectListItem>)ViewBag.UserCommunities).Any())
-                                    {
-                                        <select class="form-select form-select-sm rounded-3 flex-grow-1"
-                                                id="communitySelect" name="CommunityID">
-                                            <option value="">Tag a Community (Optional)</option>
-                                            @foreach (var item in ViewBag.UserCommunities as IEnumerable<SelectListItem>)
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
-                                            }
-                                        </select>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small align-self-center">No communities joined</span>
-                                    }
+                              
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4" id="shareButton">
                                     <i class='bx bx-send me-1'></i> Share
@@ -96,9 +82,9 @@
                     <div class="post-card mb-4">
                         @if (!string.IsNullOrEmpty(item.CommunityName))
                         {
-                            <div class="community-badge mb-2">
+                            <a href="@Url.Action("Details", "Communities", new { id = item.CommunityID })" class="community-badge mb-2 text-decoration-none" style="cursor:pointer;">
                                 <i class='bx bx-group me-1'></i> @item.CommunityName
-                            </div>
+                            </a>
                         }
                         <div class="post-header">
                             <a asp-controller="UserProfile" asp-action="PublicProfile"
