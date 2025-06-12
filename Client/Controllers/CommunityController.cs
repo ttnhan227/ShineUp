@@ -691,35 +691,58 @@ public class CommunityController : Controller
     }
 
     private async Task<List<PostViewModel>> GetCommunityPosts(HttpClient client, int communityId)
+{
+    try
     {
-        try
+        var response = await client.GetAsync($"api/community/{communityId}/posts");
+        _logger.LogInformation($"Posts API Response Status: {response.StatusCode}");
+
+        if (!response.IsSuccessStatusCode)
         {
-            var response = await client.GetAsync($"api/community/{communityId}/posts");
-            _logger.LogInformation($"Posts API Response Status: {response.StatusCode}");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to get posts. Status: {response.StatusCode}");
-                return new List<PostViewModel>();
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, options);
-            _logger.LogInformation($"Successfully retrieved {posts?.Count ?? 0} posts");
-
-            return posts ?? new List<PostViewModel>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving community posts");
+            _logger.LogWarning($"Failed to get posts. Status: {response.StatusCode}");
             return new List<PostViewModel>();
         }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        // Deserialize directly into PostViewModel
+        var posts = JsonSerializer.Deserialize<List<PostViewModel>>(content, options);
+        _logger.LogInformation($"Successfully retrieved {posts?.Count ?? 0} posts");
+
+        if (posts == null)
+        {
+            return new List<PostViewModel>();
+        }
+
+        // Ensure Comments collection is initialized
+        foreach (var post in posts)
+        {
+            post.Comments ??= new List<CommentViewModel>();
+            
+            // Ensure MediaFiles collection is initialized
+            post.MediaFiles ??= new List<MediaFileViewModel>();
+            
+            // Ensure User properties are set for each comment
+            foreach (var comment in post.Comments)
+            {
+                comment.Username ??= "Unknown User";
+                comment.FullName ??= "Unknown User";
+                comment.ProfileImageURL ??= "/images/default-avatar.png";
+            }
+        }
+
+        return posts;
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving community posts");
+        return new List<PostViewModel>();
+    }
+}
 
 
     [HttpPost]

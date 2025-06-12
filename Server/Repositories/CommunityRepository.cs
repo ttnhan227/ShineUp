@@ -30,27 +30,28 @@ public class CommunityRepository : ICommunityRepository
     }
 
     public async Task<IEnumerable<Post>> GetCommunityPostsAsync(int communityId, int? userId = null)
+{
+    var posts = await _db.Posts
+        .Where(p => p.CommunityID == communityId)
+        .Include(p => p.User)
+        .Include(p => p.Privacy)
+        .Include(p => p.Likes)
+        .Include(p => p.Comments)
+            .ThenInclude(c => c.User)  // Include the User for each comment
+        .Include(p => p.Images)
+        .Include(p => p.Videos)
+        .Include(p => p.Community)
+        .OrderByDescending(p => p.CreatedAt)
+        .ToListAsync();
+
+    // Rest of the method remains the same
+    if (userId.HasValue)
     {
-        var posts = await _db.Posts
-            .Where(p => p.CommunityID == communityId)
-            .Include(p => p.User)
-            .Include(p => p.Privacy) // Include the Privacy navigation property
-            .Include(p => p.Likes)
-            .Include(p => p.Comments)
-            .Include(p => p.Images)
-            .Include(p => p.Videos)
-            .Include(p => p.Community)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-
-        // Filter posts based on privacy settings if user is not the owner
-        if (userId.HasValue)
-        {
-            return posts.Where(p => p.Privacy != null && (p.Privacy.Name == "Public" || p.UserID == userId.Value));
-        }
-
-        return posts.Where(p => p.Privacy != null && p.Privacy.Name == "Public");
+        return posts.Where(p => p.Privacy != null && (p.Privacy.Name == "Public" || p.UserID == userId.Value));
     }
+
+    return posts.Where(p => p.Privacy != null && p.Privacy.Name == "Public");
+}
 
     public async Task<CommunityDTO> UpdateCommunityAsync(int communityId, UpdateCommunityDTO dto, int requesterId)
     {
@@ -653,20 +654,5 @@ public class CommunityRepository : ICommunityRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task<List<Post>> GetCommunityPostsAsync(int communityId)
-    {
-        if (!await _db.Communities.AnyAsync(c => c.CommunityID == communityId))
-        {
-            throw new KeyNotFoundException("Community not found");
-        }
-
-        return await _db.Posts
-            .Where(p => p.CommunityID == communityId)
-            .Include(p => p.User)
-            .Include(p => p.Comments).ThenInclude(c => c.User)
-            .Include(p => p.Likes).ThenInclude(l => l.User)
-            .Include(p => p.Community)
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-    }
+    
 }

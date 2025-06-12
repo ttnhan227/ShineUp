@@ -78,55 +78,65 @@ public class CommunityController : ControllerBase
     /// <param name="communityId">ID của cộng đồng</param>
     /// <returns>Danh sách bài viết</returns>
     [HttpGet("{communityId}/posts")]
-    [AllowAnonymous]
-    public async Task<IActionResult> GetCommunityPosts(int communityId)
+[AllowAnonymous]
+public async Task<IActionResult> GetCommunityPosts(int communityId)
+{
+    try
     {
-        try
+        int? userId = null;
+        if (User.Identity.IsAuthenticated)
         {
-            int? userId = null;
-            if (User.Identity.IsAuthenticated)
-            {
-                userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            }
-
-            var posts = await _communityRepository.GetCommunityPostsAsync(communityId, userId);
-
-            var postDtos = posts.Select(p => new PostListResponseDto
-            {
-                PostID = p.PostID,
-                Title = p.Title,
-                Content = p.Content,
-                CreatedAt = p.CreatedAt,
-                UserID = p.UserID,
-                UserName = p.User.Username,
-                FullName = p.User.FullName,
-                CategoryName = p.Category?.CategoryName,
-                LikesCount = p.Likes?.Count ?? 0,
-                CommentsCount = p.Comments?.Count ?? 0,
-                CommunityID = p.CommunityID,
-                CommunityName = p.Community?.Name,
-                MediaFiles = p.Images.Select(i => new MediaFileDTO
-                {
-                    Url = i.ImageURL?.Replace("http://", "https://"),
-                    Type = "image",
-                    PublicId = i.CloudPublicId
-                }).Concat(p.Videos.Select(v => new MediaFileDTO
-                {
-                    Url = v.VideoURL?.Replace("http://", "https://"),
-                    Type = "video",
-                    PublicId = v.CloudPublicId
-                })).ToList()
-            });
-
-
-            return Ok(postDtos);
+            userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
         }
-        catch (Exception ex)
+
+        var posts = await _communityRepository.GetCommunityPostsAsync(communityId, userId);
+
+        var postDtos = posts.Select(p => new PostListResponseDto
         {
-            _logger.LogError(ex, "Error getting community posts for community {CommunityId}", communityId);
-            return StatusCode(500, "Internal server error while retrieving community posts.");
-        }
+            PostID = p.PostID,
+            Title = p.Title,
+            Content = p.Content,
+            CreatedAt = p.CreatedAt,
+            UserID = p.UserID,
+            UserName = p.User.Username,
+            FullName = p.User.FullName,
+            CategoryName = p.Category?.CategoryName,
+            LikesCount = p.Likes?.Count ?? 0,
+            CommentsCount = p.Comments?.Count ?? 0,
+            CommunityID = p.CommunityID,
+            CommunityName = p.Community?.Name,
+            // Include comments with user information
+            Comments = p.Comments?.Select(c => new CommentDTO
+            {
+                CommentID = c.CommentID,
+                Content = c.Content,
+                CreatedAt = c.CreatedAt,
+                UserID = c.UserID,
+                Username = c.User.Username,  // Using Username from User object
+                FullName = c.User.FullName,
+                ProfileImageURL = c.User.ProfileImageURL
+            }).ToList(),
+            MediaFiles = p.Images.Select(i => new MediaFileDTO
+            {
+                Url = i.ImageURL?.Replace("http://", "https://"),
+                Type = "image",
+                PublicId = i.CloudPublicId
+            }).Concat(p.Videos.Select(v => new MediaFileDTO
+            {
+                Url = v.VideoURL?.Replace("http://", "https://"),
+                Type = "video",
+                PublicId = v.CloudPublicId
+            })).ToList()
+        });
+
+        return Ok(postDtos);
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting community posts for community {CommunityId}", communityId);
+        return StatusCode(500, "Internal server error while retrieving community posts.");
+    }
+}
 
 
     /// Lấy thông tin chi tiết của một cộng đồng theo ID

@@ -6,7 +6,7 @@ public class CommentDTO
     public string? VideoID { get; set; }
     public int? PostID { get; set; }
     public int UserID { get; set; }
-    public string Username { get; set; }
+    public string Username { get; set; }  
     public string FullName { get; set; }
     public string? ProfileImageURL { get; set; }
     public string Content { get; set; }

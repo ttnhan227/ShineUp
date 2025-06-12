@@ -359,12 +359,10 @@
                                             <span class="ms-1 like-count">@post.LikesCount</span>
                                         </button>
                                     </form>
-                                    <div class="post-action">
-                                        <button type="button" class="toggle-comments" data-post-id="@post.PostID">
-                                            <i class='bx bx-comment'></i>
-                                            <span>@post.CommentsCount</span>
-                                        </button>
-                                    </div>
+                                    <a asp-action="Details" asp-controller="Posts" asp-route-id="@post.PostID" class="post-action text-decoration-none text-muted">
+                                        <i class='bx bx-comment'></i>
+                                        <span>@post.CommentsCount</span>
+                                    </a>
                                     <div class="post-action">
                                         <i class='bx bx-repost'></i>
                                         <span>Share</span>

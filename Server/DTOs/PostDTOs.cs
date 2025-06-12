@@ -93,7 +93,7 @@ public class PostListResponseDto
     // Social features
     public int LikesCount { get; set; }
     public int CommentsCount { get; set; }
-
+    public List<CommentDTO> Comments { get; set; } = new();
     public List<MediaFileDTO> MediaFiles { get; set; } = new();
 }
 
