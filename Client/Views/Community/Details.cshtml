@@ -354,9 +354,9 @@
                                           class="d-inline toggle-like-form" data-post-id="@post.PostID">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="PostID" value="@post.PostID" />
-                                        <button type="submit" class="post-action">
-                                            <i class='@(post.HasLiked ? "bx bxs-heart text-danger" : "bx bx-heart")'></i>
-                                            <span>@post.LikesCount</span>
+                                        <button type="submit" class="btn btn-link text-muted p-0 border-0 bg-transparent">
+                                            <i class='@(post.HasLiked ? "bxs-heart text-danger" : "bx-heart")'></i>
+                                            <span class="ms-1 like-count">@post.LikesCount</span>
                                         </button>
                                     </form>
                                     <div class="post-action">
@@ -389,9 +389,9 @@
                                                 <div class="comment mb-3" id="comment-@comment.CommentID">
                                                     <div class="d-flex">
                                                         <div class="comment-avatar me-2">
-                                                            @if (!string.IsNullOrEmpty(comment.ProfileImageURL))
+                                                            @if (!string.IsNullOrEmpty(comment.ProfileImageURL) && !comment.ProfileImageURL.Contains("default-avatar"))
                                                             {
-                                                                <img src="@comment.ProfileImageURL" alt="@comment.FullName" class="rounded-circle" width="32" height="32">
+                                                                <img src="@comment.ProfileImageURL" alt="@(comment.FullName ?? "User")" class="rounded-circle" width="32" height="32">
                                                             }
                                                             else
                                                             {
@@ -403,7 +403,7 @@
                                                         <div class="comment-content flex-grow-1">
                                                             <div class="d-flex justify-content-between align-items-center">
                                                                 <div>
-                                                                    <a href="#" class="fw-bold text-decoration-none">@comment.FullName</a>
+                                                                    <a href="#" class="fw-bold text-decoration-none">@(comment.FullName ?? "User")</a>
                                                                     <span class="text-muted small ms-2">@@@comment.Username</span>
                                                                 </div>
                                                                 <div class="dropdown">
@@ -1014,13 +1014,13 @@
             togglePreviewContainer();
 
             // Like/Unlike AJAX functionality
-            $('.toggle-like-form').on('submit', function(e) {
+            $(document).on('submit', '.toggle-like-form', function(e) {
                 e.preventDefault();
 
                 const $form = $(this);
                 const $button = $form.find('button[type="submit"]');
                 const $icon = $button.find('i');
-                const $count = $button.find('span');
+                const $count = $button.find('.like-count');
                 const postId = $form.data('post-id');
 
                 // Prevent double-clicking
@@ -1080,19 +1080,120 @@
                 }
             });
 
+            // Toggle comments section (no AJAX, just show/hide)
+            $('.toggle-comments').on('click', function () {
+                var postId = $(this).data('post-id');
+                var $container = $('#comments-container-' + postId);
+                var $icon = $(this).find('i');
+                var isHidden = $container.is(':hidden');
+                $container.toggle();
+                $icon.toggleClass('bx-comment bxs-comment');
+                
+                // Load comments if not already loaded
+                if (isHidden) {
+                    loadComments(postId);
+                }
+            });
+
+            // Close comments section
+            $('.close-comments').on('click', function () {
+                var postId = $(this).data('post-id');
+                $('#comments-container-' + postId).hide();
+                var $icon = $('.toggle-comments[data-post-id="' + postId + '"] i');
+                $icon.removeClass('bxs-comment').addClass('bx-comment');
+            });
+
+            // Format date to relative time (e.g., '2 hours ago')
+            function formatTimeAgo(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+                
+                let interval = Math.floor(seconds / 31536000);
+                if (interval > 1) return `${interval} years ago`;
+                if (interval === 1) return '1 year ago';
+                
+                interval = Math.floor(seconds / 2592000);
+                if (interval > 1) return `${interval} months ago`;
+                if (interval === 1) return '1 month ago';
+                
+                interval = Math.floor(seconds / 86400);
+                if (interval > 1) return `${interval} days ago`;
+                if (interval === 1) return '1 day ago';
+                
+                interval = Math.floor(seconds / 3600);
+                if (interval > 1) return `${interval} hours ago`;
+                if (interval === 1) return '1 hour ago';
+                
+                interval = Math.floor(seconds / 60);
+                if (interval > 1) return `${interval} minutes ago`;
+                if (interval === 1) return '1 minute ago';
+                
+                return 'just now';
+            }
+
             // Load comments function
             function loadComments(postId) {
+                const $commentsContainer = $('#comments-container-' + postId);
+                const $commentsList = $('#comments-list-' + postId);
+                
+                // Show loading state
+                $commentsList.html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div> Loading comments...</div>');
+                $commentsContainer.show();
+                
                 $.ajax({
-                    url: '@Url.Action("GetComments", "Posts")',
+                    url: '/Social/GetComments',
                     type: 'GET',
                     data: { postId: postId },
+                    dataType: 'json',
                     success: function(response) {
-                        // Append comments to the post
-                        const $postCard = $(`.post-card`).has(`[data-post-id="${postId}"]`);
-                        $postCard.append(response);
+                        // Check if response is an array or if it's an object with a data property
+                        const comments = Array.isArray(response) ? response : (response.data || []);
+                        
+                        if (!comments || comments.length === 0) {
+                            $commentsList.html('<div class="text-muted text-center py-3">No comments yet. Be the first to comment!</div>');
+                            return;
+                        }
+                        
+                        // Clear loading state
+                        $commentsList.empty();
+                        
+                        // Add each comment to the list
+                        comments.forEach(function(comment) {
+                            if (!comment) return; // Skip null/undefined comments
+                            
+                            const profileImage = comment.profileImageURL && !comment.profileImageURL.includes('default-avatar')
+                                ? `<img src="${comment.profileImageURL}" alt="${comment.username || 'User'}" class="rounded-circle me-2" width="32" height="32">`
+                                : `<div class="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style="width:32px;height:32px;">
+                                      <i class='bx bx-user text-primary'></i>
+                                  </div>`;
+                            
+                            const commentHtml = `
+                                <div class="comment mb-3" id="comment-${comment.commentID}">
+                                    <div class="d-flex">
+                                        <div class="comment-avatar me-2">
+                                            ${profileImage}
+                                        </div>
+                                        <div class="comment-body flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="fw-bold">${comment.username || 'User'}</span>
+                                                    <small class="text-muted ms-2">${comment.timeAgo || formatTimeAgo(comment.createdAt)}</small>
+                                                </div>
+                                            </div>
+                                            <div class="comment-content mt-1">
+                                                ${comment.content}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            
+                            $commentsList.append(commentHtml);
+                        });
                     },
-                    error: function(xhr) {
-                        showToast('Error loading comments', 'error');
+                    error: function(xhr, status, error) {
+                        console.error('Error loading comments:', error);
+                        $commentsList.html('<div class="text-danger py-2">Error loading comments. Please try again.</div>');
                     }
                 });
             }

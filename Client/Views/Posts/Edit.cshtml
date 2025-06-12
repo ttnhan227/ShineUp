@@ -2,6 +2,18 @@
 
 @{
     ViewData["Title"] = "Edit Post";
+    
+    // Helper function to get grid class based on media count
+    string GetGridClass(int count)
+    {
+        return count switch
+        {
+            2 => "grid-2",
+            3 => "grid-3",
+            >= 4 => "grid-4",
+            _ => "grid-1"
+        };
+    }
 }
 
 <div class="main-content-container">
@@ -15,8 +27,9 @@
                     </h5>
                 </div>
                 <div class="post-creation-body">
-                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
-                        <input type="hidden" asp-for="PostID"/>
+                    <form asp-action="Edit" asp-route-id="@Model.PostID" method="post" enctype="multipart/form-data" id="editPostForm">
+                        <input type="hidden" asp-for="PostID" />
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="form-group mb-3">
@@ -115,21 +128,25 @@
                         }
 
                         <div class="form-group mb-3 media-upload-group">
+                            <label class="control-label">
+                                <i class='bx bx-image me-1'></i>Add New Media (Optional)
+                            </label>
                             <div class="d-flex gap-2">
                                 <label for="imagesInput" class="media-upload-btn" data-bs-toggle="tooltip"
                                        data-bs-placement="bottom" title="Add photos">
                                     <i class="bx bx-image"></i>
-                                    <input type="file" id="imagesInput" name="Images" class="d-none" multiple
-                                           accept="image/*"/>
+                                    <input type="file" id="imagesInput" name="Images" class="d-none" 
+                                           accept="image/*" multiple />
                                 </label>
                                 <label for="videosInput" class="media-upload-btn" data-bs-toggle="tooltip"
                                        data-bs-placement="bottom" title="Add videos">
                                     <i class="bx bx-video"></i>
-                                    <input type="file" id="videosInput" name="Videos" class="d-none" multiple
-                                           accept="video/*"/>
+                                    <input type="file" id="videosInput" name="Videos" class="d-none" 
+                                           accept="video/*" multiple />
                                 </label>
                             </div>
                             <div id="mediaPreview" class="row g-2 mt-2"></div>
+                            <small class="text-muted">You can add up to 4 images/videos. New files will replace existing ones.</small>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mt-3">
@@ -206,12 +223,128 @@
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <script>
+        // Image preview functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle image preview
+            const imagesInput = document.getElementById('imagesInput');
+            const videosInput = document.getElementById('videosInput');
+            const mediaPreview = document.getElementById('mediaPreview');
+            const maxFiles = 4;
+            let fileCount = @(Model.CurrentMediaFiles?.Count ?? 0);
+
+            // Function to update file counter
+            function updateFileCounter() {
+                const remaining = maxFiles - fileCount;
+                const counter = document.getElementById('fileCounter');
+                if (counter) {
+                    counter.textContent = `(${remaining} more ${remaining === 1 ? 'file' : 'files'} allowed)`;
+                }
+            }
+
+            // Function to create preview element
+            function createPreviewElement(file, isVideo = false) {
+                const col = document.createElement('div');
+                col.className = 'col-6 col-md-3 mb-2';
+                
+                const preview = document.createElement('div');
+                preview.className = 'position-relative';
+                
+                if (isVideo) {
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(file);
+                    video.controls = true;
+                    video.className = 'img-thumbnail w-100';
+                    video.style.height = '120px';
+                    video.style.objectFit = 'cover';
+                    preview.appendChild(video);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.className = 'img-thumbnail w-100';
+                    img.style.height = '120px';
+                    img.style.objectFit = 'cover';
+                    preview.appendChild(img);
+                }
+                
+                // Add remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.onclick = function() {
+                    col.remove();
+                    fileCount--;
+                    updateFileCounter();
+                    
+                    // Remove the file from the file input
+                    if (isVideo) {
+                        const newFiles = Array.from(videosInput.files).filter(f => f !== file);
+                        const dataTransfer = new DataTransfer();
+                        newFiles.forEach(f => dataTransfer.items.add(f));
+                        videosInput.files = dataTransfer.files;
+                    } else {
+                        const newFiles = Array.from(imagesInput.files).filter(f => f !== file);
+                        const dataTransfer = new DataTransfer();
+                        newFiles.forEach(f => dataTransfer.items.add(f));
+                        imagesInput.files = dataTransfer.files;
+                    }
+                };
+                preview.appendChild(removeBtn);
+                col.appendChild(preview);
+                return col;
+            }
+
+            // Handle file selection
+            function handleFileSelect(event, isVideo = false) {
+                const files = Array.from(event.target.files);
+                const remainingSlots = maxFiles - fileCount;
+                
+                if (files.length > remainingSlots) {
+                    alert(`You can only add ${remainingSlots} more file(s).`);
+                    return;
+                }
+
+                files.forEach(file => {
+                    if (fileCount >= maxFiles) return;
+                    
+                    const preview = createPreviewElement(file, isVideo);
+                    mediaPreview.appendChild(preview);
+                    fileCount++;
+                });
+                
+                updateFileCounter();
+            }
+
+            // Add event listeners
+            if (imagesInput) {
+                imagesInput.addEventListener('change', (e) => handleFileSelect(e, false));
+            }
+            
+            if (videosInput) {
+                videosInput.addEventListener('change', (e) => handleFileSelect(e, true));
+            }
+            
+            // Initialize file counter
+            updateFileCounter();
+            
+            // Handle form submission
+            const form = document.getElementById('editPostForm');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    // Show loading state
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                    }
+                });
+            }
+        });
         // Tooltip initialization
         $(function () {
             $('[data-bs-toggle="tooltip"]').tooltip();
         });
 
-        // Preview selected images
         document.querySelector('input[name="Images"]').addEventListener('change', function (e) {
             const previewContainer = document.createElement('div');
             previewContainer.className = 'row g-2';

@@ -809,12 +809,10 @@ public class PostsController : Controller
         }
     }
 
-    // POST: Posts/Edit/5
     [HttpPost("edit/{id}")]
     [ValidateAntiForgeryToken]
     [Authorize]
-    public async Task<IActionResult> Edit(int id, EditPostViewModel model, List<IFormFile> Images,
-        List<IFormFile> Videos)
+    public async Task<IActionResult> Edit(int id, EditPostViewModel model, List<IFormFile> Images, List<IFormFile> Videos)
     {
         try
         {
@@ -825,46 +823,77 @@ public class PostsController : Controller
 
             if (ModelState.IsValid)
             {
+                // Get JWT token
+                var token = User.FindFirst("JWT")?.Value;
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Unauthorized("Authentication token is missing");
+                }
+
                 var client = _clientFactory.CreateClient("API");
-                var content = new MultipartFormDataContent();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                // Add basic post data
-                content.Add(new StringContent(model.Title), "Title");
-                content.Add(new StringContent(model.Content), "Content");
-                content.Add(new StringContent(model.CategoryID.ToString()), "CategoryID");
-                content.Add(new StringContent(model.PrivacyID.ToString()), "PrivacyID");
+                using var content = new MultipartFormDataContent();
+                var streamsToDispose = new List<Stream>();
 
-                // Add new images
-                if (Images != null)
+                try
                 {
-                    foreach (var image in Images)
-                        if (image.Length > 0)
+                    // Add basic post data
+                    content.Add(new StringContent(model.Title), "Title");
+                    content.Add(new StringContent(model.Content), "Content");
+                    content.Add(new StringContent(model.CategoryID.ToString()), "CategoryID");
+                    content.Add(new StringContent(model.PrivacyID.ToString()), "PrivacyID");
+
+                    // Add new images
+                    if (Images != null && Images.Any())
+                    {
+                        foreach (var image in Images)
                         {
-                            var imageContent = new StreamContent(image.OpenReadStream());
-                            content.Add(imageContent, "Images", image.FileName);
+                            if (image.Length > 0)
+                            {
+                                var imageStream = image.OpenReadStream();
+                                streamsToDispose.Add(imageStream);
+                                var imageContent = new StreamContent(imageStream);
+                                content.Add(imageContent, "files", image.FileName);
+                                content.Add(new StringContent("image"), "mediaTypes");
+                            }
                         }
-                }
+                    }
 
-                // Add new videos
-                if (Videos != null)
-                {
-                    foreach (var video in Videos)
-                        if (video.Length > 0)
+                    // Add new videos
+                    if (Videos != null && Videos.Any())
+                    {
+                        foreach (var video in Videos)
                         {
-                            var videoContent = new StreamContent(video.OpenReadStream());
-                            content.Add(videoContent, "Videos", video.FileName);
+                            if (video.Length > 0)
+                            {
+                                var videoStream = video.OpenReadStream();
+                                streamsToDispose.Add(videoStream);
+                                var videoContent = new StreamContent(videoStream);
+                                content.Add(videoContent, "files", video.FileName);
+                                content.Add(new StringContent("video"), "mediaTypes");
+                            }
                         }
+                    }
+
+                    var response = await client.PutAsync($"api/posts/{id}", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    var error = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", $"Error updating post: {error}");
                 }
-
-                var response = await client.PutAsync($"api/posts/{id}", content);
-
-                if (response.IsSuccessStatusCode)
+                finally
                 {
-                    return RedirectToAction(nameof(Index));
+                    // Ensure all streams are properly disposed
+                    foreach (var stream in streamsToDispose)
+                    {
+                        try { stream?.Dispose(); } catch { /* Ignore disposal errors */ }
+                    }
                 }
-
-                var error = await response.Content.ReadAsStringAsync();
-                ModelState.AddModelError("", error);
             }
 
             // If we got this far, something failed, redisplay form
@@ -874,7 +903,7 @@ public class PostsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing post {PostId}", id);
-            ModelState.AddModelError("", "An error occurred while editing the post.");
+            ModelState.AddModelError("", "An error occurred while editing the post. Please try again.");
             await LoadDropdowns();
             return View(model);
         }
@@ -1039,7 +1068,7 @@ public class PostsController : Controller
             var response = await client.GetAsync("api/privacy");
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await response.Content.ReadAsStringAsync();   
                 var privacyOptions = JsonSerializer.Deserialize<List<PrivacyViewModel>>(content,
                     new JsonSerializerOptions
                     {
