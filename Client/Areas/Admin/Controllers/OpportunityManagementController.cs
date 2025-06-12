@@ -258,8 +258,8 @@ public class OpportunityManagementController : Controller
         }
     }
 
-    // POST: Admin/OpportunityManagement/Delete/5
-    [HttpPost("{id}")] [ActionName("Delete")]
+    // POST: Admin/OpportunityManagement/DeleteConfirmed/5
+    [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -268,21 +268,56 @@ public class OpportunityManagementController : Controller
             var client = GetAuthenticatedClient();
             var response = await client.DeleteAsync($"{ApiBaseUrl}/{id}");
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Opportunity deleted successfully.";
-                return RedirectToAction(nameof(Index));
+                return StatusCode((int)response.StatusCode);
             }
 
-            var errorContent = await response.Content.ReadAsStringAsync();
-            TempData["ErrorMessage"] = $"Failed to delete opportunity: {errorContent}";
+            return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"An error occurred while deleting the opportunity: {ex.Message}";
+            _logger.LogError(ex, "Error deleting opportunity with ID {OpportunityId}", id);
+            return StatusCode(500, "An error occurred while deleting the opportunity.");
         }
+    }
 
-        return RedirectToAction(nameof(Index));
+    // POST: Admin/OpportunityManagement/UpdateStatus/5
+    [HttpPost("UpdateStatus")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStatus(int id, string status)
+    {
+        try
+        {
+            var client = GetAuthenticatedClient();
+            
+            // Send the status as a simple string in the request body
+            var content = new StringContent(
+                $"\"{status}\"",
+                Encoding.UTF8,
+                "application/json");
+                
+            var response = await client.PutAsync($"{ApiBaseUrl}/{id}/status", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to update opportunity status. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, errorContent);
+                    
+                TempData["ErrorMessage"] = "Failed to update opportunity status. " + errorContent;
+                return RedirectToAction("Details", new { id });
+            }
+
+            TempData["SuccessMessage"] = $"Opportunity has been {status.ToLower()} successfully.";
+            return RedirectToAction("Details", new { id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for opportunity ID {OpportunityId}", id);
+            TempData["ErrorMessage"] = "An error occurred while updating the opportunity status: " + ex.Message;
+            return RedirectToAction("Details", new { id });
+        }
     }
 
     // GET: Admin/OpportunityManagement/Applications/5
@@ -371,16 +406,10 @@ public class OpportunityManagementController : Controller
                 return NotFound();
             }
 
-            var model = new UpdateApplicationStatusViewModel
-            {
-                ApplicationId = application.ApplicationId,
-                Status = application.Status,
-                ReviewNotes = application.ReviewNotes,
-                StatusOptions = new List<string> { "Pending", "InReview", "Approved", "Rejected" }
-            };
-
-            ViewBag.Application = application;
-            return View(model);
+            // Set available status options
+            application.AvailableStatuses = new List<string> { "Pending", "InReview", "Approved", "Rejected" };
+            
+            return View(application);
         }
         catch (Exception)
         {
