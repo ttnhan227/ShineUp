@@ -70,6 +70,7 @@ public class CommunityViewModel
 
     [JsonPropertyName("privacy")]
     public PrivacyViewModel? Privacy { get; set; }
+    [Required(ErrorMessage = "Cover image is required.")]
 
     [JsonPropertyName("coverImageUrl")]
     public string? CoverImageUrl { get; set; }
