@@ -24,15 +24,13 @@
                     }
 
                     <form asp-action="Edit" method="post" enctype="multipart/form-data">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
                         <input type="hidden" asp-for="CommunityID"/>
                         <input type="hidden" name="communityId" value="@Model.CommunityID"/>
 
                         <div class="mb-3">
-                            @Html.ValidationMessageFor(model => model.Name, "This name already be used", new { @class = "text-danger" })
-
-                            <label asp-for="Name" class="form-label"></label>
-                            <input asp-for="Name" class="form-control"/>
+                            <label asp-for="Name" class="form-label">Community Name <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" aria-required="true"/>
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 

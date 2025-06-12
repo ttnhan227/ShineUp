@@ -257,13 +257,76 @@ public class CommunityController : Controller
                 return RedirectToAction("Details", new { communityId });
             }
 
+            var responseContent = await response.Content.ReadAsStringAsync();
+            string errorMessage = "An error occurred while updating the community. Please try again.";
+
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                TempData["Error"] = "Community not found.";
+                errorMessage = "Community not found.";
+                TempData["Error"] = errorMessage;
             }
             else if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                TempData["Error"] = "You are not authorized to update this community.";
+                errorMessage = "You are not authorized to update this community.";
+                TempData["Error"] = errorMessage;
+            }
+            else if (response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.Conflict)
+            {
+                if (!string.IsNullOrWhiteSpace(responseContent))
+                {
+                    // First try to handle as plain text
+                    if (!responseContent.Trim().StartsWith('{') && !responseContent.Trim().StartsWith('['))
+                    {
+                        errorMessage = responseContent.Trim('"');
+                    }
+                    else
+                    {
+                        // Try to parse as JSON
+                        try
+                        {
+                            using var errorDoc = JsonDocument.Parse(responseContent);
+                            
+                            // Check for standard ProblemDetails format
+                            if (errorDoc.RootElement.TryGetProperty("detail", out var detailProp) && detailProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = detailProp.GetString() ?? errorMessage;
+                            }
+                            // Check for our custom error message
+                            else if (errorDoc.RootElement.TryGetProperty("message", out var messageProp) && messageProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = messageProp.GetString() ?? errorMessage;
+                            }
+                            // Check for the raw error message
+                            else if (errorDoc.RootElement.TryGetProperty("error", out var errorProp) && errorProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = errorProp.GetString() ?? errorMessage;
+                            }
+                            else
+                            {
+                                errorMessage = responseContent.Trim('"');
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // If JSON parsing fails, use the raw content
+                            errorMessage = responseContent.Trim('"');
+                        }
+                    }
+                }
+                
+                // Check for duplicate name error
+                if (errorMessage.Contains("Community name already exists", StringComparison.OrdinalIgnoreCase) || 
+                    errorMessage.Contains("name already be used", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("already in use", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("Name", "This community name is already in use. Please choose a different name.");
+                    _logger.LogInformation("Duplicate community name detected during update: {Name}", model.Name);
+                    return View(model);
+                }
+                
+                TempData["Error"] = errorMessage;
             }
             else
             {
@@ -364,33 +427,67 @@ public class CommunityController : Controller
             }
             else
             {
-                string errorMessage;
-                try
+                string errorMessage = "An error occurred while creating the community. Please try again later.";
+                
+                if (!string.IsNullOrWhiteSpace(responseContent))
                 {
-                    using var errorDoc = JsonDocument.Parse(responseContent);
-                    if (errorDoc.RootElement.TryGetProperty("message", out var messageProp) &&
-                        messageProp.ValueKind == JsonValueKind.String)
+                    // First try to handle as plain text
+                    if (!responseContent.Trim().StartsWith('{') && !responseContent.Trim().StartsWith('['))
                     {
-                        errorMessage = messageProp.GetString() ?? "An error occurred while creating the community.";
-                    }
-                    else if (errorDoc.RootElement.TryGetProperty("title", out var titleProp) &&
-                             titleProp.ValueKind == JsonValueKind.String)
-                    {
-                        errorMessage = titleProp.GetString() ?? "An error occurred while creating the community.";
+                        errorMessage = responseContent.Trim('"');
                     }
                     else
                     {
-                        errorMessage = responseContent;
+                        // Try to parse as JSON
+                        try
+                        {
+                            using var errorDoc = JsonDocument.Parse(responseContent);
+                            
+                            // Check for standard ProblemDetails format
+                            if (errorDoc.RootElement.TryGetProperty("detail", out var detailProp) && detailProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = detailProp.GetString() ?? errorMessage;
+                            }
+                            // Check for our custom error message
+                            else if (errorDoc.RootElement.TryGetProperty("message", out var messageProp) && messageProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = messageProp.GetString() ?? errorMessage;
+                            }
+                            // Check for the raw error message
+                            else if (errorDoc.RootElement.TryGetProperty("error", out var errorProp) && errorProp.ValueKind == JsonValueKind.String)
+                            {
+                                errorMessage = errorProp.GetString() ?? errorMessage;
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // If JSON parsing fails, use the raw content
+                            errorMessage = responseContent.Trim('"');
+                        }
                     }
                 }
-                catch
+                
+                // Handle specific error messages
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    errorMessage = response.StatusCode == HttpStatusCode.Unauthorized
-                        ? "You need to log in to perform this action."
-                        : "An error occurred while creating the community. Please try again later.";
+                    errorMessage = "You need to log in to perform this action.";
                 }
-
-                ModelState.AddModelError(string.Empty, errorMessage);
+                
+                // Check for duplicate name error
+                if (errorMessage.Contains("Community name already exists", StringComparison.OrdinalIgnoreCase) || 
+                    errorMessage.Contains("name already be used", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("already in use", StringComparison.OrdinalIgnoreCase) ||
+                    errorMessage.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("Name", "This community name is already in use. Please choose a different name.");
+                    _logger.LogInformation("Duplicate community name detected: {Name}", model.Name);
+                }
+                else
+                {
+                    // For other error messages, add as a general error
+                    ModelState.AddModelError(string.Empty, errorMessage);
+                }
             }
         }
         catch (HttpRequestException)

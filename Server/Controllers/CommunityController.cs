@@ -188,13 +188,55 @@ public async Task<IActionResult> GetCommunityPosts(int communityId)
     {
         try
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Validation Error",
+                    Detail = "One or more validation errors occurred.",
+                    Instance = HttpContext.Request.Path,
+                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+                });
+            }
+
             var userId = GetUserId();
             var result = await _communityRepository.CreateCommunityAsync(dto, userId);
             return Ok(result);
         }
-        catch
+        catch (ArgumentException ex)
         {
-            return StatusCode(500, "Internal server error");
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid Request",
+                Detail = ex.Message,
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = ex.Message,
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating community");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred while creating the community.",
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            });
         }
     }
 
@@ -318,18 +360,45 @@ public async Task<IActionResult> GetCommunityPosts(int communityId)
     {
         try
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Validation Error",
+                    Detail = "One or more validation errors occurred.",
+                    Instance = HttpContext.Request.Path,
+                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+                });
+            }
+
+
             var userId = GetUserId();
 
             // Check if user is Moderator of this community
             if (!await IsUserModeratorAsync(communityId, userId))
             {
-                return Forbid("You must be an Moderator to update this community.");
+                return Unauthorized(new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = "You must be a Moderator to update this community.",
+                    Instance = HttpContext.Request.Path,
+                    Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+                });
             }
 
             // Ensure the community ID in the path matches the DTO
             if (communityId != dto.CommunityID)
             {
-                return BadRequest("Community ID in the path does not match the request body.");
+                return BadRequest(new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Bad Request",
+                    Detail = "Community ID in the path does not match the request body.",
+                    Instance = HttpContext.Request.Path,
+                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+                });
             }
 
             var result = await _communityRepository.UpdateCommunityAsync(communityId, dto, userId);
@@ -337,16 +406,48 @@ public async Task<IActionResult> GetCommunityPosts(int communityId)
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = ex.Message,
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4"
+            });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Forbid(ex.Message);
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Unauthorized",
+                Detail = ex.Message,
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7235#section-3.1"
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Invalid Request",
+                Detail = ex.Message,
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update community {CommunityId}", communityId);
-            return StatusCode(500, "An error occurred while updating the community.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred while updating the community.",
+                Instance = HttpContext.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            });
         }
     }
 
