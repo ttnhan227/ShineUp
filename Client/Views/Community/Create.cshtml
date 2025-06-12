@@ -34,6 +34,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
+                @Html.ValidationMessageFor(model => model.Name, "This name already be used", new { @class = "text-danger" })
                 <label asp-for="Name" class="form-label">Community Name <span class="text-danger">*</span></label>
                 <input asp-for="Name" class="form-control" placeholder="Enter community name"/>
                 <span asp-validation-for="Name" class="text-danger"></span>
@@ -50,7 +51,6 @@
                 <label asp-for="PrivacyID" class="form-label">Privacy Settings</label>
                 <select asp-for="PrivacyID" class="form-select">
                     <option value="1">Public (Anyone can view posts and join)</option>
-                    <option value="3">Private (Only members can view content)</option>
                 </select>
                 <span asp-validation-for="PrivacyID" class="text-danger"></span>
             </div>

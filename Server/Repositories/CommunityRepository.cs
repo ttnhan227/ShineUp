@@ -69,6 +69,17 @@ public class CommunityRepository : ICommunityRepository
         {
             throw new UnauthorizedAccessException("You must be an Moderator to update this community.");
         }
+        // Validate community name
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+        {
+            var exists = await _db.Communities
+                .AnyAsync(c => c.CommunityID != communityId && c.Name.ToLower() == dto.Name.Trim().ToLower());
+            if (exists)
+            {
+                throw new ArgumentException("Community name already exists.");
+            }
+            community.Name = dto.Name.Trim();
+        }
 
         // Update properties if they are provided in the DTO
         if (!string.IsNullOrWhiteSpace(dto.Name))
@@ -151,6 +162,12 @@ public class CommunityRepository : ICommunityRepository
             CreatedByUserID = userId,
             PrivacyID = dto.PrivacyID
         };
+        
+        // Add at the start of CreateCommunityAsync
+        if (await _db.Communities.AnyAsync(c => c.Name.ToLower() == dto.Name.Trim().ToLower()))
+        {
+            throw new ArgumentException("Community name already exists.");
+        }
 
         if (dto.CoverImage != null && dto.CoverImage.Length > 0)
         {

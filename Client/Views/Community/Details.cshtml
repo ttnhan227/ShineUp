@@ -1,3 +1,5 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model CommunityDetailsViewModel
 
 @functions {
@@ -143,6 +145,75 @@
         </div>
     </div>
 
+    <!-- Posts Create -->
+
+    @if (Model.CommunityRole != CommunityRole.None)
+    {
+  
+    
+        <div class="post-creation-card card mb-4 shadow-sm border-0">
+            <div class="card-header bg-light border-0">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bx bx-camera me-2"></i>Share your feeling here!
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="createPostForm" asp-action="CreatePost" asp-controller="Posts" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <input type="text" id="titleInput" name="Title" class="form-control rounded-3"
+                               placeholder="Performance Title" required/>
+                        <span validaton-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <textarea id="contentInput" name="Content" class="form-control rounded-3" rows="4"
+                                  placeholder="Share your talent story..."></textarea>
+                        <span validation-for="Content" class="text-danger"></span>
+                    </div>
+
+                    <!-- Updated Media Preview Container -->
+                    <div id="mediaPreviewContainer" class="media-preview-container">
+                        <div class="empty-preview" id="emptyPreview">
+                            <i class="bx bx-cloud-upload" style="font-size: 2rem; opacity: 0.5;"></i>
+                            <p class="mb-0 mt-2">Select photos or videos to preview them here</p>
+                        </div>
+                        <div id="mediaPreview" class="row g-3"></div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
+                        <div class="d-flex flex-wrap gap-2 flex-grow-1">
+                            <label for="imagesInput"
+                                   class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1 file-input-label"
+                                   data-bs-toggle="tooltip" title="Add photos (Max 10MB each)">
+                                <i class='bx bx-image'></i> 
+                                <span>Photos</span>
+                                <span id="imageCount" class="file-count-badge d-none">0</span>
+                                <input type="file" id="imagesInput" name="ImageFiles" class="d-none" multiple accept="image/*"/>
+                            </label>
+                            
+                            <label for="videosInput"
+                                   class="btn btn-outline-primary btn-sm rounded-pill d-flex align-items-center gap-1 file-input-label"
+                                   data-bs-toggle="tooltip" title="Add videos (Max 100MB each)">
+                                <i class='bx bx-video'></i> 
+                                <span>Videos</span>
+                                <span id="videoCount" class="file-count-badge d-none">0</span>
+                                <input type="file" id="videosInput" name="VideoFiles" class="d-none" multiple accept="video/*"/>
+                            </label>
+                             
+                            <input type="hidden" name="CommunityID" value="@Model.Community.CommunityID"/>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4" id="shareButton">
+                            <i class='bx bx-send me-1'></i> Share
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }    
+
     <!-- Posts Section -->
     <div class="row mt-4">
         <div class="col-12">
@@ -192,22 +263,20 @@
                                    class="text-decoration-none d-block text-dark">
                                     <div class="post-header">
                                         <div class="d-flex align-items-center">
-                                            <div class="post-avatar"
-                                                 onclick="event.stopPropagation(); window.location.href='@Url.Action("PublicProfile", "UserProfile", new { username = post.Username })'">
+
+                                            <div class="post-avatar">
                                                 @if (!string.IsNullOrEmpty(post.ProfileImageURL))
                                                 {
-                                                    <img src="@post.ProfileImageURL" alt="@post.FullName">
+                                                    <img src="@post.ProfileImageURL" alt="@post.FullName" class="rounded-circle" width="40" height="40"
+                                                         onerror="this.onerror=null;this.src='/images/default-avatar.png';" />
                                                 }
                                                 else
                                                 {
-                                                    <div
-                                                        class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle">
-                                                        <i class='bx bx-user text-primary'
-                                                           style="font-size: 1.5rem;"></i>
+                                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light rounded-circle" style="width:40px;height:40px;">
+                                                        <i class='bx bx-user text-primary' style="font-size: 1.5rem;"></i>
                                                     </div>
                                                 }
-                                            </div>
-                                            <div class="post-meta ms-3">
+                                            </div><div class="post-meta ms-3">
                                                 <div class="post-author">
                                                     @post.FullName
                                                     @if (!string.IsNullOrEmpty(post.CategoryName))
@@ -295,14 +364,7 @@
                                             <span>@post.CommentsCount</span>
                                         </button>
                                     </div>
-                                    <div class="post-action">
-                                        <i class='bx bx-repost'></i>
-                                        <span>Share</span>
-                                    </div>
-                                    <div class="post-action">
-                                        <i class='bx bx-bar-chart'></i>
-                                        <span>Stats</span>
-                                    </div>
+                               
                                 </div>
                             </div>
                         }
@@ -312,12 +374,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
                             <p class="text-muted">No posts in this community yet.</p>
-                            @if (Model.CommunityRole != CommunityRole.None)
-                            {
-                                <a asp-controller="Posts" asp-action="Index" class="btn btn-primary mt-2">
-                                    <i class="fas fa-plus me-1"></i> Create First Post
-                                </a>
-                            }
+                           
                         </div>
                     }
                 </div>
@@ -326,41 +383,584 @@
     </div>
 </div>
 
-<!-- Debug toggle -->
-<script>
-    document.addEventListener('keydown', function (e) {
-        // Show debug info when pressing Ctrl+Shift+D
-        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-            const debugInfo = document.getElementById('debugInfo');
-            if (debugInfo) {
-                debugInfo.classList.toggle('d-none');
-                console.log('Debug info toggled. Visible:', !debugInfo.classList.contains('d-none'));
+@section Scripts
+{
+    <script>
+        document.addEventListener('keydown', function (e) {
+            // Show debug info when pressing Ctrl+Shift+D
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                const debugInfo = document.getElementById('debugInfo');
+                if (debugInfo) {
+                    debugInfo.classList.toggle('d-none');
+                    console.log('Debug info toggled. Visible:', !debugInfo.classList.contains('d-none'));
 
-                // Log model data to console
-                console.log('Community Details Model:', {
-                    communityId: @Model.Community.CommunityID,
-                    postCount: @Model.Posts.Count,
-                    memberCount: @Model.Members.Count,
-                    userRole: '@Model.CommunityRole'
-                });
+                    // Log model data to console
+                    console.log('Community Details Model:', {
+                        communityId: @Model.Community.CommunityID,
+                        postCount: @Model.Posts.Count,
+                        memberCount: @Model.Members.Count,
+                        userRole: '@Model.CommunityRole'
+                    });
 
-                @if (Model.Posts.Any())
-                {
-                    <text>
-                        console.log('First 3 posts:');
-                        @foreach (var post in Model.Posts.Take(3))
-                        {
-                            <text>console.log('  - Post ID: @post.PostID, Title: @post.Title');</text>
-                        }
-                    </text>
+                    @if (Model.Posts.Any())
+                    {
+                        <text>
+                            console.log('First 3 posts:');
+                            @foreach (var post in Model.Posts.Take(3))
+                            {
+                                <text>console.log('  - Post ID: @post.PostID, Title: @post.Title');</text>
+                            }
+                        </text>
+                    }
                 }
             }
-        }
-    });
+        });
 
-    // Log when the page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('Community Details page loaded');
-        console.log('Press Ctrl+Shift+D to toggle debug information');
-    });
-</script>
+        // Log when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Community Details page loaded');
+            console.log('Press Ctrl+Shift+D to toggle debug information');
+        });
+
+        $(function () {
+            // Tooltip initialization
+            $('[data-bs-toggle="tooltip"]').tooltip();
+
+            // File size limits
+            const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+            const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+
+            // Toast notification
+            function showToast(message, type = 'error') {
+                $('.toast-container').remove();
+                const toastHtml = `
+            <div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 11">
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-${type} text-white">
+                        <strong class="me-auto">${type === 'error' ? 'Error' : 'Success'}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            </div>`;
+                $('body').append(toastHtml);
+                setTimeout(() => $('.toast-container').fadeOut(400, function () { $(this).remove(); }), 5000);
+            }
+
+            // File size validation
+            function validateFileSize(file, isVideo = false) {
+                const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+                const fileType = isVideo ? 'video' : 'image';
+                if (file.size > maxSize) {
+                    const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+                    showToast(`The selected ${fileType} '${file.name}' exceeds the maximum size of ${maxSizeMB}MB.`);
+                    return false;
+                }
+                return true;
+            }
+
+            // Update file count badges
+            function updateFileCountBadges() {
+                const imageFiles = $('#imagesInput')[0].files;
+                const videoFiles = $('#videosInput')[0].files;
+
+                const $imageCount = $('#imageCount');
+                const $videoCount = $('#videoCount');
+
+                if (imageFiles.length > 0) {
+                    $imageCount.text(imageFiles.length).removeClass('d-none');
+                } else {
+                    $imageCount.addClass('d-none');
+                }
+
+                if (videoFiles.length > 0) {
+                    $videoCount.text(videoFiles.length).removeClass('d-none');
+                } else {
+                    $videoCount.addClass('d-none');
+                }
+            }
+
+            // Show/hide preview container
+            function togglePreviewContainer() {
+                const imageFiles = $('#imagesInput')[0].files;
+                const videoFiles = $('#videosInput')[0].files;
+                const totalFiles = imageFiles.length + videoFiles.length;
+
+                const $emptyPreview = $('#emptyPreview');
+                const $mediaPreview = $('#mediaPreview');
+
+                if (totalFiles > 0) {
+                    $emptyPreview.hide();
+                    $mediaPreview.show();
+                } else {
+                    $emptyPreview.show();
+                    $mediaPreview.hide().empty();
+                }
+            }
+
+            // Media preview function - FIXED VERSION
+            function updateMediaPreview() {
+                const imageFiles = Array.from($('#imagesInput')[0].files || []);
+                const videoFiles = Array.from($('#videosInput')[0].files || []);
+                const allFiles = [...imageFiles, ...videoFiles];
+
+                const $mediaPreview = $('#mediaPreview');
+                $mediaPreview.empty();
+
+                // Check file limit
+                if (allFiles.length > 4) {
+                    showToast('You can only upload up to 4 files at once.');
+                    $('#imagesInput')[0].value = '';
+                    $('#videosInput')[0].value = '';
+                    togglePreviewContainer();
+                    updateFileCountBadges();
+                    return;
+                }
+
+                // Process each file
+                allFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const $mediaItem = $('<div class="col-6 col-md-3 position-relative"></div>');
+                        let content;
+                        let inputName;
+
+                        if (file.type.startsWith('image/')) {
+                            content = `<img src="${e.target.result}" class="img-fluid rounded" style="height: 100px; width: 100%; object-fit: cover;" alt="${file.name}" />`;
+                            inputName = 'ImageFiles';
+                        } else if (file.type.startsWith('video/')) {
+                            content = `<video class="img-fluid rounded" style="height: 100px; width: 100%; object-fit: cover;" controls>
+                                    <source src="${e.target.result}" />
+                                   </video>`;
+                            inputName = 'VideoFiles';
+                        }
+
+                        $mediaItem.html(`
+                        <div class="media-preview-item position-relative">
+                            ${content}
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-1" 
+                                    style="width: 24px; height: 24px; font-size: 12px;" 
+                                    data-file-name="${file.name}" 
+                                    data-input-name="${inputName}" 
+                                    title="Remove">×</button>
+                        </div>
+                    `);
+                        $mediaPreview.append($mediaItem);
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Update UI
+                togglePreviewContainer();
+                updateFileCountBadges();
+            }
+
+            // Image input change - FIXED
+            $('#imagesInput').on('change', function () {
+                const files = Array.from(this.files);
+
+                // Validate each file
+                for (let file of files) {
+                    if (!validateFileSize(file, false)) {
+                        this.value = '';
+                        updateMediaPreview();
+                        return;
+                    }
+                }
+
+                updateMediaPreview();
+            });
+
+            // Video input change - FIXED
+            $('#videosInput').on('change', function () {
+                const files = Array.from(this.files);
+
+                // Validate each file
+                for (let file of files) {
+                    if (!validateFileSize(file, true)) {
+                        this.value = '';
+                        updateMediaPreview();
+                        return;
+                    }
+                }
+
+                updateMediaPreview();
+            });
+
+            // Remove media preview item - FIXED
+            $(document).on('click', '[data-file-name]', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const fileName = $(this).data('file-name');
+                const inputName = $(this).data('input-name');
+
+                // Remove the preview item
+                $(this).closest('.col-6').remove();
+
+                // Update the file input
+                const $input = $(`input[name="${inputName}"]`);
+                const files = Array.from($input[0].files);
+                const remainingFiles = files.filter(file => file.name !== fileName);
+
+                // Create new FileList
+                const dataTransfer = new DataTransfer();
+                remainingFiles.forEach(file => dataTransfer.items.add(file));
+                $input[0].files = dataTransfer.files;
+
+                // Update preview
+                updateMediaPreview();
+            });
+
+            // Initialize preview container state
+            togglePreviewContainer();
+
+            // Like/Unlike AJAX functionality
+            $('.toggle-like-form').on('submit', function(e) {
+                e.preventDefault();
+
+                const $form = $(this);
+                const $button = $form.find('button[type="submit"]');
+                const $icon = $button.find('i');
+                const $count = $button.find('span');
+                const postId = $form.data('post-id');
+
+                // Prevent double-clicking
+                if ($button.prop('disabled')) {
+                    return;
+                }
+
+                $button.prop('disabled', true);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Toggle heart icon
+                            if ($icon.hasClass('bx-heart')) {
+                                $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
+                            } else {
+                                $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
+                            }
+
+                            // Update count
+                            $count.text(response.likesCount);
+                        } else {
+                            showToast(response.message || 'Error toggling like', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Error toggling like';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || response.title || errorMessage;
+                        } catch (e) {}
+                        showToast(errorMessage, 'error');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false);
+                    }
+                });
+            });
+
+            // Comments toggle functionality
+            $('.toggle-comments').on('click', function() {
+                const postId = $(this).data('post-id');
+                const $commentsContainer = $(`.comments-container[data-post-id="${postId}"]`);
+
+                if ($commentsContainer.length === 0) {
+                    // Load comments via AJAX if not already loaded
+                    loadComments(postId);
+                } else {
+                    // Toggle existing comments
+                    $commentsContainer.toggle();
+                }
+            });
+
+            // Load comments function
+            function loadComments(postId) {
+                $.ajax({
+                    url: '@Url.Action("GetComments", "Posts")',
+                    type: 'GET',
+                    data: { postId: postId },
+                    success: function(response) {
+                        // Append comments to the post
+                        const $postCard = $(`.post-card`).has(`[data-post-id="${postId}"]`);
+                        $postCard.append(response);
+                    },
+                    error: function(xhr) {
+                        showToast('Error loading comments', 'error');
+                    }
+                });
+            }
+
+            // Form submit (AJAX)
+            $('#createPostForm').on('submit', function (e) {
+                e.preventDefault();
+
+                // Basic validation
+                const title = $('#titleInput').val().trim();
+                const content = $('#contentInput').val().trim();
+
+                if (!title) {
+                    showToast('Please enter a title for your post.', 'error');
+                    $('#titleInput').focus();
+                    return;
+                }
+
+                var formData = new FormData(this);
+                var $form = $(this);
+                var $submitBtn = $form.find('button[type="submit"]');
+                var originalBtnText = $submitBtn.html();
+
+                $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Posting...');
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response, status, xhr) {
+                        if (xhr.getResponseHeader('X-Redirect-Url')) {
+                            window.location.href = xhr.getResponseHeader('X-Redirect-Url');
+                            return;
+                        }
+
+                        // Reset form
+                        $form.trigger('reset');
+                        $('#mediaPreview').empty();
+                        $('#imagesInput')[0].value = '';
+                        $('#videosInput')[0].value = '';
+                        togglePreviewContainer();
+                        updateFileCountBadges();
+
+                        // Show success message
+                        showToast('Post created successfully!', 'success');
+
+                        if (xhr.responseJSON && xhr.responseJSON.redirectUrl) {
+                            setTimeout(() => {
+                                window.location.href = xhr.responseJSON.redirectUrl;
+                            }, 1000);
+                        } else {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        }
+                    },
+                    error: function (xhr) {
+                        var errorMessage = 'An error occurred while creating the post.';
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.errors) {
+                                // Handle validation errors
+                                const errors = Object.values(response.errors).flat();
+                                errorMessage = errors.join('<br>');
+                            } else {
+                                errorMessage = response.title || response.detail || response.message || errorMessage;
+                            }
+                        } catch (e) {
+                            // Handle non-JSON responses
+                            if (xhr.status === 413) {
+                                errorMessage = 'File size too large. Please reduce file sizes and try again.';
+                            } else if (xhr.status === 400) {
+                                errorMessage = 'Invalid request. Please check your input and try again.';
+                            } else if (xhr.status === 401) {
+                                errorMessage = 'You need to be logged in to create a post.';
+                            } else if (xhr.status === 403) {
+                                errorMessage = 'You do not have permission to create posts in this community.';
+                            }
+                        }
+                        showToast(errorMessage, 'error');
+                    },
+                    complete: function () {
+                        $submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                });
+            });
+
+            // Image modal/lightbox functionality
+            $(document).on('click', '.clickable-image', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const fullsizeUrl = $(this).data('fullsize');
+                const alt = $(this).attr('alt');
+
+                // Create modal
+                const modalHtml = `
+                <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content bg-transparent border-0">
+                            <div class="modal-header border-0 pb-0">
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center p-0">
+                                <img src="${fullsizeUrl}" class="img-fluid rounded" alt="${alt}" style="max-height: 80vh;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                // Remove existing modal and add new one
+                $('#imageModal').remove();
+                $('body').append(modalHtml);
+                
+                // Show modal
+                const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+                imageModal.show();
+
+                // Remove modal from DOM when hidden
+                $('#imageModal').on('hidden.bs.modal', function() {
+                    $(this).remove();
+                });
+            });
+
+            // Auto-resize textarea
+            $('#contentInput').on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            // Character counter for title and content (optional)
+            const MAX_TITLE_LENGTH = 200;
+            const MAX_CONTENT_LENGTH = 2000;
+
+            $('#titleInput').on('input', function() {
+                const length = $(this).val().length;
+                if (length > MAX_TITLE_LENGTH) {
+                    $(this).val($(this).val().substring(0, MAX_TITLE_LENGTH));
+                }
+            });
+
+            $('#contentInput').on('input', function() {
+                const length = $(this).val().length;
+                if (length > MAX_CONTENT_LENGTH) {
+                    $(this).val($(this).val().substring(0, MAX_CONTENT_LENGTH));
+                }
+            });
+
+            // Prevent form submission on Enter key in title input
+            $('#titleInput').on('keypress', function(e) {
+                if (e.which === 13) { // Enter key
+                    e.preventDefault();
+                    $('#contentInput').focus();
+                }
+            });
+        });
+
+        $(function () {
+            // Like/Unlike AJAX functionality
+            $(document).on('submit', '.toggle-like-form', function(e) {
+                e.preventDefault();
+                const $form = $(this);
+                const $button = $form.find('button[type="submit"]');
+                const $icon = $button.find('i');
+                const $count = $button.find('span');
+                if ($button.prop('disabled')) return;
+                $button.prop('disabled', true);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            if ($icon.hasClass('bx-heart')) {
+                                $icon.removeClass('bx-heart').addClass('bxs-heart text-danger');
+                            } else {
+                                $icon.removeClass('bxs-heart text-danger').addClass('bx-heart');
+                            }
+                            $count.text(response.likesCount);
+                        } else {
+                            showToast(response.message || 'Error toggling like', 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Error toggling like', 'error');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false);
+                    }
+                });
+            });
+
+            // Toggle comments section
+            $(document).on('click', '.toggle-comments', function () {
+                var postId = $(this).data('post-id');
+                var $container = $('#comments-container-' + postId);
+                var $icon = $(this).find('i');
+                var isHidden = $container.is(':hidden');
+                $container.toggle();
+                $icon.toggleClass('bx-comment bxs-comment');
+            });
+
+            // Add comment
+            $(document).on('submit', '.add-comment-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                var postId = $form.data('post-id');
+                var $commentsList = $('#comments-list-' + postId);
+                var $count = $('.toggle-comments[data-post-id="' + postId + '"] span');
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function () {
+                        $form.find('input[name="Content"]').val('');
+                        $count.text(parseInt($count.text()) + 1);
+                        // Reload comments (implement GetComments endpoint to return HTML or JSON)
+                        $.ajax({
+                            url: '/Social/GetComments',
+                            type: 'GET',
+                            data: {postId: postId},
+                            success: function (comments) {
+                                $commentsList.empty();
+                                if (comments.length > 0) {
+                                    comments.forEach(function (comment) {
+                                        var commentHtml = `<div class="comment-item mb-3 d-flex">
+                                    <div class="flex-shrink-0 me-2">
+                                        <img src="${comment.profileImageURL || '/images/default-avatar.png'}" class="rounded-circle" width="40" height="40" alt="${comment.username}" />
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="comment-header d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>${comment.username}</strong>
+                                                <small class="text-muted ms-2">${comment.timeAgo}</small>
+                                            </div>
+                                        </div>
+                                        <div class="comment-content">${comment.content}</div>
+                                    </div>
+                                </div>`;
+                                        $commentsList.append(commentHtml);
+                                    });
+                                } else {
+                                    $commentsList.html('<p class="text-muted">No comments yet. Be the first to comment!</p>');
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+}
